@@ -282,7 +282,7 @@ func TestSingularize(t *testing.T) {
 		{"Categories", "Category"},
 		{"Fields", "Field"},
 		{"Changes", "Change"},
-		{"Addresses", "Addresse"},
+		{"Addresses", "Address"},
 		{"Status", "Status"},
 	}
 	for _, tt := range tests {
