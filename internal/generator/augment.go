@@ -67,6 +67,16 @@ func ApplyAugmentations(types map[string]*GoType, config *AugmentConfig) {
 					updateTypeRef(&t.Fields[i].Type, oldName, aug.Name)
 				}
 			}
+
+			// Update enum const name prefixes.
+			if goType.Kind == GoTypeEnum {
+				for i := range goType.EnumValues {
+					ev := &goType.EnumValues[i]
+					if strings.HasPrefix(ev.GoName, oldName) {
+						ev.GoName = aug.Name + ev.GoName[len(oldName):]
+					}
+				}
+			}
 		}
 
 		if aug.Doc != "" {

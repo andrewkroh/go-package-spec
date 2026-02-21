@@ -1,0 +1,129 @@
+files:
+  manifest.go:
+    - IntegrationManifest
+    - IntegrationManifestElasticsearch
+    - IntegrationManifestElasticsearchPrivileges
+    - IntegrationManifestType
+    - InputManifest
+    - InputManifestElasticsearch
+    - InputManifestType
+    - ContentManifest
+    - ContentManifestConditions
+    - ContentManifestType
+    - Owner
+    - OwnerType
+    - Source
+    - SourceLicense
+    - Conditions
+    - ConditionsAgent
+    - ConditionsElastic
+    - ConditionsElasticCapability
+    - ConditionsElasticSubscription
+    - ConditionsKibana
+    - Category
+    - Deprecated
+    - DeprecatedReplacedBy
+    - Icon
+    - Screenshot
+    - Agent
+    - AgentPrivileges
+    - Discovery
+    - DiscoveryDataset
+    - DiscoveryField
+
+  policytemplate.go:
+    - IntegrationManifestPolicyTemplate
+    - IntegrationManifestPolicyTemplateInput
+    - IntegrationManifestPolicyTemplateInputDeploymentMode
+    - IntegrationManifestPolicyTemplateInputInputGroup
+    - InputManifestPolicyTemplate
+    - InputManifestPolicyTemplateType
+    - DeploymentModes
+    - DeploymentModesAgentless
+    - DeploymentModesAgentlessResources
+    - DeploymentModesAgentlessResourcesRequests
+    - DeploymentModesDefault
+    - ConfigurationLink
+    - ConfigurationLinkType
+
+  var.go:
+    - Var
+    - VarType
+    - VarHideInDeploymentMode
+    - VarOption
+    - VarGroup
+    - VarGroupOption
+    - VarGroupOptionHideInDeploymentMode
+    - RequiredVars
+
+  datastream.go:
+    - DataStreamManifest
+    - DataStreamManifestElasticsearch
+    - DataStreamManifestElasticsearchPrivileges
+    - DataStreamManifestElasticsearchSourceMode
+    - DataStreamManifestRelease
+    - DataStreamManifestStream
+    - DataStreamManifestType
+
+  field.go:
+    - Field
+    - FieldExternal
+    - FieldMetricType
+    - FieldNormalize
+    - FieldObjectType
+    - FieldObjectTypeMappingType
+    - FieldUnit
+    - Type
+
+  changelog.go:
+    - Changelog
+    - ChangelogChange
+    - ChangelogChangeType
+
+  validation.go:
+    - Validation
+    - ValidationDocsStructureEnforced
+    - ValidationDocsStructureEnforcedSkip
+    - ValidationErrors
+
+  lifecycle.go:
+    - Lifecycle
+
+  elasticsearch.go:
+    - ElasticsearchIndexMode
+    - ElasticsearchIndexTemplate
+    - ElasticsearchIndexTemplateDataStream
+    - ElasticsearchIndexTemplateIngestPipeline
+    - ElasticsearchIndexTemplateMappings
+    - ElasticsearchIndexTemplateMappingsDynamicTemplateValue
+    - ElasticsearchIndexTemplateMappingsDynamicTemplateValueMapping
+    - ElasticsearchIndexTemplateSettings
+    - IndexTemplateSettingAnalysis
+    - IndexTemplateSettingAnalysisAnalyzerValue
+    - IndexTemplateSettingAnalysisAnalyzerValueType
+    - IndexTemplateSettingIndex
+    - IndexTemplateSettingIndexCodec
+    - IndexTemplateSettingIndexMapping
+    - IndexTemplateSettingIndexSort
+
+  transform.go:
+    - Transform
+    - TransformManifest
+    - TransformManifestDestinationIndexTemplate
+    - TransformManifestDestinationIndexTemplateSettings
+    - TransformManifestDestinationIndexTemplateSettingsIndex
+    - TransformManifestDestinationIndexTemplateSettingsIndexMode
+    - TransformDest
+    - TransformDestAlias
+    - TransformLatest
+    - TransformPivot
+    - TransformRetentionPolicy
+    - TransformRetentionPolicyTime
+    - TransformSettings
+    - TransformSource
+    - TransformSync
+    - TransformSyncTime
+
+  kibana.go:
+    - Tag
+    - TagAssetType

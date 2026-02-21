@@ -651,8 +651,9 @@ func (m *TypeMapper) createEnumType(
 
 	values := schema.EnumStrings()
 	for _, v := range values {
+		goName := enumConstName(name, v)
 		goType.EnumValues = append(goType.EnumValues, GoEnumVal{
-			GoName: name + ToGoName(v),
+			GoName: goName,
 			Value:  v,
 		})
 	}
@@ -681,6 +682,26 @@ func (m *TypeMapper) uniqueName(name string) string {
 func cleanDoc(s string) string {
 	s = strings.TrimSpace(s)
 	return s
+}
+
+// enumConstName generates a valid Go constant name for an enum value.
+func enumConstName(typeName, value string) string {
+	// Handle special characters.
+	cleaned := strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '-', r == '.':
+			return r
+		case r == '*':
+			return -1 // Drop.
+		default:
+			return '_'
+		}
+	}, value)
+
+	if cleaned == "" {
+		return typeName + "Any"
+	}
+	return typeName + ToGoName(cleaned)
 }
 
 // singularize attempts to produce a singular form of a plural name.

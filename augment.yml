@@ -1,0 +1,93 @@
+types:
+  # Rename generic "Type" enum to "FieldType" to avoid conflicts with Go keyword shadow.
+  Type:
+    name: FieldType
+    doc: "FieldType represents the Elasticsearch mapping type of a field."
+
+  Field:
+    doc: "Field represents a field definition in a data stream's field mapping."
+    fields:
+      example:
+        type: any
+      null_value:
+        type: any
+      dynamic:
+        type: any
+        doc: "Dynamic controls whether new fields are added dynamically. Accepts true, false, \"strict\", or \"runtime\"."
+      runtime:
+        type: any
+        doc: "Runtime specifies if this field is evaluated at query time. Can be a boolean or a script string."
+      default_metric:
+        type: any
+      metrics:
+        type: any
+
+  Var:
+    doc: "Var represents an input variable definition for a package."
+    fields:
+      default:
+        type: any
+        doc: "Default is the default value for the variable."
+      options:
+        type: any
+        doc: "Options provides the list of selectable options when type is \"select\"."
+
+  ElasticsearchIndexTemplateMappings:
+    fields:
+      dynamic:
+        type: any
+        doc: "Dynamic controls whether new fields can be added dynamically to the mapping."
+      dynamic_templates:
+        type: any
+        doc: "DynamicTemplates defines custom rules for dynamic field mapping."
+
+  IndexTemplateSettingIndexSort:
+    fields:
+      field:
+        type: any
+        doc: "Field is the field or fields used to sort documents."
+      order:
+        type: any
+        doc: "Order is the sort order to use for each field."
+
+  TransformSource:
+    fields:
+      index:
+        type: any
+        doc: "Index is the source index or indices for the transform."
+      query:
+        type: any
+        doc: "Query filters the source documents."
+      runtime_mappings:
+        type: any
+        doc: "RuntimeMappings defines runtime fields for the source."
+
+  TransformPivot:
+    fields:
+      aggregations:
+        type: any
+        doc: "Aggregations defines the aggregations for the pivot."
+      aggs:
+        type: any
+        doc: "Aggs is an alias for Aggregations."
+      group_by:
+        type: any
+        doc: "GroupBy defines the grouping for the pivot."
+
+  Transform:
+    doc: "Transform represents an Elasticsearch transform definition."
+    fields:
+      _meta:
+        name: Meta
+        type: "map[string]any"
+        doc: "Meta holds user-defined metadata about the transform."
+
+  IntegrationManifestPolicyTemplateInput:
+    fields:
+      hide_in_var_group_options:
+        type: "map[string][]string"
+        doc: "HideInVarGroupOptions filters out specific var_group options for this input."
+
+  # RequiredVars uses patternProperties and needs a map type.
+  RequiredVars:
+    name: RequiredVars
