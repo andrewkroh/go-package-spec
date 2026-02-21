@@ -2,4 +2,7 @@ module github.com/andrewkroh/go-package-spec
 
 go 1.25.5
 
-require gopkg.in/yaml.v3 v3.0.1 // indirect
+require (
+	github.com/dave/jennifer v1.7.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
