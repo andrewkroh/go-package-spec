@@ -8,9 +8,9 @@ import (
 
 func TestSchemaType_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
-		name   string
-		json   string
-		want   []string
+		name string
+		json string
+		want []string
 	}{
 		{"single string", `"string"`, []string{"string"}},
 		{"array", `["string","null"]`, []string{"string", "null"}},

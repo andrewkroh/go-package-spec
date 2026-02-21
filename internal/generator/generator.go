@@ -4,7 +4,7 @@ import "fmt"
 
 // Config holds all configuration for a generator run.
 type Config struct {
-	SchemaDir  string
+	SchemaDir   string
 	AugmentFile string
 	FileMapFile string
 	OutputDir   string

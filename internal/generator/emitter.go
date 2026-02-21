@@ -16,14 +16,14 @@ const (
 
 // Emitter generates Go source files from GoType definitions using jennifer/jen.
 type Emitter struct {
-	pkgName  string
+	pkgName   string
 	outputDir string
 }
 
 // NewEmitter creates an Emitter targeting the given package name and directory.
 func NewEmitter(pkgName, outputDir string) *Emitter {
 	return &Emitter{
-		pkgName:  pkgName,
+		pkgName:   pkgName,
 		outputDir: outputDir,
 	}
 }
@@ -118,9 +118,6 @@ func (e *Emitter) emitStruct(f *File, goType *GoType) {
 
 // fieldDecl generates a struct field declaration with tags.
 func (e *Emitter) fieldDecl(field GoField) Code {
-	stmt := Id(field.Name)
-	stmt = e.typeRefCode(stmt, field.Type)
-
 	// Build tags.
 	jsonTag := field.JSONName + ",omitempty"
 	yamlTag := field.JSONName + ",omitempty"
@@ -129,58 +126,10 @@ func (e *Emitter) fieldDecl(field GoField) Code {
 		yamlTag = "-"
 	}
 
-	return stmt.Tag(map[string]string{
+	return Id(field.Name).Add(e.typeExpr(&field.Type)).Tag(map[string]string{
 		"json": jsonTag,
 		"yaml": yamlTag,
 	})
-}
-
-// typeRefCode appends a type reference to a statement.
-func (e *Emitter) typeRefCode(stmt *Statement, ref GoTypeRef) *Statement {
-	if ref.Pointer {
-		inner := ref
-		inner.Pointer = false
-		return e.typeRefCode(Op("*").Add(stmt), inner)
-	}
-	if ref.Slice {
-		if ref.Element != nil {
-			return stmt.Index().Add(e.typeExpr(ref.Element))
-		}
-		return stmt.Index().Interface()
-	}
-	if ref.Map {
-		keyExpr := Id("string")
-		if ref.MapKey != nil {
-			keyExpr = e.typeExpr(ref.MapKey)
-		}
-		valExpr := Interface()
-		if ref.MapValue != nil {
-			valExpr = e.typeExpr(ref.MapValue)
-		}
-		return stmt.Map(keyExpr).Add(valExpr)
-	}
-	if ref.Builtin != "" {
-		switch ref.Builtin {
-		case "any":
-			return stmt.Any()
-		case "string":
-			return stmt.String()
-		case "int":
-			return stmt.Int()
-		case "int64":
-			return stmt.Int64()
-		case "float64":
-			return stmt.Float64()
-		case "bool":
-			return stmt.Bool()
-		default:
-			return stmt.Id(ref.Builtin)
-		}
-	}
-	if ref.Named != "" {
-		return stmt.Id(ref.Named)
-	}
-	return stmt.Any()
 }
 
 // typeExpr generates a type expression for use in composite types.
@@ -297,8 +246,8 @@ func (e *Emitter) emitMetadata() error {
 	f.Line()
 
 	// Accessor methods.
-	f.Comment("Path returns the file path from which the value was loaded.")
-	f.Func().Params(Id("m").Id("FileMetadata")).Id("Path").Params().String().Block(
+	f.Comment("FilePath returns the file path from which the value was loaded.")
+	f.Func().Params(Id("m").Id("FileMetadata")).Id("FilePath").Params().String().Block(
 		Return(Id("m").Dot("file")),
 	)
 	f.Line()
