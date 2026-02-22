@@ -494,3 +494,83 @@ func TestImageMetadata(t *testing.T) {
 		t.Error("logo.svg byte size is 0")
 	}
 }
+
+func TestKibanaObjects(t *testing.T) {
+	pkg, err := Read("testdata/integration_pkg")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if pkg.KibanaObjects == nil {
+		t.Fatal("KibanaObjects is nil")
+	}
+
+	dashboards, ok := pkg.KibanaObjects["dashboard"]
+	if !ok {
+		t.Fatal("no dashboard objects found")
+	}
+	if len(dashboards) != 1 {
+		t.Fatalf("dashboard count = %d, want 1", len(dashboards))
+	}
+
+	d := dashboards[0]
+	if d.ID != "test-integration-overview" {
+		t.Errorf("id = %q, want test-integration-overview", d.ID)
+	}
+	if d.Type != "dashboard" {
+		t.Errorf("type = %q, want dashboard", d.Type)
+	}
+	if d.Attributes.Title != "[Test Integration] Overview" {
+		t.Errorf("title = %q, want [Test Integration] Overview", d.Attributes.Title)
+	}
+	if d.Attributes.Description != "Overview dashboard for test integration." {
+		t.Errorf("description = %q, want Overview dashboard for test integration.", d.Attributes.Description)
+	}
+	if d.CoreMigrationVersion != "8.8.0" {
+		t.Errorf("coreMigrationVersion = %q, want 8.8.0", d.CoreMigrationVersion)
+	}
+	if d.Managed == nil || *d.Managed != false {
+		t.Errorf("managed = %v, want false", d.Managed)
+	}
+
+	// References.
+	if len(d.References) != 1 {
+		t.Fatalf("references count = %d, want 1", len(d.References))
+	}
+	if d.References[0].ID != "test-vis-1" {
+		t.Errorf("reference id = %q, want test-vis-1", d.References[0].ID)
+	}
+	if d.References[0].Type != "visualization" {
+		t.Errorf("reference type = %q, want visualization", d.References[0].Type)
+	}
+
+	// Extras should contain remaining attribute fields.
+	if d.Attributes.Extras == nil {
+		t.Fatal("extras is nil")
+	}
+	if _, ok := d.Attributes.Extras["kibanaSavedObjectMeta"]; !ok {
+		t.Error("extras missing kibanaSavedObjectMeta")
+	}
+	if _, ok := d.Attributes.Extras["panelsJSON"]; !ok {
+		t.Error("extras missing panelsJSON")
+	}
+	// title and description should NOT be in extras.
+	if _, ok := d.Attributes.Extras["title"]; ok {
+		t.Error("extras should not contain title")
+	}
+
+	// Path.
+	if d.Path() != "kibana/dashboard/overview.json" {
+		t.Errorf("path = %q, want kibana/dashboard/overview.json", d.Path())
+	}
+}
+
+func TestKibanaObjectsNotLoadedForInput(t *testing.T) {
+	pkg, err := Read("testdata/input_pkg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pkg.KibanaObjects != nil {
+		t.Error("KibanaObjects should be nil for input package")
+	}
+}

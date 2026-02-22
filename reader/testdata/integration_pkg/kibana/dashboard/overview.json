@@ -1,0 +1,21 @@
+{
+  "id": "test-integration-overview",
+  "type": "dashboard",
+  "attributes": {
+    "title": "[Test Integration] Overview",
+    "description": "Overview dashboard for test integration.",
+    "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{}"
+    },
+    "panelsJSON": "[]"
+  },
+  "references": [
+    {
+      "id": "test-vis-1",
+      "name": "panel_0",
+      "type": "visualization"
+    }
+  ],
+  "coreMigrationVersion": "8.8.0",
+  "managed": false
+}

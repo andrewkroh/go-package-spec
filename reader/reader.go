@@ -28,15 +28,16 @@ type Package struct {
 	Changelog  []packagespec.Changelog
 	Validation *packagespec.Validation // nil if absent
 
-	DataStreams map[string]*DataStream    // type:integration only
-	Fields      map[string]*FieldsFile    // type:input only
-	Pipelines   map[string]*PipelineFile  // package-level elasticsearch/ingest_pipeline/
-	Transforms  map[string]*TransformData // nil if absent
-	Tags        []packagespec.Tag         // nil if absent
-	Lifecycle   *packagespec.Lifecycle    // type:input only, nil if absent
-	SampleEvent     json.RawMessage              // type:input only, nil if absent
-	AgentTemplates  map[string]*AgentTemplate    // type:integration and type:input only, nil unless WithAgentTemplates used
-	Images          map[string]*ImageFile        // nil unless WithImageMetadata used
+	DataStreams    map[string]*DataStream          // type:integration only
+	Fields         map[string]*FieldsFile          // type:input only
+	Pipelines      map[string]*PipelineFile        // package-level elasticsearch/ingest_pipeline/
+	Transforms     map[string]*TransformData       // nil if absent
+	Tags           []packagespec.Tag               // nil if absent
+	Lifecycle      *packagespec.Lifecycle          // type:input only, nil if absent
+	SampleEvent    json.RawMessage                 // type:input only, nil if absent
+	KibanaObjects  map[string][]*KibanaSavedObject // type:integration and type:content only, keyed by asset type
+	AgentTemplates map[string]*AgentTemplate       // type:integration and type:input only, nil unless WithAgentTemplates used
+	Images         map[string]*ImageFile           // nil unless WithImageMetadata used
 
 	Commit string // git HEAD commit ID, empty unless WithGitMetadata used
 
@@ -86,12 +87,12 @@ func (p *Package) ContentManifest() *packagespec.ContentManifest {
 type Option func(*config)
 
 type config struct {
-	fsys            fs.FS
-	knownFields     bool
-	gitMetadata     bool
-	agentTemplates  bool
-	imageMetadata   bool
-	packagePath     string // original OS path, needed for git operations
+	fsys           fs.FS
+	knownFields    bool
+	gitMetadata    bool
+	agentTemplates bool
+	imageMetadata  bool
+	packagePath    string // original OS path, needed for git operations
 }
 
 // WithFS provides a custom filesystem for reading package files. When set,
@@ -271,6 +272,13 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			pkg.AgentTemplates = templates
 		}
 
+		// Read Kibana saved objects.
+		kibanaObjects, err := readKibanaObjects(cfg.fsys, root)
+		if err != nil {
+			return nil, fmt.Errorf("reading kibana objects: %w", err)
+		}
+		pkg.KibanaObjects = kibanaObjects
+
 	case "input":
 		// Read fields from package-root fields/ directory.
 		fieldsDir := path.Join(root, "fields")
@@ -308,6 +316,14 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			}
 			pkg.AgentTemplates = templates
 		}
+
+	case "content":
+		// Read Kibana saved objects.
+		kibanaObjects, err := readKibanaObjects(cfg.fsys, root)
+		if err != nil {
+			return nil, fmt.Errorf("reading kibana objects: %w", err)
+		}
+		pkg.KibanaObjects = kibanaObjects
 	}
 
 	// Git metadata enrichment.
