@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -68,7 +69,18 @@ func ApplyAugmentations(types map[string]*GoType, config *AugmentConfig) {
 		return
 	}
 
-	for typeName, aug := range config.Types {
+	// Sort type names for deterministic processing order. This matters
+	// when augmentations rename types (e.g. RoutingRule→RoutingRuleSet and
+	// RoutingRule2→RoutingRule) because the intermediate map state depends
+	// on the order renames are applied.
+	typeNames := make([]string, 0, len(config.Types))
+	for typeName := range config.Types {
+		typeNames = append(typeNames, typeName)
+	}
+	sort.Strings(typeNames)
+
+	for _, typeName := range typeNames {
+		aug := config.Types[typeName]
 		goType, ok := types[typeName]
 		if !ok {
 			continue

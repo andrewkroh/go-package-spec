@@ -33,6 +33,7 @@ func DefaultEntryPoints() []EntryPoint {
 		{"integration/data_stream/lifecycle.jsonschema.json", "Lifecycle"},
 		{"integration/elasticsearch/pipeline.jsonschema.json", "IngestPipeline"},
 		{"integration/data_stream/routing_rules.jsonschema.json", "RoutingRules"},
+		{"integration/_dev/build/build.jsonschema.json", "BuildManifest"},
 	}
 }
 

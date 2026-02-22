@@ -137,6 +137,11 @@ files:
     - RoutingRuleSet
     - RoutingRule
 
+  build.go:
+    - BuildManifest
+    - BuildManifestDependencies
+    - BuildManifestDependenciesECS
+
   kibana.go:
     - Tag
     - TagAssetType

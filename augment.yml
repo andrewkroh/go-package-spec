@@ -126,6 +126,11 @@ types:
         json: "date,omitempty"
         yaml: "-"
 
+  BuildManifestDependenciesECS:
+    fields:
+      reference:
+        doc: "Reference is the ECS version source reference. Values begin with \"git@\" (e.g. \"git@v8.11.0\")."
+
 base_types:
   Manifest:
     doc: "Manifest contains the common fields shared by all package manifest types."

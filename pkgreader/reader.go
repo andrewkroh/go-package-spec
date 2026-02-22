@@ -26,7 +26,8 @@ type Package struct {
 	manifest any // *pkgspec.IntegrationManifest, *pkgspec.InputManifest, or *pkgspec.ContentManifest
 
 	Changelog  []pkgspec.Changelog
-	Validation *pkgspec.Validation // nil if absent
+	Validation *pkgspec.Validation    // nil if absent
+	Build      *pkgspec.BuildManifest // type:integration only, nil if absent
 
 	DataStreams    map[string]*DataStream          // type:integration only
 	Fields         map[string]*FieldsFile          // type:input only
@@ -278,6 +279,17 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			return nil, fmt.Errorf("reading kibana objects: %w", err)
 		}
 		pkg.KibanaObjects = kibanaObjects
+
+		// Read build manifest (optional).
+		buildPath := path.Join(root, "_dev", "build", "build.yml")
+		build, err := readOptionalYAML[pkgspec.BuildManifest](cfg.fsys, buildPath, cfg.knownFields)
+		if err != nil {
+			return nil, fmt.Errorf("reading build manifest: %w", err)
+		}
+		if build != nil {
+			pkgspec.AnnotateFileMetadata(buildPath, build)
+			pkg.Build = build
+		}
 
 	case "input":
 		// Read fields from package-root fields/ directory.

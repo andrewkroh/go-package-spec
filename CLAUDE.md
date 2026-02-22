@@ -21,6 +21,7 @@ pkgspec/                   Generated data model (DO NOT EDIT except hand-written
   flatten.go                   Hand-written: FlattenFields with ECS enrichment callback
   metadata.go                  Generated: FileMetadata type + reflection walker
   manifest.go                  Manifest base type + Integration/Input/Content manifests
+  build.go                     Generated: BuildManifest type for _dev/build/build.yml
   ingest_pipeline.go           Generated: IngestPipeline type
   routing_rules.go             Generated: RoutingRuleSet, RoutingRule types
   *.go                         Other generated types (changelog, field, transform, etc.)

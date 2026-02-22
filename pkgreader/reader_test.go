@@ -193,6 +193,17 @@ func TestReadIntegrationPackage(t *testing.T) {
 		t.Errorf("transform fields count = %d, want 1", len(td.Fields))
 	}
 
+	// Build manifest.
+	if pkg.Build == nil {
+		t.Fatal("Build is nil")
+	}
+	if pkg.Build.Dependencies.ECS.Reference != "git@v8.11.0" {
+		t.Errorf("build ecs reference = %q, want git@v8.11.0", pkg.Build.Dependencies.ECS.Reference)
+	}
+	if pkg.Build.Dependencies.ECS.ImportMappings == nil || !*pkg.Build.Dependencies.ECS.ImportMappings {
+		t.Error("build ecs import_mappings should be true")
+	}
+
 	// Fields should be nil for integration packages.
 	if pkg.Fields != nil {
 		t.Error("Fields should be nil for integration package")
@@ -263,6 +274,11 @@ func TestReadInputPackage(t *testing.T) {
 	}
 	if !json.Valid(pkg.SampleEvent) {
 		t.Error("input package sample event is not valid JSON")
+	}
+
+	// Build should be nil for input packages.
+	if pkg.Build != nil {
+		t.Error("Build should be nil for input package")
 	}
 
 	// Changelog.

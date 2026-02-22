@@ -23,6 +23,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if pkg.Build != nil {
+		fmt.Printf("build ecs reference: %s\n\n", pkg.Build.Dependencies.ECS.Reference)
+	}
+
 	for name, ds := range pkg.DataStreams {
 		fmt.Printf("data_stream: %s\n", name)
 
