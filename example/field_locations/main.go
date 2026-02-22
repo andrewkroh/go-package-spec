@@ -9,8 +9,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/andrewkroh/go-package-spec/pkgspec"
 	"github.com/andrewkroh/go-package-spec/pkgreader"
+	"github.com/andrewkroh/go-package-spec/pkgspec"
 )
 
 func main() {

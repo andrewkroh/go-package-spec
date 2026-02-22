@@ -11,8 +11,8 @@ import (
 	"slices"
 	"text/tabwriter"
 
-	"github.com/andrewkroh/go-package-spec/pkgspec"
 	"github.com/andrewkroh/go-package-spec/pkgreader"
+	"github.com/andrewkroh/go-package-spec/pkgspec"
 )
 
 func main() {

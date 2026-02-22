@@ -402,8 +402,8 @@ var mdLinkRe = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 
 // docComment holds formatted doc text and any extracted link definitions.
 type docComment struct {
-	text  string            // main text with Markdown links replaced by [text] refs
-	links []docCommentLink  // extracted link definitions in order of appearance
+	text  string           // main text with Markdown links replaced by [text] refs
+	links []docCommentLink // extracted link definitions in order of appearance
 }
 
 type docCommentLink struct {

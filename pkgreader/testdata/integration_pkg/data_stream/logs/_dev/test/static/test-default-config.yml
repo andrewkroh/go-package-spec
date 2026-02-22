@@ -1,0 +1,3 @@
+skip:
+  reason: "Static check disabled"
+  link: "https://github.com/elastic/integrations/issues/5678"

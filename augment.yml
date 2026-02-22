@@ -131,6 +131,70 @@ types:
       reference:
         doc: "Reference is the ECS version source reference. Values begin with \"git@\" (e.g. \"git@v8.11.0\")."
 
+  # Test config type renames to avoid generic names.
+  Skip:
+    name: TestSkip
+    doc: "TestSkip describes why a test should be skipped, with a reason and tracking link."
+
+  Vars:
+    name: TestVars
+    doc: "TestVars holds variables defined for a test case."
+
+  ConfigTests:
+    name: TestCategoryConfig
+    doc: "TestCategoryConfig controls parallelism and skip for a test category."
+
+  TestConfig:
+    doc: "TestConfig holds the package-level test configuration for integration packages (_dev/test/config.yml)."
+
+  InputTestConfig:
+    doc: "InputTestConfig holds the package-level test configuration for input packages (_dev/test/config.yml)."
+
+  PipelineTestCommonConfig:
+    doc: "PipelineTestCommonConfig holds shared configuration for all pipeline tests in a data stream (test-common-config.yml)."
+    fields:
+      numeric_keyword_fields:
+        type: "[]string"
+        doc: "NumericKeywordFields lists keyword type fields allowed to have a numeric value."
+      string_number_fields:
+        type: "[]string"
+        doc: "StringNumberFields lists numeric type fields allowed to have a string value if parseable as a number."
+
+  PipelineTestJSONConfig:
+    doc: "PipelineTestJSONConfig holds per-case configuration for a JSON pipeline test (test-*.json-config.yml)."
+    fields:
+      numeric_keyword_fields:
+        type: "[]string"
+        doc: "NumericKeywordFields lists keyword type fields allowed to have a numeric value."
+      string_number_fields:
+        type: "[]string"
+        doc: "StringNumberFields lists numeric type fields allowed to have a string value if parseable as a number."
+
+  PipelineTestRawConfig:
+    doc: "PipelineTestRawConfig holds per-case configuration for a raw/log pipeline test (test-*.log-config.yml)."
+    fields:
+      numeric_keyword_fields:
+        type: "[]string"
+        doc: "NumericKeywordFields lists keyword type fields allowed to have a numeric value."
+      string_number_fields:
+        type: "[]string"
+        doc: "StringNumberFields lists numeric type fields allowed to have a string value if parseable as a number."
+
+  PipelineTestEvent:
+    doc: "PipelineTestEvent holds the input events for a JSON pipeline test (test-*.json)."
+
+  PipelineTestExpected:
+    doc: "PipelineTestExpected holds the expected output for a pipeline test (test-*-expected.json)."
+
+  PolicyTestConfig:
+    doc: "PolicyTestConfig holds configuration for a policy test case (test-*.yml)."
+
+  StaticTestConfig:
+    doc: "StaticTestConfig holds configuration for a static test case (test-*-config.yml)."
+
+  SystemTestConfig:
+    doc: "SystemTestConfig holds configuration for a system test case (test-*-config.yml)."
+
 base_types:
   Manifest:
     doc: "Manifest contains the common fields shared by all package manifest types."

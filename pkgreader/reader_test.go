@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 	"testing/fstest"
+
+	"github.com/andrewkroh/go-package-spec/pkgspec"
 )
 
 func TestReadIntegrationPackage(t *testing.T) {
@@ -588,5 +590,190 @@ func TestKibanaObjectsNotLoadedForInput(t *testing.T) {
 	}
 	if pkg.KibanaObjects != nil {
 		t.Error("KibanaObjects should be nil for input package")
+	}
+}
+
+func TestTestConfigs(t *testing.T) {
+	t.Run("integration", func(t *testing.T) {
+		pkg, err := Read("testdata/integration_pkg", WithTestConfigs())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Package-level test config.
+		tc := pkg.TestConfig
+		if tc == nil {
+			t.Fatal("TestConfig is nil")
+		}
+		if tc.Pipeline.Parallel == nil || !*tc.Pipeline.Parallel {
+			t.Error("pipeline.parallel should be true")
+		}
+		if tc.System.Skip.Reason != "Requires docker environment" {
+			t.Errorf("system.skip.reason = %q, want Requires docker environment", tc.System.Skip.Reason)
+		}
+		if tc.System.Skip.Link != "https://github.com/elastic/integrations/issues/1234" {
+			t.Errorf("system.skip.link = %q", tc.System.Skip.Link)
+		}
+
+		// Data stream tests.
+		ds, ok := pkg.DataStreams["logs"]
+		if !ok {
+			t.Fatal("data stream 'logs' not found")
+		}
+		if ds.Tests == nil {
+			t.Fatal("DataStream.Tests is nil")
+		}
+
+		// Pipeline tests.
+		if len(ds.Tests.Pipeline) != 1 {
+			t.Fatalf("pipeline test count = %d, want 1", len(ds.Tests.Pipeline))
+		}
+		pc := ds.Tests.Pipeline[0]
+		if pc.Name != "test-example" {
+			t.Errorf("pipeline test name = %q, want test-example", pc.Name)
+		}
+		if pc.Format != "json" {
+			t.Errorf("pipeline test format = %q, want json", pc.Format)
+		}
+		if pc.EventPath == "" {
+			t.Error("pipeline test event path is empty")
+		}
+		if pc.Config == nil {
+			t.Fatal("pipeline test config is nil")
+		}
+		jsonCfg, ok := pc.Config.(*pkgspec.PipelineTestJSONConfig)
+		if !ok {
+			t.Fatalf("pipeline test config type = %T, want *PipelineTestJSONConfig", pc.Config)
+		}
+		if len(jsonCfg.NumericKeywordFields) != 1 || jsonCfg.NumericKeywordFields[0] != "event.code" {
+			t.Errorf("numeric_keyword_fields = %v, want [event.code]", jsonCfg.NumericKeywordFields)
+		}
+
+		// System tests.
+		if len(ds.Tests.System) != 1 {
+			t.Fatalf("system test count = %d, want 1", len(ds.Tests.System))
+		}
+		sys, ok := ds.Tests.System["default"]
+		if !ok {
+			t.Fatal("system test 'default' not found")
+		}
+		if sys.Vars.DataStreamDataset != "test_integration.logs" {
+			t.Errorf("system vars.data_stream.dataset = %q, want test_integration.logs", sys.Vars.DataStreamDataset)
+		}
+
+		// Static tests.
+		if len(ds.Tests.Static) != 1 {
+			t.Fatalf("static test count = %d, want 1", len(ds.Tests.Static))
+		}
+		st, ok := ds.Tests.Static["default"]
+		if !ok {
+			t.Fatal("static test 'default' not found")
+		}
+		if st.Skip.Reason != "Static check disabled" {
+			t.Errorf("static skip.reason = %q, want Static check disabled", st.Skip.Reason)
+		}
+
+		// Policy tests.
+		if len(ds.Tests.Policy) != 1 {
+			t.Fatalf("policy test count = %d, want 1", len(ds.Tests.Policy))
+		}
+		pol, ok := ds.Tests.Policy["default"]
+		if !ok {
+			t.Fatal("policy test 'default' not found")
+		}
+		if pol.Input != "logfile" {
+			t.Errorf("policy input = %q, want logfile", pol.Input)
+		}
+
+		// InputTestConfig should be nil for integration packages.
+		if pkg.InputTestConfig != nil {
+			t.Error("InputTestConfig should be nil for integration package")
+		}
+		if pkg.InputTests != nil {
+			t.Error("InputTests should be nil for integration package")
+		}
+	})
+
+	t.Run("input", func(t *testing.T) {
+		pkg, err := Read("testdata/input_pkg", WithTestConfigs())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Package-level test config.
+		tc := pkg.InputTestConfig
+		if tc == nil {
+			t.Fatal("InputTestConfig is nil")
+		}
+		if tc.System.Parallel == nil || *tc.System.Parallel {
+			t.Error("system.parallel should be false")
+		}
+
+		// Input test cases.
+		it := pkg.InputTests
+		if it == nil {
+			t.Fatal("InputTests is nil")
+		}
+		if len(it.System) != 1 {
+			t.Fatalf("input system test count = %d, want 1", len(it.System))
+		}
+		sys, ok := it.System["default"]
+		if !ok {
+			t.Fatal("input system test 'default' not found")
+		}
+		if sys.Vars.DataStreamDataset != "test_input.default" {
+			t.Errorf("input system vars.data_stream.dataset = %q, want test_input.default", sys.Vars.DataStreamDataset)
+		}
+
+		// TestConfig should be nil for input packages.
+		if pkg.TestConfig != nil {
+			t.Error("TestConfig should be nil for input package")
+		}
+	})
+
+	t.Run("without_option", func(t *testing.T) {
+		pkg, err := Read("testdata/integration_pkg")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if pkg.TestConfig != nil {
+			t.Error("TestConfig should be nil without WithTestConfigs")
+		}
+
+		ds := pkg.DataStreams["logs"]
+		if ds.Tests != nil {
+			t.Error("DataStream.Tests should be nil without WithTestConfigs")
+		}
+
+		pkg2, err := Read("testdata/input_pkg")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if pkg2.InputTestConfig != nil {
+			t.Error("InputTestConfig should be nil without WithTestConfigs")
+		}
+		if pkg2.InputTests != nil {
+			t.Error("InputTests should be nil without WithTestConfigs")
+		}
+	})
+}
+
+func TestPipelineTestCommonConfig(t *testing.T) {
+	pkg, err := Read("testdata/integration_pkg", WithTestConfigs())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ds := pkg.DataStreams["logs"]
+	if ds.Tests == nil {
+		t.Fatal("Tests is nil")
+	}
+	if len(ds.Tests.Pipeline) == 0 {
+		t.Fatal("no pipeline tests found")
+	}
+
+	// CommonConfig is nil when no test-common-config.yml exists.
+	if ds.Tests.Pipeline[0].CommonConfig != nil {
+		t.Error("CommonConfig should be nil when test-common-config.yml is absent")
 	}
 }

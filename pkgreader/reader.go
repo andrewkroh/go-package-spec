@@ -33,12 +33,16 @@ type Package struct {
 	Fields         map[string]*FieldsFile          // type:input only
 	Pipelines      map[string]*PipelineFile        // package-level elasticsearch/ingest_pipeline/
 	Transforms     map[string]*TransformData       // nil if absent
-	Tags           []pkgspec.Tag               // nil if absent
-	Lifecycle      *pkgspec.Lifecycle          // type:input only, nil if absent
+	Tags           []pkgspec.Tag                   // nil if absent
+	Lifecycle      *pkgspec.Lifecycle              // type:input only, nil if absent
 	SampleEvent    json.RawMessage                 // type:input only, nil if absent
 	KibanaObjects  map[string][]*KibanaSavedObject // type:integration and type:content only, keyed by asset type
 	AgentTemplates map[string]*AgentTemplate       // type:integration and type:input only, nil unless WithAgentTemplates used
 	Images         map[string]*ImageFile           // nil unless WithImageMetadata used
+
+	TestConfig      *pkgspec.TestConfig      // type:integration only, nil unless WithTestConfigs used
+	InputTestConfig *pkgspec.InputTestConfig // type:input only, nil unless WithTestConfigs used
+	InputTests      *InputPackageTests       // type:input only, nil unless WithTestConfigs used
 
 	Commit string // git HEAD commit ID, empty unless WithGitMetadata used
 
@@ -93,6 +97,7 @@ type config struct {
 	gitMetadata    bool
 	agentTemplates bool
 	imageMetadata  bool
+	testConfigs    bool
 	packagePath    string // original OS path, needed for git operations
 }
 
@@ -129,6 +134,16 @@ func WithAgentTemplates() Option {
 func WithImageMetadata() Option {
 	return func(c *config) {
 		c.imageMetadata = true
+	}
+}
+
+// WithTestConfigs enables loading of _dev/test/ configuration files. When
+// set, the reader populates test config fields on Package and DataStream.
+// This is skipped by default to avoid unnecessary overhead when test
+// configurations are not needed.
+func WithTestConfigs() Option {
+	return func(c *config) {
+		c.testConfigs = true
 	}
 }
 
@@ -291,6 +306,19 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			pkg.Build = build
 		}
 
+		// Read test config (optional, requires WithTestConfigs).
+		if cfg.testConfigs {
+			testConfigPath := path.Join(root, "_dev", "test", "config.yml")
+			tc, err := readOptionalYAML[pkgspec.TestConfig](cfg.fsys, testConfigPath, cfg.knownFields)
+			if err != nil {
+				return nil, fmt.Errorf("reading test config: %w", err)
+			}
+			if tc != nil {
+				pkgspec.AnnotateFileMetadata(testConfigPath, tc)
+				pkg.TestConfig = tc
+			}
+		}
+
 	case "input":
 		// Read fields from package-root fields/ directory.
 		fieldsDir := path.Join(root, "fields")
@@ -327,6 +355,26 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 				return nil, fmt.Errorf("reading agent templates: %w", err)
 			}
 			pkg.AgentTemplates = templates
+		}
+
+		// Read test config and test cases (optional, requires WithTestConfigs).
+		if cfg.testConfigs {
+			testConfigPath := path.Join(root, "_dev", "test", "config.yml")
+			tc, err := readOptionalYAML[pkgspec.InputTestConfig](cfg.fsys, testConfigPath, cfg.knownFields)
+			if err != nil {
+				return nil, fmt.Errorf("reading test config: %w", err)
+			}
+			if tc != nil {
+				pkgspec.AnnotateFileMetadata(testConfigPath, tc)
+				pkg.InputTestConfig = tc
+			}
+
+			testDir := path.Join(root, "_dev", "test")
+			inputTests, err := readInputPackageTests(cfg.fsys, testDir, cfg)
+			if err != nil {
+				return nil, fmt.Errorf("reading input tests: %w", err)
+			}
+			pkg.InputTests = inputTests
 		}
 
 	case "content":

@@ -13,14 +13,15 @@ import (
 
 // DataStream represents a fully-loaded data stream within an integration package.
 type DataStream struct {
-	Manifest     pkgspec.DataStreamManifest
-	Fields       map[string]*FieldsFile   // keyed by filename
-	Pipelines    map[string]*PipelineFile // keyed by filename (e.g., "default.yml")
-	ILMPolicies  map[string]*ILMPolicy    // keyed by filename, nil if absent
-	Lifecycle    *pkgspec.Lifecycle    // nil if absent
-	RoutingRules   []pkgspec.RoutingRuleSet // nil if absent
-	SampleEvent    json.RawMessage             // nil if absent
-	AgentTemplates map[string]*AgentTemplate   // nil unless WithAgentTemplates used
+	Manifest       pkgspec.DataStreamManifest
+	Fields         map[string]*FieldsFile    // keyed by filename
+	Pipelines      map[string]*PipelineFile  // keyed by filename (e.g., "default.yml")
+	ILMPolicies    map[string]*ILMPolicy     // keyed by filename, nil if absent
+	Lifecycle      *pkgspec.Lifecycle        // nil if absent
+	RoutingRules   []pkgspec.RoutingRuleSet  // nil if absent
+	SampleEvent    json.RawMessage           // nil if absent
+	AgentTemplates map[string]*AgentTemplate // nil unless WithAgentTemplates used
+	Tests          *DataStreamTests          // nil unless WithTestConfigs used
 	path           string
 }
 
@@ -175,6 +176,15 @@ func readDataStream(fsys fs.FS, dsPath string, cfg *config) (*DataStream, error)
 			return nil, fmt.Errorf("reading agent templates: %w", err)
 		}
 		ds.AgentTemplates = templates
+	}
+
+	// Read test configs (optional, requires WithTestConfigs).
+	if cfg.testConfigs {
+		tests, err := readDataStreamTests(fsys, dsPath, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("reading tests: %w", err)
+		}
+		ds.Tests = tests
 	}
 
 	return ds, nil

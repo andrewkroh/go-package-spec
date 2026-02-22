@@ -1,0 +1,6 @@
+pipeline:
+  parallel: true
+system:
+  skip:
+    reason: "Requires docker environment"
+    link: "https://github.com/elastic/integrations/issues/1234"

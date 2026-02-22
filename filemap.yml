@@ -145,3 +145,28 @@ files:
   kibana.go:
     - Tag
     - TagAssetType
+
+  test.go:
+    - TestConfig
+    - InputTestConfig
+    - TestCategoryConfig
+    - TestSkip
+    - TestVars
+    - PipelineTestCommonConfig
+    - PipelineTestJSONConfig
+    - PipelineTestRawConfig
+    - PipelineTestEvent
+    - PipelineTestExpected
+    - PolicyTestConfig
+    - PolicyTestConfigDataStream
+    - StaticTestConfig
+    - SystemTestConfig
+    - SystemTestConfigAgent
+    - SystemTestConfigAgentBaseImage
+    - SystemTestConfigAgentLinuxCapability
+    - SystemTestConfigAgentPidMode
+    - SystemTestConfigAgentPreStartScript
+    - SystemTestConfigAgentPreStartScriptLanguage
+    - SystemTestConfigAgentProvisioningScript
+    - SystemTestConfigAgentRuntime
+    - SystemTestConfigDataStream

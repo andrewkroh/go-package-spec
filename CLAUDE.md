@@ -22,6 +22,7 @@ pkgspec/                   Generated data model (DO NOT EDIT except hand-written
   metadata.go                  Generated: FileMetadata type + reflection walker
   manifest.go                  Manifest base type + Integration/Input/Content manifests
   build.go                     Generated: BuildManifest type for _dev/build/build.yml
+  test.go                      Generated: Test config types (TestConfig, SystemTestConfig, etc.)
   ingest_pipeline.go           Generated: IngestPipeline type
   routing_rules.go             Generated: RoutingRuleSet, RoutingRule types
   *.go                         Other generated types (changelog, field, transform, etc.)
@@ -29,6 +30,7 @@ pkgreader/                        Package reader (loads from disk into pkgspec t
   reader.go                    Read() entry point, Package type, options
   decode.go                    YAML decoding helpers
   datastream.go                DataStream + FieldsFile + PipelineFile types
+  test.go                      DataStreamTests, PipelineTestCase, InputPackageTests + loading
   transform.go                 TransformData type
   git.go                       Git commit + git blame for changelog dates
 augment.yml                    Type/field augmentation config
@@ -115,6 +117,7 @@ elasticsearch/                                    optional
     manifest.yml                                  optional  schema:elasticsearch/transform/manifest.spec.yml
     fields/*.yml                                  optional  schema:data_stream/fields/fields.spec.yml
   esql_view/*.yml                                 optional  schema:elasticsearch/view.spec.yml (3.6.0+)
+_dev/test/config.yml                              optional  schema:integration/_dev/test/config.spec.yml
 data_stream/<name>/                               optional
   manifest.yml                                    required  schema:data_stream/manifest.spec.yml
   fields/*.yml                                    required  schema:data_stream/fields/fields.spec.yml
@@ -122,6 +125,13 @@ data_stream/<name>/                               optional
   routing_rules.yml                               optional  schema:data_stream/routing_rules.spec.yml (tech preview)
   lifecycle.yml                                   optional  schema:data_stream/lifecycle.spec.yml (tech preview)
   agent/stream/*.yml.hbs                          optional  Handlebars templates
+  _dev/test/                                      optional  (loaded with WithTestConfigs)
+    pipeline/test-*.json|*.log                    optional  pipeline test event files
+    pipeline/test-*-config.yml                    optional  pipeline test per-case config
+    pipeline/test-common-config.yml               optional  pipeline shared config
+    system/test-*-config.yml                      optional  system test config
+    static/test-*-config.yml                      optional  static test config
+    policy/test-*.yml                             optional  policy test config
   elasticsearch/
     ingest_pipeline/*.yml|*.json                   optional  schema:elasticsearch/pipeline.spec.yml
     ilm/*.yml|*.json                               optional  opaque YAML/JSON
@@ -144,6 +154,9 @@ docs/                                             required
   knowledge_base/*.md                             optional  markdown
 fields/*.yml                                      optional  schema:data_stream/fields/fields.spec.yml
 img/                                              optional  images
+_dev/test/config.yml                              optional  schema:input/_dev/test/config.spec.yml
+_dev/test/system/test-*-config.yml                optional  system test config (loaded with WithTestConfigs)
+_dev/test/policy/test-*.yml                       optional  policy test config (loaded with WithTestConfigs)
 ```
 
 ### Content package
@@ -173,7 +186,7 @@ elasticsearch/                                    optional
 
 - Uses `io/fs.FS` for filesystem abstraction (testable with `fstest.MapFS`)
 - Detects package type from `manifest.yml` `type` field
-- Options: `WithFS()`, `WithKnownFields()`, `WithGitMetadata()`
+- Options: `WithFS()`, `WithKnownFields()`, `WithGitMetadata()`, `WithTestConfigs()`
 - `Package.Manifest()` returns the common `*pkgspec.Manifest` for any package type
 - Transform and pipeline files always decoded with `knownFields=false` (contain arbitrary ES DSL)
 - Ingest pipelines loaded from `data_stream/<name>/elasticsearch/ingest_pipeline/*.yml`

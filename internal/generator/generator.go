@@ -34,6 +34,16 @@ func DefaultEntryPoints() []EntryPoint {
 		{"integration/elasticsearch/pipeline.jsonschema.json", "IngestPipeline"},
 		{"integration/data_stream/routing_rules.jsonschema.json", "RoutingRules"},
 		{"integration/_dev/build/build.jsonschema.json", "BuildManifest"},
+		{"integration/_dev/test/config.jsonschema.json", "TestConfig"},
+		{"input/_dev/test/config.jsonschema.json", "InputTestConfig"},
+		{"integration/data_stream/_dev/test/pipeline/common_config.jsonschema.json", "PipelineTestCommonConfig"},
+		{"integration/data_stream/_dev/test/pipeline/config_json.jsonschema.json", "PipelineTestJSONConfig"},
+		{"integration/data_stream/_dev/test/pipeline/config_raw.jsonschema.json", "PipelineTestRawConfig"},
+		{"integration/data_stream/_dev/test/pipeline/event.jsonschema.json", "PipelineTestEvent"},
+		{"integration/data_stream/_dev/test/pipeline/expected.jsonschema.json", "PipelineTestExpected"},
+		{"integration/data_stream/_dev/test/policy/config.jsonschema.json", "PolicyTestConfig"},
+		{"integration/data_stream/_dev/test/static/config.jsonschema.json", "StaticTestConfig"},
+		{"integration/data_stream/_dev/test/system/config.jsonschema.json", "SystemTestConfig"},
 	}
 }
 
