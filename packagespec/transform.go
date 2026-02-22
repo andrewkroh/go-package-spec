@@ -9,14 +9,14 @@ type Transform struct {
 	FileMetadata    `json:"-" yaml:"-"`
 	Meta            map[string]any           `json:"_meta,omitempty" yaml:"_meta,omitempty"`
 	Description     string                   `json:"description,omitempty" yaml:"description,omitempty"`
-	Dest            TransformDest            `json:"dest,omitempty" yaml:"dest,omitempty"`
+	Dest            TransformDest            `json:"dest" yaml:"dest"`
 	Frequency       string                   `json:"frequency,omitempty" yaml:"frequency,omitempty"`
 	ID              string                   `json:"id,omitempty" yaml:"id,omitempty"`
 	Latest          TransformLatest          `json:"latest,omitempty" yaml:"latest,omitempty"`
 	Pivot           TransformPivot           `json:"pivot,omitempty" yaml:"pivot,omitempty"`
 	RetentionPolicy TransformRetentionPolicy `json:"retention_policy,omitempty" yaml:"retention_policy,omitempty"`
 	Settings        TransformSettings        `json:"settings,omitempty" yaml:"settings,omitempty"`
-	Source          TransformSource          `json:"source,omitempty" yaml:"source,omitempty"`
+	Source          TransformSource          `json:"source" yaml:"source"`
 	Sync            TransformSync            `json:"sync,omitempty" yaml:"sync,omitempty"`
 }
 
@@ -35,18 +35,18 @@ func (v *Transform) UnmarshalYAML(node *yamlv3.Node) error {
 
 type TransformDest struct {
 	Aliases  []TransformDestAlias `json:"aliases,omitempty" yaml:"aliases,omitempty"`
-	Index    string               `json:"index,omitempty" yaml:"index,omitempty"`
+	Index    string               `json:"index" yaml:"index"`
 	Pipeline string               `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 }
 
 type TransformDestAlias struct {
-	Alias          string `json:"alias,omitempty" yaml:"alias,omitempty"`
+	Alias          string `json:"alias" yaml:"alias"`
 	MoveOnCreation *bool  `json:"move_on_creation,omitempty" yaml:"move_on_creation,omitempty"`
 }
 
 type TransformLatest struct {
-	Sort      string `json:"sort,omitempty" yaml:"sort,omitempty"`
-	UniqueKey []any  `json:"unique_key,omitempty" yaml:"unique_key,omitempty"`
+	Sort      string `json:"sort" yaml:"sort"`
+	UniqueKey []any  `json:"unique_key" yaml:"unique_key"`
 }
 
 type TransformManifest struct {
@@ -103,7 +103,7 @@ const (
 type TransformPivot struct {
 	Aggregations any `json:"aggregations,omitempty" yaml:"aggregations,omitempty"`
 	Aggs         any `json:"aggs,omitempty" yaml:"aggs,omitempty"`
-	GroupBy      any `json:"group_by,omitempty" yaml:"group_by,omitempty"`
+	GroupBy      any `json:"group_by" yaml:"group_by"`
 }
 
 type TransformRetentionPolicy struct {
@@ -112,8 +112,8 @@ type TransformRetentionPolicy struct {
 
 // TransformRetentionPolicyTime schema definition for a retention policy
 type TransformRetentionPolicyTime struct {
-	Field  string `json:"field,omitempty" yaml:"field,omitempty"`
-	MaxAge string `json:"max_age,omitempty" yaml:"max_age,omitempty"`
+	Field  string `json:"field" yaml:"field"`
+	MaxAge string `json:"max_age" yaml:"max_age"`
 }
 
 type TransformSettings struct {
@@ -127,7 +127,7 @@ type TransformSettings struct {
 }
 
 type TransformSource struct {
-	Index           any `json:"index,omitempty" yaml:"index,omitempty"`
+	Index           any `json:"index" yaml:"index"`
 	Query           any `json:"query,omitempty" yaml:"query,omitempty"`
 	RuntimeMappings any `json:"runtime_mappings,omitempty" yaml:"runtime_mappings,omitempty"`
 }
@@ -138,5 +138,5 @@ type TransformSync struct {
 
 type TransformSyncTime struct {
 	Delay string `json:"delay,omitempty" yaml:"delay,omitempty"`
-	Field string `json:"field,omitempty" yaml:"field,omitempty"`
+	Field string `json:"field" yaml:"field"`
 }

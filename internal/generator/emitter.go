@@ -133,9 +133,14 @@ func (e *Emitter) fieldDecl(field GoField) Code {
 		return Id(field.Name)
 	}
 
-	// Build tags.
-	jsonTag := field.JSONName + ",omitempty"
-	yamlTag := field.JSONName + ",omitempty"
+	// Build tags. Required fields omit ",omitempty" to signal that
+	// the field is expected to always be present.
+	jsonTag := field.JSONName
+	yamlTag := field.JSONName
+	if !field.Required {
+		jsonTag += ",omitempty"
+		yamlTag += ",omitempty"
+	}
 	if field.JSONName == "-" {
 		jsonTag = "-"
 		yamlTag = "-"

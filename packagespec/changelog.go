@@ -9,8 +9,8 @@ import (
 
 type Changelog struct {
 	FileMetadata `json:"-" yaml:"-"`
-	Changes      []ChangelogChange `json:"changes,omitempty" yaml:"changes,omitempty"`
-	Version      string            `json:"version,omitempty" yaml:"version,omitempty"`
+	Changes      []ChangelogChange `json:"changes" yaml:"changes"`
+	Version      string            `json:"version" yaml:"version"`
 	Date         *time.Time        `json:"date,omitempty" yaml:"-"`
 }
 
@@ -28,9 +28,9 @@ func (v *Changelog) UnmarshalYAML(node *yamlv3.Node) error {
 }
 
 type ChangelogChange struct {
-	Description string              `json:"description,omitempty" yaml:"description,omitempty"`
-	Link        string              `json:"link,omitempty" yaml:"link,omitempty"`
-	Type        ChangelogChangeType `json:"type,omitempty" yaml:"type,omitempty"`
+	Description string              `json:"description" yaml:"description"`
+	Link        string              `json:"link" yaml:"link"`
+	Type        ChangelogChangeType `json:"type" yaml:"type"`
 }
 
 // ChangelogChangeType type of change.

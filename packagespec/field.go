@@ -29,7 +29,7 @@ type Field struct {
 	MetricType            FieldMetricType            `json:"metric_type,omitempty" yaml:"metric_type,omitempty"`
 	Metrics               any                        `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 	MultiFields           []Field                    `json:"multi_fields,omitempty" yaml:"multi_fields,omitempty"`
-	Name                  string                     `json:"name,omitempty" yaml:"name,omitempty"`
+	Name                  string                     `json:"name" yaml:"name"`
 	Normalize             []FieldNormalize           `json:"normalize,omitempty" yaml:"normalize,omitempty"`
 	Normalizer            string                     `json:"normalizer,omitempty" yaml:"normalizer,omitempty"`
 	NullValue             any                        `json:"null_value,omitempty" yaml:"null_value,omitempty"`

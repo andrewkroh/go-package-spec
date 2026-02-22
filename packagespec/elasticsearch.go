@@ -28,7 +28,7 @@ type ElasticsearchIndexTemplateDataStream struct {
 
 // ElasticsearchIndexTemplateIngestPipeline elasticsearch ingest pipeline settings
 type ElasticsearchIndexTemplateIngestPipeline struct {
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	Name string `json:"name" yaml:"name"`
 }
 
 // ElasticsearchIndexTemplateMappings mappings section of index template

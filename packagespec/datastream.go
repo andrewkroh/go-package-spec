@@ -16,7 +16,7 @@ type DataStreamManifest struct {
 	ILMPolicy       string                          `json:"ilm_policy,omitempty" yaml:"ilm_policy,omitempty"`
 	Release         DataStreamManifestRelease       `json:"release,omitempty" yaml:"release,omitempty"`
 	Streams         []DataStreamManifestStream      `json:"streams,omitempty" yaml:"streams,omitempty"`
-	Title           string                          `json:"title,omitempty" yaml:"title,omitempty"`
+	Title           string                          `json:"title" yaml:"title"`
 	Type            DataStreamManifestType          `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
@@ -74,12 +74,12 @@ const (
 )
 
 type DataStreamManifestStream struct {
-	Description  string       `json:"description,omitempty" yaml:"description,omitempty"`
+	Description  string       `json:"description" yaml:"description"`
 	Enabled      *bool        `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Input        string       `json:"input,omitempty" yaml:"input,omitempty"`
+	Input        string       `json:"input" yaml:"input"`
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
 	TemplatePath string       `json:"template_path,omitempty" yaml:"template_path,omitempty"`
-	Title        string       `json:"title,omitempty" yaml:"title,omitempty"`
+	Title        string       `json:"title" yaml:"title"`
 	VarGroups    []VarGroup   `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	Vars         []Var        `json:"vars,omitempty" yaml:"vars,omitempty"`
 }

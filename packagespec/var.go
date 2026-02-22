@@ -14,31 +14,31 @@ type Var struct {
 	MaxDuration           string                    `json:"max_duration,omitempty" yaml:"max_duration,omitempty"`
 	MinDuration           string                    `json:"min_duration,omitempty" yaml:"min_duration,omitempty"`
 	Multi                 *bool                     `json:"multi,omitempty" yaml:"multi,omitempty"`
-	Name                  string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Name                  string                    `json:"name" yaml:"name"`
 	Options               any                       `json:"options,omitempty" yaml:"options,omitempty"`
 	Required              *bool                     `json:"required,omitempty" yaml:"required,omitempty"`
 	Secret                *bool                     `json:"secret,omitempty" yaml:"secret,omitempty"`
 	ShowUser              *bool                     `json:"show_user,omitempty" yaml:"show_user,omitempty"`
 	Title                 string                    `json:"title,omitempty" yaml:"title,omitempty"`
-	Type                  VarType                   `json:"type,omitempty" yaml:"type,omitempty"`
+	Type                  VarType                   `json:"type" yaml:"type"`
 	URLAllowedSchemes     []string                  `json:"url_allowed_schemes,omitempty" yaml:"url_allowed_schemes,omitempty"`
 }
 
 type VarGroup struct {
 	Description   string           `json:"description,omitempty" yaml:"description,omitempty"`
-	Name          string           `json:"name,omitempty" yaml:"name,omitempty"`
-	Options       []VarGroupOption `json:"options,omitempty" yaml:"options,omitempty"`
+	Name          string           `json:"name" yaml:"name"`
+	Options       []VarGroupOption `json:"options" yaml:"options"`
 	Required      *bool            `json:"required,omitempty" yaml:"required,omitempty"`
-	SelectorTitle string           `json:"selector_title,omitempty" yaml:"selector_title,omitempty"`
-	Title         string           `json:"title,omitempty" yaml:"title,omitempty"`
+	SelectorTitle string           `json:"selector_title" yaml:"selector_title"`
+	Title         string           `json:"title" yaml:"title"`
 }
 
 type VarGroupOption struct {
 	Description           string                               `json:"description,omitempty" yaml:"description,omitempty"`
 	HideInDeploymentModes []VarGroupOptionHideInDeploymentMode `json:"hide_in_deployment_modes,omitempty" yaml:"hide_in_deployment_modes,omitempty"`
-	Name                  string                               `json:"name,omitempty" yaml:"name,omitempty"`
-	Title                 string                               `json:"title,omitempty" yaml:"title,omitempty"`
-	Vars                  []string                             `json:"vars,omitempty" yaml:"vars,omitempty"`
+	Name                  string                               `json:"name" yaml:"name"`
+	Title                 string                               `json:"title" yaml:"title"`
+	Vars                  []string                             `json:"vars" yaml:"vars"`
 }
 
 type VarGroupOptionHideInDeploymentMode string

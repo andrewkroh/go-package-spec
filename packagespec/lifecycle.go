@@ -6,7 +6,7 @@ import yamlv3 "gopkg.in/yaml.v3"
 
 type Lifecycle struct {
 	FileMetadata  `json:"-" yaml:"-"`
-	DataRetention string `json:"data_retention,omitempty" yaml:"data_retention,omitempty"`
+	DataRetention string `json:"data_retention" yaml:"data_retention"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for Lifecycle.

@@ -141,7 +141,7 @@ type ContentManifest struct {
 	Manifest
 	Conditions ContentManifestConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	Discovery  Discovery                 `json:"discovery,omitempty" yaml:"discovery,omitempty"`
-	Type       ContentManifestType       `json:"type,omitempty" yaml:"type,omitempty"`
+	Type       ContentManifestType       `json:"type" yaml:"type"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for ContentManifest.
@@ -176,9 +176,9 @@ const (
 
 // Deprecated information on deprecation of a package or an individual feature.
 type Deprecated struct {
-	Description string               `json:"description,omitempty" yaml:"description,omitempty"`
+	Description string               `json:"description" yaml:"description"`
 	ReplacedBy  DeprecatedReplacedBy `json:"replaced_by,omitempty" yaml:"replaced_by,omitempty"`
-	Since       string               `json:"since,omitempty" yaml:"since,omitempty"`
+	Since       string               `json:"since" yaml:"since"`
 }
 
 type DeprecatedReplacedBy struct {
@@ -196,17 +196,17 @@ type Discovery struct {
 }
 
 type DiscoveryDataset struct {
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	Name string `json:"name" yaml:"name"`
 }
 
 type DiscoveryField struct {
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	Name string `json:"name" yaml:"name"`
 }
 
 type Icon struct {
 	DarkMode *bool  `json:"dark_mode,omitempty" yaml:"dark_mode,omitempty"`
 	Size     string `json:"size,omitempty" yaml:"size,omitempty"`
-	Src      string `json:"src,omitempty" yaml:"src,omitempty"`
+	Src      string `json:"src" yaml:"src"`
 	Title    string `json:"title,omitempty" yaml:"title,omitempty"`
 	Type     string `json:"type,omitempty" yaml:"type,omitempty"`
 }
@@ -217,7 +217,7 @@ type InputManifest struct {
 	Conditions      Conditions                    `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	Elasticsearch   InputManifestElasticsearch    `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	PolicyTemplates []InputManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
-	Type            InputManifestType             `json:"type,omitempty" yaml:"type,omitempty"`
+	Type            InputManifestType             `json:"type" yaml:"type"`
 	Vars            []Var                         `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
@@ -258,7 +258,7 @@ type IntegrationManifest struct {
 	Elasticsearch           IntegrationManifestElasticsearch    `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	PolicyTemplates         []IntegrationManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
 	PolicyTemplatesBehavior string                              `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
-	Type                    IntegrationManifestType             `json:"type,omitempty" yaml:"type,omitempty"`
+	Type                    IntegrationManifestType             `json:"type" yaml:"type"`
 	VarGroups               []VarGroup                          `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	Vars                    []Var                               `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -302,20 +302,20 @@ type Manifest struct {
 	FileMetadata  `json:"-" yaml:"-"`
 	Categories    []Category   `json:"categories,omitempty" yaml:"categories,omitempty"`
 	Deprecated    Deprecated   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description   string       `json:"description,omitempty" yaml:"description,omitempty"`
-	FormatVersion string       `json:"format_version,omitempty" yaml:"format_version,omitempty"`
+	Description   string       `json:"description" yaml:"description"`
+	FormatVersion string       `json:"format_version" yaml:"format_version"`
 	Icons         []Icon       `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Name          string       `json:"name,omitempty" yaml:"name,omitempty"`
-	Owner         Owner        `json:"owner,omitempty" yaml:"owner,omitempty"`
+	Name          string       `json:"name" yaml:"name"`
+	Owner         Owner        `json:"owner" yaml:"owner"`
 	Screenshots   []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
 	Source        Source       `json:"source,omitempty" yaml:"source,omitempty"`
-	Title         string       `json:"title,omitempty" yaml:"title,omitempty"`
-	Version       string       `json:"version,omitempty" yaml:"version,omitempty"`
+	Title         string       `json:"title" yaml:"title"`
+	Version       string       `json:"version" yaml:"version"`
 }
 
 type Owner struct {
-	Github string    `json:"github,omitempty" yaml:"github,omitempty"`
-	Type   OwnerType `json:"type,omitempty" yaml:"type,omitempty"`
+	Github string    `json:"github" yaml:"github"`
+	Type   OwnerType `json:"type" yaml:"type"`
 }
 
 // OwnerType describes who owns the package and the level of support that is provided. The 'elastic' value indicates that the package is built and maintained by Elastic. The 'partner' value indicates that the package is built and maintained by a partner vendor and may include involvement from Elastic. The 'community' value indicates the package is built and maintained by non-Elastic community members.
@@ -330,8 +330,8 @@ const (
 
 type Screenshot struct {
 	Size  string `json:"size,omitempty" yaml:"size,omitempty"`
-	Src   string `json:"src,omitempty" yaml:"src,omitempty"`
-	Title string `json:"title,omitempty" yaml:"title,omitempty"`
+	Src   string `json:"src" yaml:"src"`
+	Title string `json:"title" yaml:"title"`
 	Type  string `json:"type,omitempty" yaml:"type,omitempty"`
 }
 

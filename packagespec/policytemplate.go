@@ -4,9 +4,9 @@ package packagespec
 
 type ConfigurationLink struct {
 	Content string                `json:"content,omitempty" yaml:"content,omitempty"`
-	Title   string                `json:"title,omitempty" yaml:"title,omitempty"`
-	Type    ConfigurationLinkType `json:"type,omitempty" yaml:"type,omitempty"`
-	URL     string                `json:"url,omitempty" yaml:"url,omitempty"`
+	Title   string                `json:"title" yaml:"title"`
+	Type    ConfigurationLinkType `json:"type" yaml:"type"`
+	URL     string                `json:"url" yaml:"url"`
 }
 
 // ConfigurationLinkType type of link. `next_steps` for links to locations that can be relevant right after configuring the policy. `action` for actions that can be performed while the policy is in use.
@@ -54,16 +54,16 @@ type InputManifestPolicyTemplate struct {
 	ConfigurationLinks []ConfigurationLink             `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
 	DeploymentModes    DeploymentModes                 `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
 	Deprecated         Deprecated                      `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description        string                          `json:"description,omitempty" yaml:"description,omitempty"`
+	Description        string                          `json:"description" yaml:"description"`
 	DynamicSignalTypes *bool                           `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
 	FipsCompatible     *bool                           `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
 	Icons              []Icon                          `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Input              string                          `json:"input,omitempty" yaml:"input,omitempty"`
-	Name               string                          `json:"name,omitempty" yaml:"name,omitempty"`
+	Input              string                          `json:"input" yaml:"input"`
+	Name               string                          `json:"name" yaml:"name"`
 	Screenshots        []Screenshot                    `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	TemplatePath       string                          `json:"template_path,omitempty" yaml:"template_path,omitempty"`
-	Title              string                          `json:"title,omitempty" yaml:"title,omitempty"`
-	Type               InputManifestPolicyTemplateType `json:"type,omitempty" yaml:"type,omitempty"`
+	TemplatePath       string                          `json:"template_path" yaml:"template_path"`
+	Title              string                          `json:"title" yaml:"title"`
+	Type               InputManifestPolicyTemplateType `json:"type" yaml:"type"`
 	Vars               []Var                           `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
@@ -84,28 +84,28 @@ type IntegrationManifestPolicyTemplate struct {
 	DataStreams        []string                                 `json:"data_streams,omitempty" yaml:"data_streams,omitempty"`
 	DeploymentModes    DeploymentModes                          `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
 	Deprecated         Deprecated                               `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description        string                                   `json:"description,omitempty" yaml:"description,omitempty"`
+	Description        string                                   `json:"description" yaml:"description"`
 	FipsCompatible     *bool                                    `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
 	Icons              []Icon                                   `json:"icons,omitempty" yaml:"icons,omitempty"`
 	Inputs             []IntegrationManifestPolicyTemplateInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 	Multiple           *bool                                    `json:"multiple,omitempty" yaml:"multiple,omitempty"`
-	Name               string                                   `json:"name,omitempty" yaml:"name,omitempty"`
+	Name               string                                   `json:"name" yaml:"name"`
 	Screenshots        []Screenshot                             `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	Title              string                                   `json:"title,omitempty" yaml:"title,omitempty"`
+	Title              string                                   `json:"title" yaml:"title"`
 	Vars               []Var                                    `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 type IntegrationManifestPolicyTemplateInput struct {
 	DeploymentModes       []IntegrationManifestPolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
 	Deprecated            Deprecated                                             `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description           string                                                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Description           string                                                 `json:"description" yaml:"description"`
 	HideInVarGroupOptions map[string][]string                                    `json:"hide_in_var_group_options,omitempty" yaml:"hide_in_var_group_options,omitempty"`
 	InputGroup            IntegrationManifestPolicyTemplateInputInputGroup       `json:"input_group,omitempty" yaml:"input_group,omitempty"`
 	Multi                 *bool                                                  `json:"multi,omitempty" yaml:"multi,omitempty"`
 	RequiredVars          RequiredVars                                           `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
 	TemplatePath          string                                                 `json:"template_path,omitempty" yaml:"template_path,omitempty"`
-	Title                 string                                                 `json:"title,omitempty" yaml:"title,omitempty"`
-	Type                  string                                                 `json:"type,omitempty" yaml:"type,omitempty"`
+	Title                 string                                                 `json:"title" yaml:"title"`
+	Type                  string                                                 `json:"type" yaml:"type"`
 	Vars                  []Var                                                  `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
