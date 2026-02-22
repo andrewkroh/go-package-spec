@@ -4,6 +4,34 @@ package pkgspec
 
 import yamlv3 "gopkg.in/yaml.v3"
 
+// DataStreamElasticsearch elasticsearch asset definitions
+type DataStreamElasticsearch struct {
+	// DynamicDataset when set to true, agents running this integration are granted data stream
+	// privileges for all datasets of its type
+	DynamicDataset *bool `json:"dynamic_dataset,omitempty" yaml:"dynamic_dataset,omitempty"`
+	// DynamicNamespace when set to true, agents running this integration are granted data stream
+	// privileges for all namespaces of its type
+	DynamicNamespace *bool         `json:"dynamic_namespace,omitempty" yaml:"dynamic_namespace,omitempty"`
+	IndexMode        IndexMode     `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
+	IndexTemplate    IndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
+	// Privileges elasticsearch privilege requirements
+	Privileges DataStreamElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
+	// SourceMode source mode to use. This configures how the document source (`_source`) is stored for
+	// this data stream. If configured as `default`, this mode is not configured and it uses
+	// Elasticsearch defaults. If configured as `synthetic`, it enables [synthetic source], that doesn't
+	// store the source, but tries to rebuild it from the indexed fields when queried. If no configured
+	// or set to `synthetic`, users may override the setting from Fleet UI.
+	//
+	// [synthetic source]: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/mapping-source-field.html#synthetic-source
+	SourceMode DataStreamSourceMode `json:"source_mode,omitempty" yaml:"source_mode,omitempty"`
+}
+
+// DataStreamElasticsearchPrivileges elasticsearch privilege requirements
+type DataStreamElasticsearchPrivileges struct {
+	// Indices elasticsearch index privilege requirements
+	Indices []string `json:"indices,omitempty" yaml:"indices,omitempty"`
+}
+
 type DataStreamManifest struct {
 	FileMetadata `json:"-" yaml:"-"`
 	Agent        Agent `json:"agent,omitempty" yaml:"agent,omitempty"`
@@ -17,7 +45,7 @@ type DataStreamManifest struct {
 	DatasetIsPrefix *bool      `json:"dataset_is_prefix,omitempty" yaml:"dataset_is_prefix,omitempty"`
 	Deprecated      Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Elasticsearch asset definitions
-	Elasticsearch DataStreamManifestElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
+	Elasticsearch DataStreamElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	// Hidden specifies if a data stream is hidden, resulting in dot prefixed system indices. To set the
 	// data stream hidden without those dot prefixed indices, check
 	// `elasticsearch.index_template.data_stream.hidden` flag.
@@ -25,14 +53,14 @@ type DataStreamManifest struct {
 	// ILMPolicy the name of an existing ILM (Index Lifecycle Management) policy
 	ILMPolicy string `json:"ilm_policy,omitempty" yaml:"ilm_policy,omitempty"`
 	// Release stability of data stream.
-	Release DataStreamManifestRelease `json:"release,omitempty" yaml:"release,omitempty"`
+	Release DataStreamRelease `json:"release,omitempty" yaml:"release,omitempty"`
 	// Streams offered by data stream.
-	Streams []DataStreamManifestStream `json:"streams,omitempty" yaml:"streams,omitempty"`
+	Streams []DataStreamStream `json:"streams,omitempty" yaml:"streams,omitempty"`
 	// Title of data stream. It should include the source of the data that is being collected, and the
 	// kind of data collected such as logs or metrics. Words should be uppercased.
 	Title string `json:"title" yaml:"title"`
 	// Type of data stream
-	Type DataStreamManifestType `json:"type,omitempty" yaml:"type,omitempty"`
+	Type DataStreamType `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for DataStreamManifest.
@@ -48,60 +76,31 @@ func (v *DataStreamManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-// DataStreamManifestElasticsearch elasticsearch asset definitions
-type DataStreamManifestElasticsearch struct {
-	// DynamicDataset when set to true, agents running this integration are granted data stream
-	// privileges for all datasets of its type
-	DynamicDataset *bool `json:"dynamic_dataset,omitempty" yaml:"dynamic_dataset,omitempty"`
-	// DynamicNamespace when set to true, agents running this integration are granted data stream
-	// privileges for all namespaces of its type
-	DynamicNamespace *bool                      `json:"dynamic_namespace,omitempty" yaml:"dynamic_namespace,omitempty"`
-	IndexMode        ElasticsearchIndexMode     `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
-	IndexTemplate    ElasticsearchIndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
-	// Privileges elasticsearch privilege requirements
-	Privileges DataStreamManifestElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
-	// SourceMode source mode to use. This configures how the document source (`_source`) is stored for
-	// this data stream. If configured as `default`, this mode is not configured and it uses
-	// Elasticsearch defaults. If configured as `synthetic`, it enables [synthetic source], that doesn't
-	// store the source, but tries to rebuild it from the indexed fields when queried. If no configured
-	// or set to `synthetic`, users may override the setting from Fleet UI.
-	//
-	// [synthetic source]: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/mapping-source-field.html#synthetic-source
-	SourceMode DataStreamManifestElasticsearchSourceMode `json:"source_mode,omitempty" yaml:"source_mode,omitempty"`
-}
+// DataStreamRelease stability of data stream.
+type DataStreamRelease string
 
-// DataStreamManifestElasticsearchPrivileges elasticsearch privilege requirements
-type DataStreamManifestElasticsearchPrivileges struct {
-	// Indices elasticsearch index privilege requirements
-	Indices []string `json:"indices,omitempty" yaml:"indices,omitempty"`
-}
+// Enum values for DataStreamRelease.
+const (
+	DataStreamReleaseExperimental DataStreamRelease = "experimental"
+	DataStreamReleaseBeta         DataStreamRelease = "beta"
+)
 
-// DataStreamManifestElasticsearchSourceMode source mode to use. This configures how the document
-// source (`_source`) is stored for this data stream. If configured as `default`, this mode is not
-// configured and it uses Elasticsearch defaults. If configured as `synthetic`, it enables
-// [synthetic source], that doesn't store the source, but tries to rebuild it from the indexed
-// fields when queried. If no configured or set to `synthetic`, users may override the setting from
-// Fleet UI.
+// DataStreamSourceMode source mode to use. This configures how the document source (`_source`) is
+// stored for this data stream. If configured as `default`, this mode is not configured and it uses
+// Elasticsearch defaults. If configured as `synthetic`, it enables [synthetic source], that doesn't
+// store the source, but tries to rebuild it from the indexed fields when queried. If no configured
+// or set to `synthetic`, users may override the setting from Fleet UI.
 //
 // [synthetic source]: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/mapping-source-field.html#synthetic-source
-type DataStreamManifestElasticsearchSourceMode string
+type DataStreamSourceMode string
 
-// Enum values for DataStreamManifestElasticsearchSourceMode.
+// Enum values for DataStreamSourceMode.
 const (
-	DataStreamManifestElasticsearchSourceModeDefault   DataStreamManifestElasticsearchSourceMode = "default"
-	DataStreamManifestElasticsearchSourceModeSynthetic DataStreamManifestElasticsearchSourceMode = "synthetic"
+	DataStreamSourceModeDefault   DataStreamSourceMode = "default"
+	DataStreamSourceModeSynthetic DataStreamSourceMode = "synthetic"
 )
 
-// DataStreamManifestRelease stability of data stream.
-type DataStreamManifestRelease string
-
-// Enum values for DataStreamManifestRelease.
-const (
-	DataStreamManifestReleaseExperimental DataStreamManifestRelease = "experimental"
-	DataStreamManifestReleaseBeta         DataStreamManifestRelease = "beta"
-)
-
-type DataStreamManifestStream struct {
+type DataStreamStream struct {
 	// Description of the stream. It should describe what is being collected and with what collector,
 	// following the structure "Collect X from Y with X".
 	Description string `json:"description" yaml:"description"`
@@ -118,14 +117,14 @@ type DataStreamManifestStream struct {
 	Vars      []Var      `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
-// DataStreamManifestType type of data stream
-type DataStreamManifestType string
+// DataStreamType type of data stream
+type DataStreamType string
 
-// Enum values for DataStreamManifestType.
+// Enum values for DataStreamType.
 const (
-	DataStreamManifestTypeMetrics    DataStreamManifestType = "metrics"
-	DataStreamManifestTypeLogs       DataStreamManifestType = "logs"
-	DataStreamManifestTypeSynthetics DataStreamManifestType = "synthetics"
-	DataStreamManifestTypeTraces     DataStreamManifestType = "traces"
-	DataStreamManifestTypeProfiling  DataStreamManifestType = "profiling"
+	DataStreamTypeMetrics    DataStreamType = "metrics"
+	DataStreamTypeLogs       DataStreamType = "logs"
+	DataStreamTypeSynthetics DataStreamType = "synthetics"
+	DataStreamTypeTraces     DataStreamType = "traces"
+	DataStreamTypeProfiling  DataStreamType = "profiling"
 )

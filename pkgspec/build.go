@@ -4,10 +4,25 @@ package pkgspec
 
 import yamlv3 "gopkg.in/yaml.v3"
 
+// BuildDependencies package dependencies
+type BuildDependencies struct {
+	// ECS dependency
+	ECS BuildDependenciesECS `json:"ecs,omitempty" yaml:"ecs,omitempty"`
+}
+
+// BuildDependenciesECS ECS dependency
+type BuildDependenciesECS struct {
+	// ImportMappings whether or not import common used dynamic templates and properties into the
+	// package
+	ImportMappings *bool `json:"import_mappings,omitempty" yaml:"import_mappings,omitempty"`
+	// Reference is the ECS version source reference. Values begin with "git@" (e.g. "git@v8.11.0").
+	Reference string `json:"reference" yaml:"reference"`
+}
+
 type BuildManifest struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// Dependencies package dependencies
-	Dependencies BuildManifestDependencies `json:"dependencies" yaml:"dependencies"`
+	Dependencies BuildDependencies `json:"dependencies" yaml:"dependencies"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for BuildManifest.
@@ -21,19 +36,4 @@ func (v *BuildManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	v.FileMetadata.line = node.Line
 	v.FileMetadata.column = node.Column
 	return nil
-}
-
-// BuildManifestDependencies package dependencies
-type BuildManifestDependencies struct {
-	// ECS dependency
-	ECS BuildManifestDependenciesECS `json:"ecs,omitempty" yaml:"ecs,omitempty"`
-}
-
-// BuildManifestDependenciesECS ECS dependency
-type BuildManifestDependenciesECS struct {
-	// ImportMappings whether or not import common used dynamic templates and properties into the
-	// package
-	ImportMappings *bool `json:"import_mappings,omitempty" yaml:"import_mappings,omitempty"`
-	// Reference is the ECS version source reference. Values begin with "git@" (e.g. "git@v8.11.0").
-	Reference string `json:"reference" yaml:"reference"`
 }

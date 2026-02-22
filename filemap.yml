@@ -1,20 +1,20 @@
 exclude:
   - Processor
   - ProcessorForeach
+  - IntegrationManifestType
+  - InputManifestType
+  - ContentManifestType
 
 files:
   manifest.go:
     - Manifest
     - IntegrationManifest
-    - IntegrationManifestElasticsearch
-    - IntegrationManifestElasticsearchPrivileges
-    - IntegrationManifestType
+    - IntegrationElasticsearch
+    - IntegrationElasticsearchPrivileges
     - InputManifest
-    - InputManifestElasticsearch
-    - InputManifestType
+    - InputElasticsearch
     - ContentManifest
-    - ContentManifestConditions
-    - ContentManifestType
+    - ContentConditions
     - Owner
     - OwnerType
     - Source
@@ -37,16 +37,16 @@ files:
     - DiscoveryField
 
   policytemplate.go:
-    - IntegrationManifestPolicyTemplate
-    - IntegrationManifestPolicyTemplateInput
-    - IntegrationManifestPolicyTemplateInputDeploymentMode
-    - IntegrationManifestPolicyTemplateInputInputGroup
-    - InputManifestPolicyTemplate
-    - InputManifestPolicyTemplateType
+    - PolicyTemplate
+    - PolicyTemplateInput
+    - PolicyTemplateInputDeploymentMode
+    - PolicyTemplateInputGroup
+    - InputPolicyTemplate
+    - InputPolicyTemplateType
     - DeploymentModes
     - DeploymentModesAgentless
-    - DeploymentModesAgentlessResources
-    - DeploymentModesAgentlessResourcesRequests
+    - AgentlessResources
+    - AgentlessResourceRequests
     - DeploymentModesDefault
     - ConfigurationLink
     - ConfigurationLinkType
@@ -63,12 +63,12 @@ files:
 
   datastream.go:
     - DataStreamManifest
-    - DataStreamManifestElasticsearch
-    - DataStreamManifestElasticsearchPrivileges
-    - DataStreamManifestElasticsearchSourceMode
-    - DataStreamManifestRelease
-    - DataStreamManifestStream
-    - DataStreamManifestType
+    - DataStreamElasticsearch
+    - DataStreamElasticsearchPrivileges
+    - DataStreamSourceMode
+    - DataStreamRelease
+    - DataStreamStream
+    - DataStreamType
 
   field.go:
     - Field
@@ -83,42 +83,42 @@ files:
 
   changelog.go:
     - Changelog
-    - ChangelogChange
-    - ChangelogChangeType
+    - ChangelogEntry
+    - ChangelogEntryType
 
   validation.go:
     - Validation
-    - ValidationDocsStructureEnforced
-    - ValidationDocsStructureEnforcedSkip
+    - ValidationDocsStructure
+    - ValidationDocsStructureSkip
     - ValidationErrors
 
   lifecycle.go:
     - Lifecycle
 
   elasticsearch.go:
-    - ElasticsearchIndexMode
-    - ElasticsearchIndexTemplate
-    - ElasticsearchIndexTemplateDataStream
-    - ElasticsearchIndexTemplateIngestPipeline
-    - ElasticsearchIndexTemplateMappings
-    - ElasticsearchIndexTemplateMappingsDynamicTemplateValue
-    - ElasticsearchIndexTemplateMappingsDynamicTemplateValueMapping
-    - ElasticsearchIndexTemplateSettings
-    - IndexTemplateSettingAnalysis
-    - IndexTemplateSettingAnalysisAnalyzerValue
-    - IndexTemplateSettingAnalysisAnalyzerValueType
-    - IndexTemplateSettingIndex
-    - IndexTemplateSettingIndexCodec
-    - IndexTemplateSettingIndexMapping
-    - IndexTemplateSettingIndexSort
+    - IndexMode
+    - IndexTemplate
+    - IndexTemplateDataStream
+    - IndexTemplatePipeline
+    - IndexTemplateMappings
+    - DynamicTemplateValue
+    - DynamicTemplateMapping
+    - IndexTemplateSettings
+    - IndexAnalysis
+    - IndexAnalyzer
+    - IndexAnalyzerType
+    - IndexSettings
+    - IndexCodec
+    - IndexMappingConfig
+    - IndexSort
 
   transform.go:
     - Transform
     - TransformManifest
-    - TransformManifestDestinationIndexTemplate
-    - TransformManifestDestinationIndexTemplateSettings
-    - TransformManifestDestinationIndexTemplateSettingsIndex
-    - TransformManifestDestinationIndexTemplateSettingsIndexMode
+    - TransformDestIndexTemplate
+    - TransformDestIndexTemplateSettings
+    - TransformDestIndexSettings
+    - TransformDestIndexMode
     - TransformDest
     - TransformDestAlias
     - TransformLatest
@@ -139,8 +139,8 @@ files:
 
   build.go:
     - BuildManifest
-    - BuildManifestDependencies
-    - BuildManifestDependenciesECS
+    - BuildDependencies
+    - BuildDependenciesECS
 
   kibana.go:
     - Tag
@@ -158,15 +158,15 @@ files:
     - PipelineTestEvent
     - PipelineTestExpected
     - PolicyTestConfig
-    - PolicyTestConfigDataStream
+    - PolicyTestDataStream
     - StaticTestConfig
     - SystemTestConfig
-    - SystemTestConfigAgent
-    - SystemTestConfigAgentBaseImage
-    - SystemTestConfigAgentLinuxCapability
-    - SystemTestConfigAgentPidMode
-    - SystemTestConfigAgentPreStartScript
-    - SystemTestConfigAgentPreStartScriptLanguage
-    - SystemTestConfigAgentProvisioningScript
-    - SystemTestConfigAgentRuntime
-    - SystemTestConfigDataStream
+    - SystemTestAgent
+    - SystemTestAgentBaseImage
+    - SystemTestAgentLinuxCapability
+    - SystemTestAgentPidMode
+    - AgentPreStartScript
+    - AgentPreStartScriptLanguage
+    - AgentProvisioningScript
+    - SystemTestAgentRuntime
+    - SystemTestDataStream

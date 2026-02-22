@@ -33,6 +33,7 @@ types:
         doc: "Options provides the list of selectable options when type is \"select\"."
 
   ElasticsearchIndexTemplateMappings:
+    name: IndexTemplateMappings
     fields:
       dynamic:
         type: any
@@ -42,6 +43,7 @@ types:
         doc: "DynamicTemplates defines custom rules for dynamic field mapping."
 
   IndexTemplateSettingIndexSort:
+    name: IndexSort
     fields:
       field:
         type: any
@@ -91,6 +93,7 @@ types:
         type: "[]*Processor"
 
   IntegrationManifestPolicyTemplateInput:
+    name: PolicyTemplateInput
     fields:
       hide_in_var_group_options:
         type: "map[string][]string"
@@ -127,9 +130,27 @@ types:
         yaml: "-"
 
   BuildManifestDependenciesECS:
+    name: BuildDependenciesECS
     fields:
       reference:
         doc: "Reference is the ECS version source reference. Values begin with \"git@\" (e.g. \"git@v8.11.0\")."
+
+  # Task 0: ManifestType coalescing — override the type field on all three manifests
+  # to use the hand-written ManifestType instead of the generated single-value enums.
+  IntegrationManifest:
+    fields:
+      type:
+        type: ManifestType
+
+  InputManifest:
+    fields:
+      type:
+        type: ManifestType
+
+  ContentManifest:
+    fields:
+      type:
+        type: ManifestType
 
   # Test config type renames to avoid generic names.
   Skip:
@@ -195,6 +216,161 @@ types:
   SystemTestConfig:
     doc: "SystemTestConfig holds configuration for a system test case (test-*-config.yml)."
 
+  # --- Tier 1: Egregiously long names ---
+
+  TransformManifestDestinationIndexTemplate:
+    name: TransformDestIndexTemplate
+
+  TransformManifestDestinationIndexTemplateSettings:
+    name: TransformDestIndexTemplateSettings
+
+  TransformManifestDestinationIndexTemplateSettingsIndex:
+    name: TransformDestIndexSettings
+
+  TransformManifestDestinationIndexTemplateSettingsIndexMode:
+    name: TransformDestIndexMode
+
+  ElasticsearchIndexTemplateMappingsDynamicTemplateValue:
+    name: DynamicTemplateValue
+
+  ElasticsearchIndexTemplateMappingsDynamicTemplateValueMapping:
+    name: DynamicTemplateMapping
+
+  IntegrationManifestPolicyTemplateInputDeploymentMode:
+    name: PolicyTemplateInputDeploymentMode
+
+  IntegrationManifestPolicyTemplateInputInputGroup:
+    name: PolicyTemplateInputGroup
+
+  IndexTemplateSettingAnalysisAnalyzerValueType:
+    name: IndexAnalyzerType
+
+  IndexTemplateSettingAnalysisAnalyzerValue:
+    name: IndexAnalyzer
+
+  IndexTemplateSettingAnalysis:
+    name: IndexAnalysis
+
+  SystemTestConfigAgentPreStartScriptLanguage:
+    name: AgentPreStartScriptLanguage
+
+  SystemTestConfigAgentProvisioningScript:
+    name: AgentProvisioningScript
+
+  SystemTestConfigAgentPreStartScript:
+    name: AgentPreStartScript
+
+  # --- Tier 2: Drop redundant "Manifest" from nested types ---
+
+  DataStreamManifestElasticsearch:
+    name: DataStreamElasticsearch
+
+  DataStreamManifestElasticsearchPrivileges:
+    name: DataStreamElasticsearchPrivileges
+
+  DataStreamManifestElasticsearchSourceMode:
+    name: DataStreamSourceMode
+
+  DataStreamManifestRelease:
+    name: DataStreamRelease
+
+  DataStreamManifestStream:
+    name: DataStreamStream
+
+  DataStreamManifestType:
+    name: DataStreamType
+
+  IntegrationManifestElasticsearch:
+    name: IntegrationElasticsearch
+
+  IntegrationManifestElasticsearchPrivileges:
+    name: IntegrationElasticsearchPrivileges
+
+  InputManifestElasticsearch:
+    name: InputElasticsearch
+
+  BuildManifestDependencies:
+    name: BuildDependencies
+
+  IntegrationManifestPolicyTemplate:
+    name: PolicyTemplate
+
+  InputManifestPolicyTemplate:
+    name: InputPolicyTemplate
+
+  InputManifestPolicyTemplateType:
+    name: InputPolicyTemplateType
+
+  SystemTestConfigAgent:
+    name: SystemTestAgent
+
+  SystemTestConfigAgentBaseImage:
+    name: SystemTestAgentBaseImage
+
+  SystemTestConfigAgentLinuxCapability:
+    name: SystemTestAgentLinuxCapability
+
+  SystemTestConfigAgentPidMode:
+    name: SystemTestAgentPidMode
+
+  SystemTestConfigAgentRuntime:
+    name: SystemTestAgentRuntime
+
+  SystemTestConfigDataStream:
+    name: SystemTestDataStream
+
+  PolicyTestConfigDataStream:
+    name: PolicyTestDataStream
+
+  # --- Tier 3: Elasticsearch/IndexTemplate prefix simplification ---
+
+  ElasticsearchIndexMode:
+    name: IndexMode
+
+  ElasticsearchIndexTemplate:
+    name: IndexTemplate
+
+  ElasticsearchIndexTemplateDataStream:
+    name: IndexTemplateDataStream
+
+  ElasticsearchIndexTemplateIngestPipeline:
+    name: IndexTemplatePipeline
+
+  ElasticsearchIndexTemplateSettings:
+    name: IndexTemplateSettings
+
+  IndexTemplateSettingIndex:
+    name: IndexSettings
+
+  IndexTemplateSettingIndexCodec:
+    name: IndexCodec
+
+  IndexTemplateSettingIndexMapping:
+    name: IndexMappingConfig
+
+  # --- Tier 4: Minor clarity improvements ---
+
+  ChangelogChange:
+    name: ChangelogEntry
+
+  ChangelogChangeType:
+    name: ChangelogEntryType
+
+  DeploymentModesAgentlessResources:
+    name: AgentlessResources
+
+  DeploymentModesAgentlessResourcesRequests:
+    name: AgentlessResourceRequests
+
+  ValidationDocsStructureEnforced:
+    name: ValidationDocsStructure
+
+  ValidationDocsStructureEnforcedSkip:
+    name: ValidationDocsStructureSkip
+
+  ContentManifestConditions:
+    name: ContentConditions
+
 base_types:
   Manifest:
     doc: "Manifest contains the common fields shared by all package manifest types."
@@ -215,4 +391,5 @@ base_types:
       - screenshots
       - source
       - title
+      - type
       - version

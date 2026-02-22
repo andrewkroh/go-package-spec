@@ -2,42 +2,96 @@
 
 package pkgspec
 
-// ElasticsearchIndexMode index mode to use. Index mode can be used to enable use case specific
-// functionalities. This setting must be installed in the composable index template, not in the
-// package component templates.
-type ElasticsearchIndexMode string
-
-// Enum values for ElasticsearchIndexMode.
-const (
-	ElasticsearchIndexModeTimeSeries ElasticsearchIndexMode = "time_series"
-)
-
-// ElasticsearchIndexTemplate index template definition
-type ElasticsearchIndexTemplate struct {
-	// DataStream data stream section of index template
-	DataStream ElasticsearchIndexTemplateDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	// IngestPipeline elasticsearch ingest pipeline settings
-	IngestPipeline ElasticsearchIndexTemplateIngestPipeline `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
-	// Mappings section of index template
-	Mappings ElasticsearchIndexTemplateMappings `json:"mappings,omitempty" yaml:"mappings,omitempty"`
-	// Settings section of index template
-	Settings ElasticsearchIndexTemplateSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+type DynamicTemplateMapping struct {
+	DefaultMetric any       `json:"default_metric,omitempty" yaml:"default_metric,omitempty"`
+	IgnoreAbove   int       `json:"ignore_above,omitempty" yaml:"ignore_above,omitempty"`
+	Index         *bool     `json:"index,omitempty" yaml:"index,omitempty"`
+	Metrics       any       `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+	ScalingFactor int       `json:"scaling_factor,omitempty" yaml:"scaling_factor,omitempty"`
+	Type          FieldType `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
-// ElasticsearchIndexTemplateDataStream data stream section of index template
-type ElasticsearchIndexTemplateDataStream struct {
+type DynamicTemplateValue struct {
+	Mapping          DynamicTemplateMapping `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	MatchMappingType any                    `json:"match_mapping_type,omitempty" yaml:"match_mapping_type,omitempty"`
+}
+
+type IndexAnalysis struct {
+	// Analyzer definition of custom analyzer.
+	Analyzer map[string]IndexAnalyzer `json:"analyzer,omitempty" yaml:"analyzer,omitempty"`
+}
+
+type IndexAnalyzer struct {
+	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	// Type of analyzer
+	Type IndexAnalyzerType `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+// IndexAnalyzerType type of analyzer
+type IndexAnalyzerType string
+
+// Enum values for IndexAnalyzerType.
+const (
+	IndexAnalyzerTypePattern IndexAnalyzerType = "pattern"
+)
+
+// IndexCodec type of compression to use. The default is to use LZ4, `best_compression` uses
+// DEFLATE, with higher compression but lower ingestion performance.
+type IndexCodec string
+
+// Enum values for IndexCodec.
+const (
+	IndexCodecDefault         IndexCodec = "default"
+	IndexCodecBestCompression IndexCodec = "best_compression"
+)
+
+type IndexMappingConfig struct{}
+
+// IndexMode index mode to use. Index mode can be used to enable use case specific functionalities.
+// This setting must be installed in the composable index template, not in the package component
+// templates.
+type IndexMode string
+
+// Enum values for IndexMode.
+const (
+	IndexModeTimeSeries IndexMode = "time_series"
+)
+
+type IndexSettings struct {
+	// Codec type of compression to use. The default is to use LZ4, `best_compression` uses DEFLATE,
+	// with higher compression but lower ingestion performance.
+	Codec   IndexCodec         `json:"codec,omitempty" yaml:"codec,omitempty"`
+	Mapping IndexMappingConfig `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	Sort    IndexSort          `json:"sort,omitempty" yaml:"sort,omitempty"`
+}
+
+type IndexSort struct {
+	// Field is the field or fields used to sort documents.
+	Field any `json:"field,omitempty" yaml:"field,omitempty"`
+	// Order is the sort order to use for each field.
+	Order any `json:"order,omitempty" yaml:"order,omitempty"`
+}
+
+// IndexTemplate index template definition
+type IndexTemplate struct {
+	// DataStream data stream section of index template
+	DataStream IndexTemplateDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	// IngestPipeline elasticsearch ingest pipeline settings
+	IngestPipeline IndexTemplatePipeline `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
+	// Mappings section of index template
+	Mappings IndexTemplateMappings `json:"mappings,omitempty" yaml:"mappings,omitempty"`
+	// Settings section of index template
+	Settings IndexTemplateSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+}
+
+// IndexTemplateDataStream data stream section of index template
+type IndexTemplateDataStream struct {
 	// Hidden makes the data stream hidden
 	Hidden *bool `json:"hidden,omitempty" yaml:"hidden,omitempty"`
 }
 
-// ElasticsearchIndexTemplateIngestPipeline elasticsearch ingest pipeline settings
-type ElasticsearchIndexTemplateIngestPipeline struct {
-	// Name ingest pipeline name
-	Name string `json:"name" yaml:"name"`
-}
-
-// ElasticsearchIndexTemplateMappings mappings section of index template
-type ElasticsearchIndexTemplateMappings struct {
+// IndexTemplateMappings mappings section of index template
+type IndexTemplateMappings struct {
 	// DateDetection if true, new string fields will be checked to see if their contents match with
 	// `dynamic_date_formats`. If they do, the field is dynamically added with type `date`. Set to false
 	// to disable this feature.
@@ -68,69 +122,15 @@ type ElasticsearchIndexTemplateMappings struct {
 	Subobjects *bool `json:"subobjects,omitempty" yaml:"subobjects,omitempty"`
 }
 
-type ElasticsearchIndexTemplateMappingsDynamicTemplateValue struct {
-	Mapping          ElasticsearchIndexTemplateMappingsDynamicTemplateValueMapping `json:"mapping,omitempty" yaml:"mapping,omitempty"`
-	MatchMappingType any                                                           `json:"match_mapping_type,omitempty" yaml:"match_mapping_type,omitempty"`
+// IndexTemplatePipeline elasticsearch ingest pipeline settings
+type IndexTemplatePipeline struct {
+	// Name ingest pipeline name
+	Name string `json:"name" yaml:"name"`
 }
 
-type ElasticsearchIndexTemplateMappingsDynamicTemplateValueMapping struct {
-	DefaultMetric any       `json:"default_metric,omitempty" yaml:"default_metric,omitempty"`
-	IgnoreAbove   int       `json:"ignore_above,omitempty" yaml:"ignore_above,omitempty"`
-	Index         *bool     `json:"index,omitempty" yaml:"index,omitempty"`
-	Metrics       any       `json:"metrics,omitempty" yaml:"metrics,omitempty"`
-	ScalingFactor int       `json:"scaling_factor,omitempty" yaml:"scaling_factor,omitempty"`
-	Type          FieldType `json:"type,omitempty" yaml:"type,omitempty"`
-}
-
-// ElasticsearchIndexTemplateSettings settings section of index template
-type ElasticsearchIndexTemplateSettings struct {
-	Analysis       IndexTemplateSettingAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
-	Index          IndexTemplateSettingIndex    `json:"index,omitempty" yaml:"index,omitempty"`
-	NumberOfShards int                          `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
-}
-
-type IndexTemplateSettingAnalysis struct {
-	// Analyzer definition of custom analyzer.
-	Analyzer map[string]IndexTemplateSettingAnalysisAnalyzerValue `json:"analyzer,omitempty" yaml:"analyzer,omitempty"`
-}
-
-type IndexTemplateSettingAnalysisAnalyzerValue struct {
-	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	// Type of analyzer
-	Type IndexTemplateSettingAnalysisAnalyzerValueType `json:"type,omitempty" yaml:"type,omitempty"`
-}
-
-// IndexTemplateSettingAnalysisAnalyzerValueType type of analyzer
-type IndexTemplateSettingAnalysisAnalyzerValueType string
-
-// Enum values for IndexTemplateSettingAnalysisAnalyzerValueType.
-const (
-	IndexTemplateSettingAnalysisAnalyzerValueTypePattern IndexTemplateSettingAnalysisAnalyzerValueType = "pattern"
-)
-
-type IndexTemplateSettingIndex struct {
-	// Codec type of compression to use. The default is to use LZ4, `best_compression` uses DEFLATE,
-	// with higher compression but lower ingestion performance.
-	Codec   IndexTemplateSettingIndexCodec   `json:"codec,omitempty" yaml:"codec,omitempty"`
-	Mapping IndexTemplateSettingIndexMapping `json:"mapping,omitempty" yaml:"mapping,omitempty"`
-	Sort    IndexTemplateSettingIndexSort    `json:"sort,omitempty" yaml:"sort,omitempty"`
-}
-
-// IndexTemplateSettingIndexCodec type of compression to use. The default is to use LZ4,
-// `best_compression` uses DEFLATE, with higher compression but lower ingestion performance.
-type IndexTemplateSettingIndexCodec string
-
-// Enum values for IndexTemplateSettingIndexCodec.
-const (
-	IndexTemplateSettingIndexCodecDefault         IndexTemplateSettingIndexCodec = "default"
-	IndexTemplateSettingIndexCodecBestCompression IndexTemplateSettingIndexCodec = "best_compression"
-)
-
-type IndexTemplateSettingIndexMapping struct{}
-
-type IndexTemplateSettingIndexSort struct {
-	// Field is the field or fields used to sort documents.
-	Field any `json:"field,omitempty" yaml:"field,omitempty"`
-	// Order is the sort order to use for each field.
-	Order any `json:"order,omitempty" yaml:"order,omitempty"`
+// IndexTemplateSettings settings section of index template
+type IndexTemplateSettings struct {
+	Analysis       IndexAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
+	Index          IndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
+	NumberOfShards int           `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
 }

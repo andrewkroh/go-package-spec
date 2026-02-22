@@ -50,6 +50,43 @@ type TransformDestAlias struct {
 	MoveOnCreation *bool `json:"move_on_creation,omitempty" yaml:"move_on_creation,omitempty"`
 }
 
+// TransformDestIndexMode index mode for lookup indices.
+type TransformDestIndexMode string
+
+// Enum values for TransformDestIndexMode.
+const (
+	TransformDestIndexModeLookup TransformDestIndexMode = "lookup"
+)
+
+type TransformDestIndexSettings struct {
+	Codec IndexCodec `json:"codec,omitempty" yaml:"codec,omitempty"`
+	// Hidden makes the index hidden.
+	Hidden  *bool              `json:"hidden,omitempty" yaml:"hidden,omitempty"`
+	Mapping IndexMappingConfig `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	// Mode index mode for lookup indices.
+	Mode TransformDestIndexMode `json:"mode,omitempty" yaml:"mode,omitempty"`
+	// NumberOfRoutingShards number used when splitting shards.
+	NumberOfRoutingShards int `json:"number_of_routing_shards,omitempty" yaml:"number_of_routing_shards,omitempty"`
+	NumberOfShards        int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	// RefreshInterval how often to perform a refresh operation, which makes recent changes to the index
+	// visible to search.
+	RefreshInterval string    `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
+	Sort            IndexSort `json:"sort,omitempty" yaml:"sort,omitempty"`
+}
+
+// TransformDestIndexTemplate elasticsearch index template for the transform's destination index
+type TransformDestIndexTemplate struct {
+	DataStream     IndexTemplateDataStream            `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	IngestPipeline IndexTemplatePipeline              `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
+	Mappings       IndexTemplateMappings              `json:"mappings,omitempty" yaml:"mappings,omitempty"`
+	Settings       TransformDestIndexTemplateSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+}
+
+type TransformDestIndexTemplateSettings struct {
+	Analysis IndexAnalysis              `json:"analysis,omitempty" yaml:"analysis,omitempty"`
+	Index    TransformDestIndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
+}
+
 type TransformLatest struct {
 	Sort      string `json:"sort" yaml:"sort"`
 	UniqueKey []any  `json:"unique_key" yaml:"unique_key"`
@@ -58,7 +95,7 @@ type TransformLatest struct {
 type TransformManifest struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// DestinationIndexTemplate elasticsearch index template for the transform's destination index
-	DestinationIndexTemplate TransformManifestDestinationIndexTemplate `json:"destination_index_template,omitempty" yaml:"destination_index_template,omitempty"`
+	DestinationIndexTemplate TransformDestIndexTemplate `json:"destination_index_template,omitempty" yaml:"destination_index_template,omitempty"`
 	// Start determines if the transform will be started upon installation
 	Start *bool `json:"start,omitempty" yaml:"start,omitempty"`
 }
@@ -75,44 +112,6 @@ func (v *TransformManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	v.FileMetadata.column = node.Column
 	return nil
 }
-
-// TransformManifestDestinationIndexTemplate elasticsearch index template for the transform's
-// destination index
-type TransformManifestDestinationIndexTemplate struct {
-	DataStream     ElasticsearchIndexTemplateDataStream              `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	IngestPipeline ElasticsearchIndexTemplateIngestPipeline          `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
-	Mappings       ElasticsearchIndexTemplateMappings                `json:"mappings,omitempty" yaml:"mappings,omitempty"`
-	Settings       TransformManifestDestinationIndexTemplateSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
-}
-
-type TransformManifestDestinationIndexTemplateSettings struct {
-	Analysis IndexTemplateSettingAnalysis                           `json:"analysis,omitempty" yaml:"analysis,omitempty"`
-	Index    TransformManifestDestinationIndexTemplateSettingsIndex `json:"index,omitempty" yaml:"index,omitempty"`
-}
-
-type TransformManifestDestinationIndexTemplateSettingsIndex struct {
-	Codec IndexTemplateSettingIndexCodec `json:"codec,omitempty" yaml:"codec,omitempty"`
-	// Hidden makes the index hidden.
-	Hidden  *bool                            `json:"hidden,omitempty" yaml:"hidden,omitempty"`
-	Mapping IndexTemplateSettingIndexMapping `json:"mapping,omitempty" yaml:"mapping,omitempty"`
-	// Mode index mode for lookup indices.
-	Mode TransformManifestDestinationIndexTemplateSettingsIndexMode `json:"mode,omitempty" yaml:"mode,omitempty"`
-	// NumberOfRoutingShards number used when splitting shards.
-	NumberOfRoutingShards int `json:"number_of_routing_shards,omitempty" yaml:"number_of_routing_shards,omitempty"`
-	NumberOfShards        int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
-	// RefreshInterval how often to perform a refresh operation, which makes recent changes to the index
-	// visible to search.
-	RefreshInterval string                        `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
-	Sort            IndexTemplateSettingIndexSort `json:"sort,omitempty" yaml:"sort,omitempty"`
-}
-
-// TransformManifestDestinationIndexTemplateSettingsIndexMode index mode for lookup indices.
-type TransformManifestDestinationIndexTemplateSettingsIndexMode string
-
-// Enum values for TransformManifestDestinationIndexTemplateSettingsIndexMode.
-const (
-	TransformManifestDestinationIndexTemplateSettingsIndexModeLookup TransformManifestDestinationIndexTemplateSettingsIndexMode = "lookup"
-)
 
 type TransformPivot struct {
 	// Aggregations defines the aggregations for the pivot.

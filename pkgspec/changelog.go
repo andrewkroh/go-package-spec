@@ -10,7 +10,7 @@ import (
 type Changelog struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// Changes list of changes in package version.
-	Changes []ChangelogChange `json:"changes" yaml:"changes"`
+	Changes []ChangelogEntry `json:"changes" yaml:"changes"`
 	// Version package version.
 	Version string `json:"version" yaml:"version"`
 	// Date is the approximate release date, populated via git blame when WithGitMetadata is used.
@@ -30,22 +30,22 @@ func (v *Changelog) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-type ChangelogChange struct {
+type ChangelogEntry struct {
 	// Description of change.
 	Description string `json:"description" yaml:"description"`
 	// Link to issue or PR describing change in detail.
 	Link string `json:"link" yaml:"link"`
 	// Type of change.
-	Type ChangelogChangeType `json:"type" yaml:"type"`
+	Type ChangelogEntryType `json:"type" yaml:"type"`
 }
 
-// ChangelogChangeType type of change.
-type ChangelogChangeType string
+// ChangelogEntryType type of change.
+type ChangelogEntryType string
 
-// Enum values for ChangelogChangeType.
+// Enum values for ChangelogEntryType.
 const (
-	ChangelogChangeTypeBreakingChange ChangelogChangeType = "breaking-change"
-	ChangelogChangeTypeBugfix         ChangelogChangeType = "bugfix"
-	ChangelogChangeTypeEnhancement    ChangelogChangeType = "enhancement"
-	ChangelogChangeTypeDeprecation    ChangelogChangeType = "deprecation"
+	ChangelogEntryTypeBreakingChange ChangelogEntryType = "breaking-change"
+	ChangelogEntryTypeBugfix         ChangelogEntryType = "bugfix"
+	ChangelogEntryTypeEnhancement    ChangelogEntryType = "enhancement"
+	ChangelogEntryTypeDeprecation    ChangelogEntryType = "deprecation"
 )

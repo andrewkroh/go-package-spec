@@ -147,13 +147,17 @@ type ConditionsKibana struct {
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
+// ContentConditions conditions under which this package can be installed.
+type ContentConditions struct {
+	Elastic ConditionsElastic `json:"elastic,omitempty" yaml:"elastic,omitempty"`
+	Kibana  ConditionsKibana  `json:"kibana,omitempty" yaml:"kibana,omitempty"`
+}
+
 type ContentManifest struct {
 	Manifest
 	// Conditions under which this package can be installed.
-	Conditions ContentManifestConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	Discovery  Discovery                 `json:"discovery,omitempty" yaml:"discovery,omitempty"`
-	// Type the type of package.
-	Type ContentManifestType `json:"type" yaml:"type"`
+	Conditions ContentConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Discovery  Discovery         `json:"discovery,omitempty" yaml:"discovery,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for ContentManifest.
@@ -171,20 +175,6 @@ func (v *ContentManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	v.FileMetadata.column = node.Column
 	return nil
 }
-
-// ContentManifestConditions conditions under which this package can be installed.
-type ContentManifestConditions struct {
-	Elastic ConditionsElastic `json:"elastic,omitempty" yaml:"elastic,omitempty"`
-	Kibana  ConditionsKibana  `json:"kibana,omitempty" yaml:"kibana,omitempty"`
-}
-
-// ContentManifestType the type of package.
-type ContentManifestType string
-
-// Enum values for ContentManifestType.
-const (
-	ContentManifestTypeContent ContentManifestType = "content"
-)
 
 // Deprecated information on deprecation of a package or an individual feature.
 type Deprecated struct {
@@ -242,17 +232,21 @@ type Icon struct {
 	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
+// InputElasticsearch elasticsearch asset definitions
+type InputElasticsearch struct {
+	IndexMode     IndexMode     `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
+	IndexTemplate IndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
+}
+
 type InputManifest struct {
 	Manifest
 	Agent      Agent      `json:"agent,omitempty" yaml:"agent,omitempty"`
 	Conditions Conditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	// Elasticsearch asset definitions
-	Elasticsearch InputManifestElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
+	Elasticsearch InputElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	// PolicyTemplates list of policy templates offered by this package.
-	PolicyTemplates []InputManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
-	// Type the type of package.
-	Type InputManifestType `json:"type" yaml:"type"`
-	Vars []Var             `json:"vars,omitempty" yaml:"vars,omitempty"`
+	PolicyTemplates []InputPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
+	Vars            []Var                 `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for InputManifest.
@@ -271,38 +265,34 @@ func (v *InputManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-// InputManifestElasticsearch elasticsearch asset definitions
-type InputManifestElasticsearch struct {
-	IndexMode     ElasticsearchIndexMode     `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
-	IndexTemplate ElasticsearchIndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
+// IntegrationElasticsearch elasticsearch requirements
+type IntegrationElasticsearch struct {
+	// Privileges elasticsearch privilege requirements
+	Privileges IntegrationElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
 }
 
-// InputManifestType the type of package.
-type InputManifestType string
-
-// Enum values for InputManifestType.
-const (
-	InputManifestTypeInput InputManifestType = "input"
-)
+// IntegrationElasticsearchPrivileges elasticsearch privilege requirements
+type IntegrationElasticsearchPrivileges struct {
+	// Cluster elasticsearch cluster privilege requirements
+	Cluster []string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+}
 
 type IntegrationManifest struct {
 	Manifest
 	Agent      Agent      `json:"agent,omitempty" yaml:"agent,omitempty"`
 	Conditions Conditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	// Elasticsearch requirements
-	Elasticsearch IntegrationManifestElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
+	Elasticsearch IntegrationElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	// PolicyTemplates list of policy templates offered by this package.
-	PolicyTemplates []IntegrationManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
+	PolicyTemplates []PolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
 	// PolicyTemplatesBehavior expected behavior when there are more than one policy template defined.
 	// When set to `combined_policy`, a single policy template is available that combines all the
 	// defined templates. When set to `individual_policies`, all policies are individually available,
 	// but there is no combined policy. The default value is `all`, where the combined policy template
 	// is available along with the individual policies.
-	PolicyTemplatesBehavior string `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
-	// Type the type of package.
-	Type      IntegrationManifestType `json:"type" yaml:"type"`
-	VarGroups []VarGroup              `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
-	Vars      []Var                   `json:"vars,omitempty" yaml:"vars,omitempty"`
+	PolicyTemplatesBehavior string     `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
+	VarGroups               []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
+	Vars                    []Var      `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for IntegrationManifest.
@@ -321,26 +311,6 @@ func (v *IntegrationManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-// IntegrationManifestElasticsearch elasticsearch requirements
-type IntegrationManifestElasticsearch struct {
-	// Privileges elasticsearch privilege requirements
-	Privileges IntegrationManifestElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
-}
-
-// IntegrationManifestElasticsearchPrivileges elasticsearch privilege requirements
-type IntegrationManifestElasticsearchPrivileges struct {
-	// Cluster elasticsearch cluster privilege requirements
-	Cluster []string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
-}
-
-// IntegrationManifestType the type of package.
-type IntegrationManifestType string
-
-// Enum values for IntegrationManifestType.
-const (
-	IntegrationManifestTypeIntegration IntegrationManifestType = "integration"
-)
-
 // Manifest contains the common fields shared by all package manifest types.
 type Manifest struct {
 	FileMetadata `json:"-" yaml:"-"`
@@ -356,6 +326,8 @@ type Manifest struct {
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
 	Source      Source       `json:"source,omitempty" yaml:"source,omitempty"`
 	Title       string       `json:"title" yaml:"title"`
+	// Type the type of package.
+	Type ManifestType `json:"type" yaml:"type"`
 	// Version the version of the package.
 	Version string `json:"version" yaml:"version"`
 }

@@ -4,6 +4,33 @@ package pkgspec
 
 import yamlv3 "gopkg.in/yaml.v3"
 
+// AgentPreStartScript optional: Custom sh script to be executed before starting the Elastic Agent
+// process (e.g. export environment variables)
+type AgentPreStartScript struct {
+	// Contents code to run before starting the Elastic Agent.
+	Contents string `json:"contents" yaml:"contents"`
+	// Language programming language of the pre-start script. Currently, only "sh" is supported.
+	Language AgentPreStartScriptLanguage `json:"language,omitempty" yaml:"language,omitempty"`
+}
+
+// AgentPreStartScriptLanguage programming language of the pre-start script. Currently, only "sh" is
+// supported.
+type AgentPreStartScriptLanguage string
+
+// Enum values for AgentPreStartScriptLanguage.
+const (
+	AgentPreStartScriptLanguageSh AgentPreStartScriptLanguage = "sh"
+)
+
+// AgentProvisioningScript optional: Script to run to customize the system where Elastic Agent runs
+// (e.g. installing new libraries/dependencies)
+type AgentProvisioningScript struct {
+	// Contents code to run as a provisioning script.
+	Contents string `json:"contents" yaml:"contents"`
+	// Language programming language of the provisioning script.
+	Language string `json:"language,omitempty" yaml:"language,omitempty"`
+}
+
 // InputTestConfig holds the package-level test configuration for input packages
 // (_dev/test/config.yml).
 type InputTestConfig struct {
@@ -162,7 +189,7 @@ func (v *PipelineTestRawConfig) UnmarshalYAML(node *yamlv3.Node) error {
 type PolicyTestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// DataStream configuration for the data stream.
-	DataStream *PolicyTestConfigDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	DataStream *PolicyTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
 	// Input the input of the package to test.
 	Input string   `json:"input,omitempty" yaml:"input,omitempty"`
 	Skip  TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
@@ -183,7 +210,7 @@ func (v *PolicyTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-type PolicyTestConfigDataStream struct {
+type PolicyTestDataStream struct {
 	// Vars variables used to configure settings defined in the data stream manifest.
 	Vars *TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -207,13 +234,120 @@ func (v *StaticTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
+// SystemTestAgent configuration overrides for the Elastic Agent
+type SystemTestAgent struct {
+	// BaseImage elastic Agent image to be used for testing. Setting `default` will be used the same
+	// Elastic Agent image as the stack. Setting `systemd` will use the image containing all the
+	// binaries for running Beats (collectors) based in an OS compatible with systemd. Setting
+	// `complete` will use the "complete" image, that includes all supported collectors plus a web
+	// browser and the required runtime for synthetic testing.
+	BaseImage SystemTestAgentBaseImage `json:"base_image,omitempty" yaml:"base_image,omitempty"`
+	// LinuxCapabilities linux Capabilities that must been enabled in the system to run the Elastic
+	// Agent process
+	LinuxCapabilities []SystemTestAgentLinuxCapability `json:"linux_capabilities,omitempty" yaml:"linux_capabilities,omitempty"`
+	// PidMode control access to PID namespaces. When set to `host`, the Elastic Agent will have access
+	// to the PID namespace of the host.
+	PidMode SystemTestAgentPidMode `json:"pid_mode,omitempty" yaml:"pid_mode,omitempty"`
+	// Ports list of ports to be exposed to access to the Elastic Agent
+	Ports []string `json:"ports,omitempty" yaml:"ports,omitempty"`
+	// PreStartScript optional: Custom sh script to be executed before starting the Elastic Agent
+	// process (e.g. export environment variables)
+	PreStartScript AgentPreStartScript `json:"pre_start_script,omitempty" yaml:"pre_start_script,omitempty"`
+	// ProvisioningScript optional: Script to run to customize the system where Elastic Agent runs (e.g.
+	// installing new libraries/dependencies)
+	ProvisioningScript AgentProvisioningScript `json:"provisioning_script,omitempty" yaml:"provisioning_script,omitempty"`
+	// Runtime to run the Elastic Agent process
+	Runtime SystemTestAgentRuntime `json:"runtime,omitempty" yaml:"runtime,omitempty"`
+	// User that runs the Elastic Agent process
+	User string `json:"user,omitempty" yaml:"user,omitempty"`
+}
+
+// SystemTestAgentBaseImage elastic Agent image to be used for testing. Setting `default` will be
+// used the same Elastic Agent image as the stack. Setting `systemd` will use the image containing
+// all the binaries for running Beats (collectors) based in an OS compatible with systemd. Setting
+// `complete` will use the "complete" image, that includes all supported collectors plus a web
+// browser and the required runtime for synthetic testing.
+type SystemTestAgentBaseImage string
+
+// Enum values for SystemTestAgentBaseImage.
+const (
+	SystemTestAgentBaseImageDefault  SystemTestAgentBaseImage = "default"
+	SystemTestAgentBaseImageComplete SystemTestAgentBaseImage = "complete"
+	SystemTestAgentBaseImageSystemd  SystemTestAgentBaseImage = "systemd"
+)
+
+// SystemTestAgentLinuxCapability capability name
+type SystemTestAgentLinuxCapability string
+
+// Enum values for SystemTestAgentLinuxCapability.
+const (
+	SystemTestAgentLinuxCapabilityAuditControl      SystemTestAgentLinuxCapability = "AUDIT_CONTROL"
+	SystemTestAgentLinuxCapabilityAuditRead         SystemTestAgentLinuxCapability = "AUDIT_READ"
+	SystemTestAgentLinuxCapabilityAuditWrite        SystemTestAgentLinuxCapability = "AUDIT_WRITE"
+	SystemTestAgentLinuxCapabilityBlockSuspend      SystemTestAgentLinuxCapability = "BLOCK_SUSPEND"
+	SystemTestAgentLinuxCapabilityBpf               SystemTestAgentLinuxCapability = "BPF"
+	SystemTestAgentLinuxCapabilityCheckpointRestore SystemTestAgentLinuxCapability = "CHECKPOINT_RESTORE"
+	SystemTestAgentLinuxCapabilityChown             SystemTestAgentLinuxCapability = "CHOWN"
+	SystemTestAgentLinuxCapabilityDacOverride       SystemTestAgentLinuxCapability = "DAC_OVERRIDE"
+	SystemTestAgentLinuxCapabilityDacReadSearch     SystemTestAgentLinuxCapability = "DAC_READ_SEARCH"
+	SystemTestAgentLinuxCapabilityFowner            SystemTestAgentLinuxCapability = "FOWNER"
+	SystemTestAgentLinuxCapabilityFsetid            SystemTestAgentLinuxCapability = "FSETID"
+	SystemTestAgentLinuxCapabilityIpcLock           SystemTestAgentLinuxCapability = "IPC_LOCK"
+	SystemTestAgentLinuxCapabilityIpcOwner          SystemTestAgentLinuxCapability = "IPC_OWNER"
+	SystemTestAgentLinuxCapabilityKill              SystemTestAgentLinuxCapability = "KILL"
+	SystemTestAgentLinuxCapabilityLease             SystemTestAgentLinuxCapability = "LEASE"
+	SystemTestAgentLinuxCapabilityLinuxImmutable    SystemTestAgentLinuxCapability = "LINUX_IMMUTABLE"
+	SystemTestAgentLinuxCapabilityMacAdmin          SystemTestAgentLinuxCapability = "MAC_ADMIN"
+	SystemTestAgentLinuxCapabilityMacOverride       SystemTestAgentLinuxCapability = "MAC_OVERRIDE"
+	SystemTestAgentLinuxCapabilityMknod             SystemTestAgentLinuxCapability = "MKNOD"
+	SystemTestAgentLinuxCapabilityNetAdmin          SystemTestAgentLinuxCapability = "NET_ADMIN"
+	SystemTestAgentLinuxCapabilityNetBindService    SystemTestAgentLinuxCapability = "NET_BIND_SERVICE"
+	SystemTestAgentLinuxCapabilityNetBroadcast      SystemTestAgentLinuxCapability = "NET_BROADCAST"
+	SystemTestAgentLinuxCapabilityNetRaw            SystemTestAgentLinuxCapability = "NET_RAW"
+	SystemTestAgentLinuxCapabilityPerform           SystemTestAgentLinuxCapability = "PERFORM"
+	SystemTestAgentLinuxCapabilitySetfcap           SystemTestAgentLinuxCapability = "SETFCAP"
+	SystemTestAgentLinuxCapabilitySetgid            SystemTestAgentLinuxCapability = "SETGID"
+	SystemTestAgentLinuxCapabilitySetpcap           SystemTestAgentLinuxCapability = "SETPCAP"
+	SystemTestAgentLinuxCapabilitySetuid            SystemTestAgentLinuxCapability = "SETUID"
+	SystemTestAgentLinuxCapabilitySysAdmin          SystemTestAgentLinuxCapability = "SYS_ADMIN"
+	SystemTestAgentLinuxCapabilitySysBoot           SystemTestAgentLinuxCapability = "SYS_BOOT"
+	SystemTestAgentLinuxCapabilitySysChroot         SystemTestAgentLinuxCapability = "SYS_CHROOT"
+	SystemTestAgentLinuxCapabilitySysModule         SystemTestAgentLinuxCapability = "SYS_MODULE"
+	SystemTestAgentLinuxCapabilitySysNice           SystemTestAgentLinuxCapability = "SYS_NICE"
+	SystemTestAgentLinuxCapabilitySysPacct          SystemTestAgentLinuxCapability = "SYS_PACCT"
+	SystemTestAgentLinuxCapabilitySysPtrace         SystemTestAgentLinuxCapability = "SYS_PTRACE"
+	SystemTestAgentLinuxCapabilitySysRawio          SystemTestAgentLinuxCapability = "SYS_RAWIO"
+	SystemTestAgentLinuxCapabilitySysResource       SystemTestAgentLinuxCapability = "SYS_RESOURCE"
+	SystemTestAgentLinuxCapabilitySysTime           SystemTestAgentLinuxCapability = "SYS_TIME"
+	SystemTestAgentLinuxCapabilitySysTtyConfig      SystemTestAgentLinuxCapability = "SYS_TTY_CONFIG"
+	SystemTestAgentLinuxCapabilitySyslog            SystemTestAgentLinuxCapability = "SYSLOG"
+	SystemTestAgentLinuxCapabilityWakeAlarm         SystemTestAgentLinuxCapability = "WAKE_ALARM"
+)
+
+// SystemTestAgentPidMode control access to PID namespaces. When set to `host`, the Elastic Agent
+// will have access to the PID namespace of the host.
+type SystemTestAgentPidMode string
+
+// Enum values for SystemTestAgentPidMode.
+const (
+	SystemTestAgentPidModeHost SystemTestAgentPidMode = "host"
+)
+
+// SystemTestAgentRuntime runtime to run the Elastic Agent process
+type SystemTestAgentRuntime string
+
+// Enum values for SystemTestAgentRuntime.
+const (
+	SystemTestAgentRuntimeDocker SystemTestAgentRuntime = "docker"
+)
+
 // SystemTestConfig holds configuration for a system test case (test-*-config.yml).
 type SystemTestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// Agent configuration overrides for the Elastic Agent
-	Agent      SystemTestConfigAgent       `json:"agent,omitempty" yaml:"agent,omitempty"`
-	DataStream *SystemTestConfigDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	Skip       TestSkip                    `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Agent      SystemTestAgent       `json:"agent,omitempty" yaml:"agent,omitempty"`
+	DataStream *SystemTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	Skip       TestSkip              `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// SkipIgnoredFields if listed here, elastic-package system tests will not fail if values for the
 	// specified field names can't be indexed for any incoming documents. This should only be used if
 	// the failure is related to the test environment and wouldn't happen in production. Mitigate the
@@ -238,141 +372,7 @@ func (v *SystemTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-// SystemTestConfigAgent configuration overrides for the Elastic Agent
-type SystemTestConfigAgent struct {
-	// BaseImage elastic Agent image to be used for testing. Setting `default` will be used the same
-	// Elastic Agent image as the stack. Setting `systemd` will use the image containing all the
-	// binaries for running Beats (collectors) based in an OS compatible with systemd. Setting
-	// `complete` will use the "complete" image, that includes all supported collectors plus a web
-	// browser and the required runtime for synthetic testing.
-	BaseImage SystemTestConfigAgentBaseImage `json:"base_image,omitempty" yaml:"base_image,omitempty"`
-	// LinuxCapabilities linux Capabilities that must been enabled in the system to run the Elastic
-	// Agent process
-	LinuxCapabilities []SystemTestConfigAgentLinuxCapability `json:"linux_capabilities,omitempty" yaml:"linux_capabilities,omitempty"`
-	// PidMode control access to PID namespaces. When set to `host`, the Elastic Agent will have access
-	// to the PID namespace of the host.
-	PidMode SystemTestConfigAgentPidMode `json:"pid_mode,omitempty" yaml:"pid_mode,omitempty"`
-	// Ports list of ports to be exposed to access to the Elastic Agent
-	Ports []string `json:"ports,omitempty" yaml:"ports,omitempty"`
-	// PreStartScript optional: Custom sh script to be executed before starting the Elastic Agent
-	// process (e.g. export environment variables)
-	PreStartScript SystemTestConfigAgentPreStartScript `json:"pre_start_script,omitempty" yaml:"pre_start_script,omitempty"`
-	// ProvisioningScript optional: Script to run to customize the system where Elastic Agent runs (e.g.
-	// installing new libraries/dependencies)
-	ProvisioningScript SystemTestConfigAgentProvisioningScript `json:"provisioning_script,omitempty" yaml:"provisioning_script,omitempty"`
-	// Runtime to run the Elastic Agent process
-	Runtime SystemTestConfigAgentRuntime `json:"runtime,omitempty" yaml:"runtime,omitempty"`
-	// User that runs the Elastic Agent process
-	User string `json:"user,omitempty" yaml:"user,omitempty"`
-}
-
-// SystemTestConfigAgentBaseImage elastic Agent image to be used for testing. Setting `default` will
-// be used the same Elastic Agent image as the stack. Setting `systemd` will use the image
-// containing all the binaries for running Beats (collectors) based in an OS compatible with
-// systemd. Setting `complete` will use the "complete" image, that includes all supported collectors
-// plus a web browser and the required runtime for synthetic testing.
-type SystemTestConfigAgentBaseImage string
-
-// Enum values for SystemTestConfigAgentBaseImage.
-const (
-	SystemTestConfigAgentBaseImageDefault  SystemTestConfigAgentBaseImage = "default"
-	SystemTestConfigAgentBaseImageComplete SystemTestConfigAgentBaseImage = "complete"
-	SystemTestConfigAgentBaseImageSystemd  SystemTestConfigAgentBaseImage = "systemd"
-)
-
-// SystemTestConfigAgentLinuxCapability capability name
-type SystemTestConfigAgentLinuxCapability string
-
-// Enum values for SystemTestConfigAgentLinuxCapability.
-const (
-	SystemTestConfigAgentLinuxCapabilityAuditControl      SystemTestConfigAgentLinuxCapability = "AUDIT_CONTROL"
-	SystemTestConfigAgentLinuxCapabilityAuditRead         SystemTestConfigAgentLinuxCapability = "AUDIT_READ"
-	SystemTestConfigAgentLinuxCapabilityAuditWrite        SystemTestConfigAgentLinuxCapability = "AUDIT_WRITE"
-	SystemTestConfigAgentLinuxCapabilityBlockSuspend      SystemTestConfigAgentLinuxCapability = "BLOCK_SUSPEND"
-	SystemTestConfigAgentLinuxCapabilityBpf               SystemTestConfigAgentLinuxCapability = "BPF"
-	SystemTestConfigAgentLinuxCapabilityCheckpointRestore SystemTestConfigAgentLinuxCapability = "CHECKPOINT_RESTORE"
-	SystemTestConfigAgentLinuxCapabilityChown             SystemTestConfigAgentLinuxCapability = "CHOWN"
-	SystemTestConfigAgentLinuxCapabilityDacOverride       SystemTestConfigAgentLinuxCapability = "DAC_OVERRIDE"
-	SystemTestConfigAgentLinuxCapabilityDacReadSearch     SystemTestConfigAgentLinuxCapability = "DAC_READ_SEARCH"
-	SystemTestConfigAgentLinuxCapabilityFowner            SystemTestConfigAgentLinuxCapability = "FOWNER"
-	SystemTestConfigAgentLinuxCapabilityFsetid            SystemTestConfigAgentLinuxCapability = "FSETID"
-	SystemTestConfigAgentLinuxCapabilityIpcLock           SystemTestConfigAgentLinuxCapability = "IPC_LOCK"
-	SystemTestConfigAgentLinuxCapabilityIpcOwner          SystemTestConfigAgentLinuxCapability = "IPC_OWNER"
-	SystemTestConfigAgentLinuxCapabilityKill              SystemTestConfigAgentLinuxCapability = "KILL"
-	SystemTestConfigAgentLinuxCapabilityLease             SystemTestConfigAgentLinuxCapability = "LEASE"
-	SystemTestConfigAgentLinuxCapabilityLinuxImmutable    SystemTestConfigAgentLinuxCapability = "LINUX_IMMUTABLE"
-	SystemTestConfigAgentLinuxCapabilityMacAdmin          SystemTestConfigAgentLinuxCapability = "MAC_ADMIN"
-	SystemTestConfigAgentLinuxCapabilityMacOverride       SystemTestConfigAgentLinuxCapability = "MAC_OVERRIDE"
-	SystemTestConfigAgentLinuxCapabilityMknod             SystemTestConfigAgentLinuxCapability = "MKNOD"
-	SystemTestConfigAgentLinuxCapabilityNetAdmin          SystemTestConfigAgentLinuxCapability = "NET_ADMIN"
-	SystemTestConfigAgentLinuxCapabilityNetBindService    SystemTestConfigAgentLinuxCapability = "NET_BIND_SERVICE"
-	SystemTestConfigAgentLinuxCapabilityNetBroadcast      SystemTestConfigAgentLinuxCapability = "NET_BROADCAST"
-	SystemTestConfigAgentLinuxCapabilityNetRaw            SystemTestConfigAgentLinuxCapability = "NET_RAW"
-	SystemTestConfigAgentLinuxCapabilityPerform           SystemTestConfigAgentLinuxCapability = "PERFORM"
-	SystemTestConfigAgentLinuxCapabilitySetfcap           SystemTestConfigAgentLinuxCapability = "SETFCAP"
-	SystemTestConfigAgentLinuxCapabilitySetgid            SystemTestConfigAgentLinuxCapability = "SETGID"
-	SystemTestConfigAgentLinuxCapabilitySetpcap           SystemTestConfigAgentLinuxCapability = "SETPCAP"
-	SystemTestConfigAgentLinuxCapabilitySetuid            SystemTestConfigAgentLinuxCapability = "SETUID"
-	SystemTestConfigAgentLinuxCapabilitySysAdmin          SystemTestConfigAgentLinuxCapability = "SYS_ADMIN"
-	SystemTestConfigAgentLinuxCapabilitySysBoot           SystemTestConfigAgentLinuxCapability = "SYS_BOOT"
-	SystemTestConfigAgentLinuxCapabilitySysChroot         SystemTestConfigAgentLinuxCapability = "SYS_CHROOT"
-	SystemTestConfigAgentLinuxCapabilitySysModule         SystemTestConfigAgentLinuxCapability = "SYS_MODULE"
-	SystemTestConfigAgentLinuxCapabilitySysNice           SystemTestConfigAgentLinuxCapability = "SYS_NICE"
-	SystemTestConfigAgentLinuxCapabilitySysPacct          SystemTestConfigAgentLinuxCapability = "SYS_PACCT"
-	SystemTestConfigAgentLinuxCapabilitySysPtrace         SystemTestConfigAgentLinuxCapability = "SYS_PTRACE"
-	SystemTestConfigAgentLinuxCapabilitySysRawio          SystemTestConfigAgentLinuxCapability = "SYS_RAWIO"
-	SystemTestConfigAgentLinuxCapabilitySysResource       SystemTestConfigAgentLinuxCapability = "SYS_RESOURCE"
-	SystemTestConfigAgentLinuxCapabilitySysTime           SystemTestConfigAgentLinuxCapability = "SYS_TIME"
-	SystemTestConfigAgentLinuxCapabilitySysTtyConfig      SystemTestConfigAgentLinuxCapability = "SYS_TTY_CONFIG"
-	SystemTestConfigAgentLinuxCapabilitySyslog            SystemTestConfigAgentLinuxCapability = "SYSLOG"
-	SystemTestConfigAgentLinuxCapabilityWakeAlarm         SystemTestConfigAgentLinuxCapability = "WAKE_ALARM"
-)
-
-// SystemTestConfigAgentPidMode control access to PID namespaces. When set to `host`, the Elastic
-// Agent will have access to the PID namespace of the host.
-type SystemTestConfigAgentPidMode string
-
-// Enum values for SystemTestConfigAgentPidMode.
-const (
-	SystemTestConfigAgentPidModeHost SystemTestConfigAgentPidMode = "host"
-)
-
-// SystemTestConfigAgentPreStartScript optional: Custom sh script to be executed before starting the
-// Elastic Agent process (e.g. export environment variables)
-type SystemTestConfigAgentPreStartScript struct {
-	// Contents code to run before starting the Elastic Agent.
-	Contents string `json:"contents" yaml:"contents"`
-	// Language programming language of the pre-start script. Currently, only "sh" is supported.
-	Language SystemTestConfigAgentPreStartScriptLanguage `json:"language,omitempty" yaml:"language,omitempty"`
-}
-
-// SystemTestConfigAgentPreStartScriptLanguage programming language of the pre-start script.
-// Currently, only "sh" is supported.
-type SystemTestConfigAgentPreStartScriptLanguage string
-
-// Enum values for SystemTestConfigAgentPreStartScriptLanguage.
-const (
-	SystemTestConfigAgentPreStartScriptLanguageSh SystemTestConfigAgentPreStartScriptLanguage = "sh"
-)
-
-// SystemTestConfigAgentProvisioningScript optional: Script to run to customize the system where
-// Elastic Agent runs (e.g. installing new libraries/dependencies)
-type SystemTestConfigAgentProvisioningScript struct {
-	// Contents code to run as a provisioning script.
-	Contents string `json:"contents" yaml:"contents"`
-	// Language programming language of the provisioning script.
-	Language string `json:"language,omitempty" yaml:"language,omitempty"`
-}
-
-// SystemTestConfigAgentRuntime runtime to run the Elastic Agent process
-type SystemTestConfigAgentRuntime string
-
-// Enum values for SystemTestConfigAgentRuntime.
-const (
-	SystemTestConfigAgentRuntimeDocker SystemTestConfigAgentRuntime = "docker"
-)
-
-type SystemTestConfigDataStream struct {
+type SystemTestDataStream struct {
 	// Vars variables used to configure settings defined in the data stream manifest.
 	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 }

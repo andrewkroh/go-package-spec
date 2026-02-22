@@ -7,7 +7,7 @@ import yamlv3 "gopkg.in/yaml.v3"
 type Validation struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// DocsStructureEnforced rules to manage the documentation structure
-	DocsStructureEnforced ValidationDocsStructureEnforced `json:"docs_structure_enforced,omitempty" yaml:"docs_structure_enforced,omitempty"`
+	DocsStructureEnforced ValidationDocsStructure `json:"docs_structure_enforced,omitempty" yaml:"docs_structure_enforced,omitempty"`
 	// Errors rules to manage the validation results
 	Errors ValidationErrors `json:"errors,omitempty" yaml:"errors,omitempty"`
 }
@@ -25,17 +25,17 @@ func (v *Validation) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-// ValidationDocsStructureEnforced rules to manage the documentation structure
-type ValidationDocsStructureEnforced struct {
+// ValidationDocsStructure rules to manage the documentation structure
+type ValidationDocsStructure struct {
 	// Enabled whether the documentation structure is enforced
 	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	// Skip list of sections to skip in the documentation validation
-	Skip []ValidationDocsStructureEnforcedSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Skip []ValidationDocsStructureSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// Version of the documentation structure
 	Version int `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
-type ValidationDocsStructureEnforcedSkip struct {
+type ValidationDocsStructureSkip struct {
 	Reason string `json:"reason,omitempty" yaml:"reason,omitempty"`
 	Title  string `json:"title,omitempty" yaml:"title,omitempty"`
 }

@@ -19,6 +19,7 @@ pkgspec/                   Generated data model (DO NOT EDIT except hand-written
   processor.go                 Hand-written: Processor type with custom marshal/unmarshal
   stringorstrings.go           Hand-written: StringOrStrings type for anyOf [string, []string]
   flatten.go                   Hand-written: FlattenFields with ECS enrichment callback
+  manifesttype.go              Hand-written: ManifestType enum (integration/input/content)
   metadata.go                  Generated: FileMetadata type + reflection walker
   manifest.go                  Manifest base type + Integration/Input/Content manifests
   build.go                     Generated: BuildManifest type for _dev/build/build.yml

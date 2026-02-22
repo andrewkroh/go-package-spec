@@ -2,6 +2,21 @@
 
 package pkgspec
 
+// AgentlessResourceRequests the computing resources that the Agentless deployment will be initially
+// allocated.
+type AgentlessResourceRequests struct {
+	// CPU the amount of CPUs that the Agentless deployment will be initially allocated.
+	CPU string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
+	// Memory the amount of memory that the Agentless deployment will be initially allocated.
+	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
+}
+
+// AgentlessResources the computing resources specifications for the Agentless deployment.
+type AgentlessResources struct {
+	// Requests the computing resources that the Agentless deployment will be initially allocated.
+	Requests AgentlessResourceRequests `json:"requests,omitempty" yaml:"requests,omitempty"`
+}
+
 type ConfigurationLink struct {
 	// Content link description
 	Content string `json:"content,omitempty" yaml:"content,omitempty"`
@@ -53,26 +68,10 @@ type DeploymentModesAgentless struct {
 	// agent deployments for monitoring.
 	Organization string `json:"organization,omitempty" yaml:"organization,omitempty"`
 	// Resources the computing resources specifications for the Agentless deployment.
-	Resources DeploymentModesAgentlessResources `json:"resources,omitempty" yaml:"resources,omitempty"`
+	Resources AgentlessResources `json:"resources,omitempty" yaml:"resources,omitempty"`
 	// Team the team responsible for the integration. This is used to tag the agentless agent
 	// deployments for monitoring.
 	Team string `json:"team,omitempty" yaml:"team,omitempty"`
-}
-
-// DeploymentModesAgentlessResources the computing resources specifications for the Agentless
-// deployment.
-type DeploymentModesAgentlessResources struct {
-	// Requests the computing resources that the Agentless deployment will be initially allocated.
-	Requests DeploymentModesAgentlessResourcesRequests `json:"requests,omitempty" yaml:"requests,omitempty"`
-}
-
-// DeploymentModesAgentlessResourcesRequests the computing resources that the Agentless deployment
-// will be initially allocated.
-type DeploymentModesAgentlessResourcesRequests struct {
-	// CPU the amount of CPUs that the Agentless deployment will be initially allocated.
-	CPU string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
-	// Memory the amount of memory that the Agentless deployment will be initially allocated.
-	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
 }
 
 // DeploymentModesDefault options specific to the default deployment mode, where agents are normally
@@ -83,7 +82,7 @@ type DeploymentModesDefault struct {
 	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 }
 
-type InputManifestPolicyTemplate struct {
+type InputPolicyTemplate struct {
 	ConfigurationLinks []ConfigurationLink `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
 	DeploymentModes    DeploymentModes     `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
 	Deprecated         Deprecated          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
@@ -103,22 +102,22 @@ type InputManifestPolicyTemplate struct {
 	// Title of policy template.
 	Title string `json:"title" yaml:"title"`
 	// Type of data stream
-	Type InputManifestPolicyTemplateType `json:"type" yaml:"type"`
-	Vars []Var                           `json:"vars,omitempty" yaml:"vars,omitempty"`
+	Type InputPolicyTemplateType `json:"type" yaml:"type"`
+	Vars []Var                   `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
-// InputManifestPolicyTemplateType type of data stream
-type InputManifestPolicyTemplateType string
+// InputPolicyTemplateType type of data stream
+type InputPolicyTemplateType string
 
-// Enum values for InputManifestPolicyTemplateType.
+// Enum values for InputPolicyTemplateType.
 const (
-	InputManifestPolicyTemplateTypeMetrics    InputManifestPolicyTemplateType = "metrics"
-	InputManifestPolicyTemplateTypeLogs       InputManifestPolicyTemplateType = "logs"
-	InputManifestPolicyTemplateTypeSynthetics InputManifestPolicyTemplateType = "synthetics"
-	InputManifestPolicyTemplateTypeTraces     InputManifestPolicyTemplateType = "traces"
+	InputPolicyTemplateTypeMetrics    InputPolicyTemplateType = "metrics"
+	InputPolicyTemplateTypeLogs       InputPolicyTemplateType = "logs"
+	InputPolicyTemplateTypeSynthetics InputPolicyTemplateType = "synthetics"
+	InputPolicyTemplateTypeTraces     InputPolicyTemplateType = "traces"
 )
 
-type IntegrationManifestPolicyTemplate struct {
+type PolicyTemplate struct {
 	Categories         []Category          `json:"categories,omitempty" yaml:"categories,omitempty"`
 	ConfigurationLinks []ConfigurationLink `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
 	// DataStreams list of data streams compatible with the policy template.
@@ -130,8 +129,8 @@ type IntegrationManifestPolicyTemplate struct {
 	FipsCompatible *bool  `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
 	Icons          []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
 	// Inputs list of inputs supported by policy template.
-	Inputs   []IntegrationManifestPolicyTemplateInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
-	Multiple *bool                                    `json:"multiple,omitempty" yaml:"multiple,omitempty"`
+	Inputs   []PolicyTemplateInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Multiple *bool                 `json:"multiple,omitempty" yaml:"multiple,omitempty"`
 	// Name of policy template.
 	Name        string       `json:"name" yaml:"name"`
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
@@ -140,17 +139,17 @@ type IntegrationManifestPolicyTemplate struct {
 	Vars  []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
-type IntegrationManifestPolicyTemplateInput struct {
+type PolicyTemplateInput struct {
 	// DeploymentModes list of deployment modes that this input is compatible with. If not specified,
 	// the input is compatible with all deployment modes.
-	DeploymentModes []IntegrationManifestPolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
-	Deprecated      Deprecated                                             `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	DeploymentModes []PolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	Deprecated      Deprecated                          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Description longer description of input.
 	Description string `json:"description" yaml:"description"`
 	// HideInVarGroupOptions filters out specific var_group options for this input.
 	HideInVarGroupOptions map[string][]string `json:"hide_in_var_group_options,omitempty" yaml:"hide_in_var_group_options,omitempty"`
 	// InputGroup name of the input group
-	InputGroup IntegrationManifestPolicyTemplateInputInputGroup `json:"input_group,omitempty" yaml:"input_group,omitempty"`
+	InputGroup PolicyTemplateInputGroup `json:"input_group,omitempty" yaml:"input_group,omitempty"`
 	// Multi can input be defined multiple times
 	Multi        *bool        `json:"multi,omitempty" yaml:"multi,omitempty"`
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
@@ -163,19 +162,19 @@ type IntegrationManifestPolicyTemplateInput struct {
 	Vars []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
-type IntegrationManifestPolicyTemplateInputDeploymentMode string
+type PolicyTemplateInputDeploymentMode string
 
-// Enum values for IntegrationManifestPolicyTemplateInputDeploymentMode.
+// Enum values for PolicyTemplateInputDeploymentMode.
 const (
-	IntegrationManifestPolicyTemplateInputDeploymentModeDefault   IntegrationManifestPolicyTemplateInputDeploymentMode = "default"
-	IntegrationManifestPolicyTemplateInputDeploymentModeAgentless IntegrationManifestPolicyTemplateInputDeploymentMode = "agentless"
+	PolicyTemplateInputDeploymentModeDefault   PolicyTemplateInputDeploymentMode = "default"
+	PolicyTemplateInputDeploymentModeAgentless PolicyTemplateInputDeploymentMode = "agentless"
 )
 
-// IntegrationManifestPolicyTemplateInputInputGroup name of the input group
-type IntegrationManifestPolicyTemplateInputInputGroup string
+// PolicyTemplateInputGroup name of the input group
+type PolicyTemplateInputGroup string
 
-// Enum values for IntegrationManifestPolicyTemplateInputInputGroup.
+// Enum values for PolicyTemplateInputGroup.
 const (
-	IntegrationManifestPolicyTemplateInputInputGroupLogs    IntegrationManifestPolicyTemplateInputInputGroup = "logs"
-	IntegrationManifestPolicyTemplateInputInputGroupMetrics IntegrationManifestPolicyTemplateInputInputGroup = "metrics"
+	PolicyTemplateInputGroupLogs    PolicyTemplateInputGroup = "logs"
+	PolicyTemplateInputGroupMetrics PolicyTemplateInputGroup = "metrics"
 )
