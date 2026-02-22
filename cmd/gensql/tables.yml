@@ -1,0 +1,317 @@
+tables:
+  packages:
+    type: Manifest
+    comment: "Fleet packages (integration, input, or content). Each row is one package version."
+    extra_columns:
+      dir_name:
+        type: TEXT
+        not_null: true
+        unique: true
+        comment: "directory name of the package"
+    inline:
+      - Owner
+      - Source
+    exclude:
+      - Categories
+      - Icons
+      - Screenshots
+    json_columns:
+      - Deprecated
+
+  package_categories:
+    comment: "Categories assigned to a package."
+    extra_columns:
+      package_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      category:
+        type: TEXT
+        not_null: true
+        comment: "category value"
+
+  package_icons:
+    type: Icon
+    parent: packages
+    comment: "Icon definitions for a package."
+
+  package_screenshots:
+    type: Screenshot
+    parent: packages
+    comment: "Screenshot definitions for a package."
+
+  changelogs:
+    type: Changelog
+    parent: packages
+    comment: "Changelog versions for a package. Each row is one version entry with its release date."
+    exclude:
+      - Changes
+
+  changelog_entries:
+    type: ChangelogEntry
+    parent: changelogs
+    comment: "Individual changelog entries within a changelog version."
+
+  policy_templates:
+    type: PolicyTemplate
+    parent: packages
+    comment: "Policy templates offered by integration packages. Defines how an integration is configured in Fleet."
+    exclude:
+      - Categories
+      - Icons
+      - Screenshots
+      - Inputs
+      - Vars
+    json_columns:
+      - Deprecated
+      - ConfigurationLinks
+      - DeploymentModes
+
+  policy_template_categories:
+    comment: "Categories assigned to a policy template."
+    extra_columns:
+      policy_template_id:
+        type: INTEGER
+        not_null: true
+        fk: policy_templates
+        comment: "foreign key to policy_templates"
+      category:
+        type: TEXT
+        not_null: true
+        comment: "category value"
+
+  policy_template_inputs:
+    type: PolicyTemplateInput
+    parent: policy_templates
+    comment: "Inputs defined within a policy template."
+    exclude:
+      - Vars
+      - RequiredVars
+    json_columns:
+      - Deprecated
+      - DeploymentModes
+      - HideInVarGroupOptions
+
+  data_streams:
+    type: DataStreamManifest
+    parent: packages
+    comment: "Data streams within integration packages. Each row is one data stream with its Elasticsearch and agent config."
+    extra_columns:
+      dir_name:
+        type: TEXT
+        not_null: true
+        comment: "directory name of the data stream"
+    inline:
+      - Elasticsearch
+    exclude:
+      - Streams
+      - Categories
+      - Agent
+    json_columns:
+      - Deprecated
+      - Elasticsearch.IndexTemplate
+      - Elasticsearch.Privileges
+
+  streams:
+    type: DataStreamStream
+    parent: data_streams
+    comment: "Streams offered by a data stream."
+    exclude:
+      - Vars
+      - VarGroups
+      - RequiredVars
+
+  vars:
+    type: Var
+    comment: "Input variable definitions. Linked to packages, policy templates, streams, or inputs via join tables."
+    exclude:
+      - Deprecated
+    json_columns:
+      - Default
+      - Options
+      - HideInDeploymentModes
+      - URLAllowedSchemes
+
+  package_vars:
+    comment: "Join table linking vars to packages."
+    extra_columns:
+      package_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      var_id:
+        type: INTEGER
+        not_null: true
+        fk: vars
+        comment: "foreign key to vars"
+
+  policy_template_vars:
+    comment: "Join table linking vars to policy templates."
+    extra_columns:
+      policy_template_id:
+        type: INTEGER
+        not_null: true
+        fk: policy_templates
+        comment: "foreign key to policy_templates"
+      var_id:
+        type: INTEGER
+        not_null: true
+        fk: vars
+        comment: "foreign key to vars"
+
+  policy_template_input_vars:
+    comment: "Join table linking vars to policy template inputs."
+    extra_columns:
+      policy_template_input_id:
+        type: INTEGER
+        not_null: true
+        fk: policy_template_inputs
+        comment: "foreign key to policy_template_inputs"
+      var_id:
+        type: INTEGER
+        not_null: true
+        fk: vars
+        comment: "foreign key to vars"
+
+  stream_vars:
+    comment: "Join table linking vars to streams."
+    extra_columns:
+      stream_id:
+        type: INTEGER
+        not_null: true
+        fk: streams
+        comment: "foreign key to streams"
+      var_id:
+        type: INTEGER
+        not_null: true
+        fk: vars
+        comment: "foreign key to vars"
+
+  fields:
+    type: FlatField
+    comment: "Elasticsearch field definitions, flattened from nested YAML into dotted-path names."
+    flatten: true
+    exclude:
+      - Fields
+      - MultiFields
+      - FileMetadata
+      - ECS
+    json_columns:
+      - DefaultMetric
+      - Dynamic
+      - Example
+      - ExpectedValues
+      - Metrics
+      - Normalize
+      - NullValue
+      - Runtime
+
+  data_stream_fields:
+    comment: "Join table linking fields to data streams."
+    extra_columns:
+      data_stream_id:
+        type: INTEGER
+        not_null: true
+        fk: data_streams
+        comment: "foreign key to data_streams"
+      field_id:
+        type: INTEGER
+        not_null: true
+        fk: fields
+        comment: "foreign key to fields"
+
+  package_fields:
+    comment: "Join table linking fields to packages (for input packages)."
+    extra_columns:
+      package_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      field_id:
+        type: INTEGER
+        not_null: true
+        fk: fields
+        comment: "foreign key to fields"
+
+  ingest_pipelines:
+    type: IngestPipeline
+    parent: data_streams
+    comment: "Elasticsearch ingest pipeline definitions within data streams."
+    extra_columns:
+      file_name:
+        type: TEXT
+        not_null: true
+        comment: "file name of the pipeline (e.g. default.yml)"
+    exclude:
+      - Processors
+      - OnFailure
+
+  ingest_processors:
+    type: Processor
+    parent: ingest_pipelines
+    comment: "Individual ingest processors flattened from pipelines. Nested on_failure handlers are included as separate rows."
+    flatten: true
+    extra_columns:
+      type:
+        type: TEXT
+        not_null: true
+        comment: "processor type (e.g. set, grok, rename)"
+      attributes:
+        type: TEXT
+        comment: "JSON-encoded processor attributes"
+      json_pointer:
+        type: TEXT
+        not_null: true
+        comment: "RFC 6901 JSON Pointer location within the pipeline"
+      ordinal:
+        type: INTEGER
+        not_null: true
+        comment: "order of processor within the pipeline"
+
+  transforms:
+    type: Transform
+    parent: packages
+    comment: "Elasticsearch transform configurations within integration packages."
+    extra_columns:
+      dir_name:
+        type: TEXT
+        not_null: true
+        comment: "directory name of the transform"
+    exclude:
+      - ID
+    json_columns:
+      - Meta
+      - Source
+      - Dest
+      - Pivot
+      - Latest
+      - Settings
+      - RetentionPolicy
+      - Sync
+
+  routing_rules:
+    type: RoutingRule
+    parent: data_streams
+    comment: "Routing rules for rerouting documents from a source dataset (technical preview)."
+    json_columns:
+      - Namespace
+      - TargetDataset
+
+  tags:
+    type: Tag
+    parent: packages
+    comment: "Kibana tags associated with integration packages."
+    json_columns:
+      - AssetIDs
+      - AssetTypes
+
+  build_manifests:
+    type: BuildManifest
+    parent: packages
+    comment: "Build configuration for integration packages (_dev/build/build.yml)."
+    inline:
+      - Dependencies
+      - Dependencies.ECS
