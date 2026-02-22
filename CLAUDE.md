@@ -1,6 +1,15 @@
 # go-package-spec
 
-Go data model and reader for Elastic [package-spec](https://github.com/andrewkroh/package-spec-schema) packages. See [REQS.md](REQS.md) for original requirements.
+Go data model and reader for Elastic [package-spec](https://github.com/andrewkroh/package-spec-schema) packages.
+
+## Design goals
+
+- The data model (`pkgspec`) can be used independently of the reader (`pkgreader`).
+- The reader accepts a package directory and options (Go functional options pattern), reads all package contents into data model types, and annotates them with file metadata.
+- Goal is native-format unmarshaling (YAML/JSON). Round-trip marshaling and preserving exact file format is explicitly a non-goal.
+- `WithKnownFields()` enables strict validation where only fields defined in the model types are allowed (delegates to the YAML/JSON decoder). Off by default for forward compatibility.
+- `WithGitMetadata()` enriches types using git — commit ID for the package, and git blame on the changelog to determine release dates. Prior art: `github.com/andrewkroh/go-fleetpkg`.
+- `FlattenFields` flattens dotted field names and enriches ECS fields using `github.com/andrewkroh/go-ecs`. Prior art: `FlattenFields` in `github.com/andrewkroh/go-fleetpkg`.
 
 ## Project layout
 
