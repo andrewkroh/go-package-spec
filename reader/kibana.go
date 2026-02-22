@@ -13,22 +13,39 @@ import (
 // type-specific attributes are partially decoded to capture title and
 // description with remaining fields stored in Extras.
 type KibanaSavedObject struct {
-	ID                   string                      `json:"id"`
-	Type                 string                      `json:"type"`
-	Attributes           KibanaSavedObjectAttributes `json:"attributes"`
-	References           []KibanaReference           `json:"references,omitempty"`
-	CoreMigrationVersion string                      `json:"coreMigrationVersion,omitempty"`
-	TypeMigrationVersion map[string]string           `json:"typeMigrationVersion,omitempty"`
-	MigrationVersion     map[string]string           `json:"migrationVersion,omitempty"`
-	Managed              *bool                       `json:"managed,omitempty"`
-	CreatedAt            string                      `json:"created_at,omitempty"`
-	UpdatedAt            string                      `json:"updated_at,omitempty"`
-	CreatedBy            string                      `json:"created_by,omitempty"`
-	UpdatedBy            string                      `json:"updated_by,omitempty"`
-	Version              string                      `json:"version,omitempty"`
-	Namespaces           []string                    `json:"namespaces,omitempty"`
-	OriginID             string                      `json:"originId,omitempty"`
-	path                 string
+	// ID is the unique identifier for the saved object.
+	ID string `json:"id"`
+	// Type is the object type (e.g. "dashboard", "visualization", "search").
+	Type string `json:"type"`
+	// Attributes is the main payload content for the object, which varies per type.
+	Attributes KibanaSavedObjectAttributes `json:"attributes"`
+	// References lists other saved objects that this object depends on for
+	// migration and linking.
+	References []KibanaReference `json:"references,omitempty"`
+	// CoreMigrationVersion tracks core migration status relative to Kibana versions.
+	CoreMigrationVersion string `json:"coreMigrationVersion,omitempty"`
+	// TypeMigrationVersion tracks type-specific migration status relative to
+	// Kibana versions.
+	TypeMigrationVersion map[string]string `json:"typeMigrationVersion,omitempty"`
+	// MigrationVersion tracks object migration status relative to Kibana versions.
+	MigrationVersion map[string]string `json:"migrationVersion,omitempty"`
+	// Managed indicates whether the object is managed by Kibana (multi-space management).
+	Managed *bool `json:"managed,omitempty"`
+	// CreatedAt is the timestamp when the object was created.
+	CreatedAt string `json:"created_at,omitempty"`
+	// UpdatedAt is the timestamp when the object was last updated.
+	UpdatedAt string `json:"updated_at,omitempty"`
+	// CreatedBy is the user who created the object.
+	CreatedBy string `json:"created_by,omitempty"`
+	// UpdatedBy is the user who last updated the object.
+	UpdatedBy string `json:"updated_by,omitempty"`
+	// Version is the object version string.
+	Version string `json:"version,omitempty"`
+	// Namespaces lists the Kibana spaces this object belongs to.
+	Namespaces []string `json:"namespaces,omitempty"`
+	// OriginID is the identifier for the original object in cross-space copies.
+	OriginID string `json:"originId,omitempty"`
+	path     string
 }
 
 // Path returns the file path relative to the package root.
