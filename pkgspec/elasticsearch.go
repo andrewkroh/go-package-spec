@@ -17,7 +17,7 @@ type DynamicTemplateValue struct {
 }
 
 type IndexAnalysis struct {
-	// Analyzer definition of custom analyzer.
+	// Definition of custom analyzer.
 	Analyzer map[string]IndexAnalyzer `json:"analyzer,omitempty" yaml:"analyzer,omitempty"`
 }
 
@@ -58,8 +58,8 @@ const (
 )
 
 type IndexSettings struct {
-	// Codec type of compression to use. The default is to use LZ4, `best_compression` uses DEFLATE,
-	// with higher compression but lower ingestion performance.
+	// Type of compression to use. The default is to use LZ4, `best_compression` uses DEFLATE, with
+	// higher compression but lower ingestion performance.
 	Codec   IndexCodec         `json:"codec,omitempty" yaml:"codec,omitempty"`
 	Mapping IndexMappingConfig `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 	Sort    IndexSort          `json:"sort,omitempty" yaml:"sort,omitempty"`
@@ -74,9 +74,9 @@ type IndexSort struct {
 
 // IndexTemplate index template definition
 type IndexTemplate struct {
-	// DataStream data stream section of index template
+	// Data stream section of index template
 	DataStream IndexTemplateDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	// IngestPipeline elasticsearch ingest pipeline settings
+	// Elasticsearch ingest pipeline settings
 	IngestPipeline IndexTemplatePipeline `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
 	// Mappings section of index template
 	Mappings IndexTemplateMappings `json:"mappings,omitempty" yaml:"mappings,omitempty"`
@@ -86,36 +86,36 @@ type IndexTemplate struct {
 
 // IndexTemplateDataStream data stream section of index template
 type IndexTemplateDataStream struct {
-	// Hidden makes the data stream hidden
+	// Makes the data stream hidden
 	Hidden *bool `json:"hidden,omitempty" yaml:"hidden,omitempty"`
 }
 
 // IndexTemplateMappings mappings section of index template
 type IndexTemplateMappings struct {
-	// DateDetection if true, new string fields will be checked to see if their contents match with
+	// If true, new string fields will be checked to see if their contents match with
 	// `dynamic_date_formats`. If they do, the field is dynamically added with type `date`. Set to false
 	// to disable this feature.
 	DateDetection *bool `json:"date_detection,omitempty" yaml:"date_detection,omitempty"`
 	// Dynamic controls whether new fields can be added dynamically to the mapping.
 	Dynamic any `json:"dynamic,omitempty" yaml:"dynamic,omitempty"`
-	// DynamicDateFormats custom date formats to use for date detection.
+	// Custom date formats to use for date detection.
 	DynamicDateFormats []string `json:"dynamic_date_formats,omitempty" yaml:"dynamic_date_formats,omitempty"`
 	// DynamicTemplates defines custom rules for dynamic field mapping.
 	DynamicTemplates any `json:"dynamic_templates,omitempty" yaml:"dynamic_templates,omitempty"`
-	// Subobjects turn the support for subobjects on or off in the mapping configuration for the data
-	// stream. By default, it's set to `true`, enabling Elasticsearch to expands fields that contain
-	// dots in their names to their corresponding object structure. Setting it to `false` restricts
-	// objects from holding subobjects, enabling storing documents with dot-contained field names and
-	// common prefixes. It is still possible to send documents that have objects to a data stream that
-	// has set subobjects to `false`. Example when the subobjects mapping option is `false`: PUT
-	// my-index-000001 { "mappings": { "subobjects": false } } PUT my-index-000001/_doc/metric_1 {
-	// "time" : "100ms", "time.min" : "10ms", "time.max" : "900ms" } Before disabling subobjects,
-	// consider the following implications: - Nested field types cannot be used in data streams. - The
-	// subobjects mapping definition is immutable. - This setting depends on auto-flattening mappings,
-	// which comes with limitations [^1] for integration and custom mappings in data streams without
-	// subobjects. - Auto-flattening is available starting from version 8.14, integrations must be on at
-	// least this version. For comprehensive details on subobjects, refer to the Elasticsearch
-	// documentation [^2]. [^1]: Auto-flattening limitations are documented at:
+	// Turn the support for subobjects on or off in the mapping configuration for the data stream. By
+	// default, it's set to `true`, enabling Elasticsearch to expands fields that contain dots in their
+	// names to their corresponding object structure. Setting it to `false` restricts objects from
+	// holding subobjects, enabling storing documents with dot-contained field names and common
+	// prefixes. It is still possible to send documents that have objects to a data stream that has set
+	// subobjects to `false`. Example when the subobjects mapping option is `false`: PUT my-index-000001
+	// { "mappings": { "subobjects": false } } PUT my-index-000001/_doc/metric_1 { "time" : "100ms",
+	// "time.min" : "10ms", "time.max" : "900ms" } Before disabling subobjects, consider the following
+	// implications: - Nested field types cannot be used in data streams. - The subobjects mapping
+	// definition is immutable. - This setting depends on auto-flattening mappings, which comes with
+	// limitations [^1] for integration and custom mappings in data streams without subobjects. -
+	// Auto-flattening is available starting from version 8.14, integrations must be on at least this
+	// version. For comprehensive details on subobjects, refer to the Elasticsearch documentation [^2].
+	// [^1]: Auto-flattening limitations are documented at:
 	// https://www.elastic.co/guide/en/elasticsearch/reference/master/subobjects.html#_auto_flattening_o
 	// bject_mappings [^2]: Elasticsearch documentation on subobjects:
 	// https://www.elastic.co/guide/en/elasticsearch/reference/current/subobjects.html
@@ -124,7 +124,7 @@ type IndexTemplateMappings struct {
 
 // IndexTemplatePipeline elasticsearch ingest pipeline settings
 type IndexTemplatePipeline struct {
-	// Name ingest pipeline name
+	// Ingest pipeline name
 	Name string `json:"name" yaml:"name"`
 }
 

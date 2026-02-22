@@ -12,8 +12,7 @@ type BuildDependencies struct {
 
 // BuildDependenciesECS ECS dependency
 type BuildDependenciesECS struct {
-	// ImportMappings whether or not import common used dynamic templates and properties into the
-	// package
+	// Whether or not import common used dynamic templates and properties into the package
 	ImportMappings *bool `json:"import_mappings,omitempty" yaml:"import_mappings,omitempty"`
 	// Reference is the ECS version source reference. Values begin with "git@" (e.g. "git@v8.11.0").
 	Reference string `json:"reference" yaml:"reference"`
@@ -21,7 +20,7 @@ type BuildDependenciesECS struct {
 
 type BuildManifest struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Dependencies package dependencies
+	// Package dependencies
 	Dependencies BuildDependencies `json:"dependencies" yaml:"dependencies"`
 }
 

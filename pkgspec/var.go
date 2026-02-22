@@ -10,72 +10,72 @@ type Var struct {
 	// Default is the default value for the variable.
 	Default    any        `json:"default,omitempty" yaml:"default,omitempty"`
 	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	// Description short description of variable.
+	// Short description of variable.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	// HideInDeploymentModes whether this variable should be hidden in the UI for agent policies
-	// intended to some specific deployment modes.
+	// Whether this variable should be hidden in the UI for agent policies intended to some specific
+	// deployment modes.
 	HideInDeploymentModes []VarHideInDeploymentMode `json:"hide_in_deployment_modes,omitempty" yaml:"hide_in_deployment_modes,omitempty"`
-	// MaxDuration the maximum allowed duration value for duration data types. This property can only be
-	// used when the type is set to 'duration'.
+	// The maximum allowed duration value for duration data types. This property can only be used when
+	// the type is set to 'duration'.
 	MaxDuration string `json:"max_duration,omitempty" yaml:"max_duration,omitempty"`
-	// MinDuration the minimum allowed duration value for duration data types. This property can only be
-	// used when the type is set to 'duration'.
+	// The minimum allowed duration value for duration data types. This property can only be used when
+	// the type is set to 'duration'.
 	MinDuration string `json:"min_duration,omitempty" yaml:"min_duration,omitempty"`
-	// Multi can variable contain multiple values?
+	// Can variable contain multiple values?
 	Multi *bool `json:"multi,omitempty" yaml:"multi,omitempty"`
-	// Name variable name.
+	// Variable name.
 	Name string `json:"name" yaml:"name"`
 	// Options provides the list of selectable options when type is "select".
 	Options any `json:"options,omitempty" yaml:"options,omitempty"`
-	// Required is variable required?
+	// Is variable required?
 	Required *bool `json:"required,omitempty" yaml:"required,omitempty"`
-	// Secret specifying that a variable is secret means that Kibana will store the value separate from
-	// the package policy in a more secure index. This is useful for passwords and other sensitive
+	// Specifying that a variable is secret means that Kibana will store the value separate from the
+	// package policy in a more secure index. This is useful for passwords and other sensitive
 	// information. One caveat is that secrets are write-only, once a user writes a secret var they
 	// cannot read it again, only overwrite it.
 	Secret *bool `json:"secret,omitempty" yaml:"secret,omitempty"`
-	// ShowUser should this variable be shown to the user by default?
+	// Should this variable be shown to the user by default?
 	ShowUser *bool `json:"show_user,omitempty" yaml:"show_user,omitempty"`
 	// Title of variable.
 	Title string `json:"title,omitempty" yaml:"title,omitempty"`
-	// Type data type of variable. A duration type is a sequence of decimal numbers, each with a unit
-	// suffix, such as "60s", "1m" or "2h45m". Duration values must follow these rules: - Use time units
-	// of "ms", "s", "m", "h". - When using min_duration, default, and max_duration, they must satisfy:
-	// 0 <= min_duration <= default <= max_duration
+	// Data type of variable. A duration type is a sequence of decimal numbers, each with a unit suffix,
+	// such as "60s", "1m" or "2h45m". Duration values must follow these rules: - Use time units of
+	// "ms", "s", "m", "h". - When using min_duration, default, and max_duration, they must satisfy: 0
+	// <= min_duration <= default <= max_duration
 	Type VarType `json:"type" yaml:"type"`
-	// URLAllowedSchemes list of allowed URL schemes for the url type. If empty, any scheme is allowed.
-	// An empty string can be used to indicate that the scheme is not mandatory.
+	// List of allowed URL schemes for the url type. If empty, any scheme is allowed. An empty string
+	// can be used to indicate that the scheme is not mandatory.
 	URLAllowedSchemes []string `json:"url_allowed_schemes,omitempty" yaml:"url_allowed_schemes,omitempty"`
 }
 
 type VarGroup struct {
-	// Description help text explaining what this selector controls.
+	// Help text explaining what this selector controls.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	// Name unique identifier for this variable group selector.
+	// Unique identifier for this variable group selector.
 	Name string `json:"name" yaml:"name"`
-	// Options available options. First option is the default.
+	// Available options. First option is the default.
 	Options []VarGroupOption `json:"options" yaml:"options"`
-	// Required whether a selection is required for this var_group. When true, Fleet UI will require the
-	// user to select an option, and all variables within the selected option are treated as required
+	// Whether a selection is required for this var_group. When true, Fleet UI will require the user to
+	// select an option, and all variables within the selected option are treated as required
 	// (inferred). When false (default), the entire var_group is optional. Variables within a var_group
 	// must not have required: true - the requirement is controlled entirely by this field.
 	Required *bool `json:"required,omitempty" yaml:"required,omitempty"`
-	// SelectorTitle label for the dropdown selector (e.g., "Preferred method").
+	// Label for the dropdown selector (e.g., "Preferred method").
 	SelectorTitle string `json:"selector_title" yaml:"selector_title"`
-	// Title section header displayed in the UI (e.g., "Setup Access").
+	// Section header displayed in the UI (e.g., "Setup Access").
 	Title string `json:"title" yaml:"title"`
 }
 
 type VarGroupOption struct {
-	// Description help text for this option.
+	// Help text for this option.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	// HideInDeploymentModes deployment modes where this option is hidden.
+	// Deployment modes where this option is hidden.
 	HideInDeploymentModes []VarGroupOptionHideInDeploymentMode `json:"hide_in_deployment_modes,omitempty" yaml:"hide_in_deployment_modes,omitempty"`
-	// Name unique identifier (stored in policy when selected).
+	// Unique identifier (stored in policy when selected).
 	Name string `json:"name" yaml:"name"`
-	// Title display title shown in the dropdown.
+	// Display title shown in the dropdown.
 	Title string `json:"title" yaml:"title"`
-	// Vars variable names to display when this option is selected.
+	// Variable names to display when this option is selected.
 	Vars []string `json:"vars" yaml:"vars"`
 }
 

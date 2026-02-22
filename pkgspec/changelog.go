@@ -9,9 +9,9 @@ import (
 
 type Changelog struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Changes list of changes in package version.
+	// List of changes in package version.
 	Changes []ChangelogEntry `json:"changes" yaml:"changes"`
-	// Version package version.
+	// Package version.
 	Version string `json:"version" yaml:"version"`
 	// Date is the approximate release date, populated via git blame when WithGitMetadata is used.
 	Date *time.Time `json:"date,omitempty" yaml:"-"`

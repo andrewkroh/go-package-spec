@@ -10,7 +10,7 @@ type Agent struct {
 }
 
 type AgentPrivileges struct {
-	// Root set to true if collection requires root privileges in the agent.
+	// Set to true if collection requires root privileges in the agent.
 	Root *bool `json:"root,omitempty" yaml:"root,omitempty"`
 }
 
@@ -94,7 +94,7 @@ const (
 
 // Conditions under which this package can be installed.
 type Conditions struct {
-	// Agent elastic Agent conditions
+	// Elastic Agent conditions
 	Agent ConditionsAgent `json:"agent,omitempty" yaml:"agent,omitempty"`
 	// Elastic conditions
 	Elastic ConditionsElastic `json:"elastic,omitempty" yaml:"elastic,omitempty"`
@@ -104,17 +104,17 @@ type Conditions struct {
 
 // ConditionsAgent elastic Agent conditions
 type ConditionsAgent struct {
-	// Version elastic Agent versions compatible with this package.
+	// Elastic Agent versions compatible with this package.
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 // ConditionsElastic elastic conditions
 type ConditionsElastic struct {
-	// Capabilities stack features that are required by the package to work properly. The package should
-	// not be used in deployments without the indicated features. Packages that don't indicate any
-	// capability condition can be used on any deployment.
+	// Stack features that are required by the package to work properly. The package should not be used
+	// in deployments without the indicated features. Packages that don't indicate any capability
+	// condition can be used on any deployment.
 	Capabilities []ConditionsElasticCapability `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
-	// Subscription the subscription required for this package.
+	// The subscription required for this package.
 	Subscription ConditionsElasticSubscription `json:"subscription,omitempty" yaml:"subscription,omitempty"`
 }
 
@@ -143,7 +143,7 @@ const (
 
 // ConditionsKibana kibana conditions
 type ConditionsKibana struct {
-	// Version kibana versions compatible with this package.
+	// Kibana versions compatible with this package.
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
@@ -178,34 +178,34 @@ func (v *ContentManifest) UnmarshalYAML(node *yamlv3.Node) error {
 
 // Deprecated information on deprecation of a package or an individual feature.
 type Deprecated struct {
-	// Description reason of deprecation.
+	// Reason of deprecation.
 	Description string               `json:"description" yaml:"description"`
 	ReplacedBy  DeprecatedReplacedBy `json:"replaced_by,omitempty" yaml:"replaced_by,omitempty"`
-	// Since version since when is deprecated.
+	// Version since when is deprecated.
 	Since string `json:"since" yaml:"since"`
 }
 
 type DeprecatedReplacedBy struct {
-	// DataStream name of the data stream that replaces the deprecated one.
+	// Name of the data stream that replaces the deprecated one.
 	DataStream string `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	// Input name of the input that replaces the deprecated one.
+	// Name of the input that replaces the deprecated one.
 	Input string `json:"input,omitempty" yaml:"input,omitempty"`
-	// Package name of the package that replaces the deprecated one.
+	// Name of the package that replaces the deprecated one.
 	Package string `json:"package,omitempty" yaml:"package,omitempty"`
-	// PolicyTemplate name of the policy template that replaces the deprecated one.
+	// Name of the policy template that replaces the deprecated one.
 	PolicyTemplate string `json:"policy_template,omitempty" yaml:"policy_template,omitempty"`
-	// Variable name of the variable that replaces the deprecated one.
+	// Name of the variable that replaces the deprecated one.
 	Variable string `json:"variable,omitempty" yaml:"variable,omitempty"`
 }
 
 // Discovery description of the data this package can be used with. It can be used to discover the
 // package from elements in the existing data.
 type Discovery struct {
-	// Datasets list of the datasets this package can be used with. For a package to be used with an
-	// index, the `data_stream.dataset` field of this index should be one of the datasets listed here.
+	// List of the datasets this package can be used with. For a package to be used with an index, the
+	// `data_stream.dataset` field of this index should be one of the datasets listed here.
 	Datasets []DiscoveryDataset `json:"datasets,omitempty" yaml:"datasets,omitempty"`
-	// Fields list of fields this package expects to find in an index. For a package to be used with an
-	// index, the index should contain all the fields listed here.
+	// List of fields this package expects to find in an index. For a package to be used with an index,
+	// the index should contain all the fields listed here.
 	Fields []DiscoveryField `json:"fields,omitempty" yaml:"fields,omitempty"`
 }
 
@@ -220,15 +220,15 @@ type DiscoveryField struct {
 }
 
 type Icon struct {
-	// DarkMode is this icon to be shown in dark mode?
+	// Is this icon to be shown in dark mode?
 	DarkMode *bool `json:"dark_mode,omitempty" yaml:"dark_mode,omitempty"`
 	// Size of the icon.
 	Size string `json:"size,omitempty" yaml:"size,omitempty"`
-	// Src relative path to the icon's image file.
+	// Relative path to the icon's image file.
 	Src string `json:"src" yaml:"src"`
 	// Title of icon.
 	Title string `json:"title,omitempty" yaml:"title,omitempty"`
-	// Type MIME type of the icon image file.
+	// MIME type of the icon image file.
 	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
@@ -244,7 +244,7 @@ type InputManifest struct {
 	Conditions Conditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	// Elasticsearch asset definitions
 	Elasticsearch InputElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
-	// PolicyTemplates list of policy templates offered by this package.
+	// List of policy templates offered by this package.
 	PolicyTemplates []InputPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
 	Vars            []Var                 `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -267,13 +267,13 @@ func (v *InputManifest) UnmarshalYAML(node *yamlv3.Node) error {
 
 // IntegrationElasticsearch elasticsearch requirements
 type IntegrationElasticsearch struct {
-	// Privileges elasticsearch privilege requirements
+	// Elasticsearch privilege requirements
 	Privileges IntegrationElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
 }
 
 // IntegrationElasticsearchPrivileges elasticsearch privilege requirements
 type IntegrationElasticsearchPrivileges struct {
-	// Cluster elasticsearch cluster privilege requirements
+	// Elasticsearch cluster privilege requirements
 	Cluster []string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
 }
 
@@ -283,13 +283,13 @@ type IntegrationManifest struct {
 	Conditions Conditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	// Elasticsearch requirements
 	Elasticsearch IntegrationElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
-	// PolicyTemplates list of policy templates offered by this package.
+	// List of policy templates offered by this package.
 	PolicyTemplates []PolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
-	// PolicyTemplatesBehavior expected behavior when there are more than one policy template defined.
-	// When set to `combined_policy`, a single policy template is available that combines all the
-	// defined templates. When set to `individual_policies`, all policies are individually available,
-	// but there is no combined policy. The default value is `all`, where the combined policy template
-	// is available along with the individual policies.
+	// Expected behavior when there are more than one policy template defined. When set to
+	// `combined_policy`, a single policy template is available that combines all the defined templates.
+	// When set to `individual_policies`, all policies are individually available, but there is no
+	// combined policy. The default value is `all`, where the combined policy template is available
+	// along with the individual policies.
 	PolicyTemplatesBehavior string     `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
 	VarGroups               []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	Vars                    []Var      `json:"vars,omitempty" yaml:"vars,omitempty"`
@@ -317,29 +317,29 @@ type Manifest struct {
 	Categories   []Category `json:"categories,omitempty" yaml:"categories,omitempty"`
 	Deprecated   Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	Description  string     `json:"description" yaml:"description"`
-	// FormatVersion the version of the package specification format used by this package.
+	// The version of the package specification format used by this package.
 	FormatVersion string `json:"format_version" yaml:"format_version"`
 	Icons         []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
-	// Name the name of the package.
+	// The name of the package.
 	Name        string       `json:"name" yaml:"name"`
 	Owner       Owner        `json:"owner" yaml:"owner"`
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
 	Source      Source       `json:"source,omitempty" yaml:"source,omitempty"`
 	Title       string       `json:"title" yaml:"title"`
-	// Type the type of package.
+	// The type of package.
 	Type ManifestType `json:"type" yaml:"type"`
-	// Version the version of the package.
+	// The version of the package.
 	Version string `json:"version" yaml:"version"`
 }
 
 type Owner struct {
 	// Github team name of the package maintainer.
 	Github string `json:"github" yaml:"github"`
-	// Type describes who owns the package and the level of support that is provided. The 'elastic'
-	// value indicates that the package is built and maintained by Elastic. The 'partner' value
-	// indicates that the package is built and maintained by a partner vendor and may include
-	// involvement from Elastic. The 'community' value indicates the package is built and maintained by
-	// non-Elastic community members.
+	// Describes who owns the package and the level of support that is provided. The 'elastic' value
+	// indicates that the package is built and maintained by Elastic. The 'partner' value indicates that
+	// the package is built and maintained by a partner vendor and may include involvement from Elastic.
+	// The 'community' value indicates the package is built and maintained by non-Elastic community
+	// members.
 	Type OwnerType `json:"type" yaml:"type"`
 }
 
@@ -360,17 +360,17 @@ const (
 type Screenshot struct {
 	// Size of the screenshot.
 	Size string `json:"size,omitempty" yaml:"size,omitempty"`
-	// Src relative path to the screenshot's image file.
+	// Relative path to the screenshot's image file.
 	Src string `json:"src" yaml:"src"`
 	// Title of screenshot.
 	Title string `json:"title" yaml:"title"`
-	// Type MIME type of the screenshot image file.
+	// MIME type of the screenshot image file.
 	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
 // Source information about the source of the package.
 type Source struct {
-	// License identifier of the license of the package, as specified in https://spdx.org/licenses/.
+	// Identifier of the license of the package, as specified in https://spdx.org/licenses/.
 	License SourceLicense `json:"license,omitempty" yaml:"license,omitempty"`
 }
 

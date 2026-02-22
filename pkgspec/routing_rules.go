@@ -6,7 +6,7 @@ import yamlv3 "gopkg.in/yaml.v3"
 
 // RoutingRule defines a single routing rule within a RoutingRuleSet (technical preview).
 type RoutingRule struct {
-	// If conditionally execute the processor
+	// Conditionally execute the processor
 	If string `json:"if" yaml:"if"`
 	// Namespace is the field reference or static value for the namespace part of the data stream name.
 	Namespace StringOrStrings `json:"namespace,omitempty" yaml:"namespace,omitempty"`
@@ -19,10 +19,10 @@ type RoutingRule struct {
 // Routing rules are a technical preview feature.
 type RoutingRuleSet struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Rules list of routing rules
+	// List of routing rules
 	Rules []RoutingRule `json:"rules" yaml:"rules"`
-	// SourceDataset source dataset to be used by this reroute processsor. If applicable, documents from
-	// this dataset will be routed according to the rules defined.
+	// Source dataset to be used by this reroute processsor. If applicable, documents from this dataset
+	// will be routed according to the rules defined.
 	SourceDataset string `json:"source_dataset" yaml:"source_dataset"`
 }
 

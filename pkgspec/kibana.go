@@ -6,14 +6,14 @@ import yamlv3 "gopkg.in/yaml.v3"
 
 type Tag struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// AssetIDs asset IDs where this tag is going to be added. If two or more pacakges define the same
-	// tag, there will be just one tag created in Kibana and all the assets will be using the same tag.
+	// Asset IDs where this tag is going to be added. If two or more pacakges define the same tag, there
+	// will be just one tag created in Kibana and all the assets will be using the same tag.
 	AssetIDs []string `json:"asset_ids,omitempty" yaml:"asset_ids,omitempty"`
-	// AssetTypes this tag will be added to all the assets of these types included in the package. If
-	// two or more pacakges define the same tag, there will be just one tag created in Kibana and all
-	// the assets will be using the same tag.
+	// This tag will be added to all the assets of these types included in the package. If two or more
+	// pacakges define the same tag, there will be just one tag created in Kibana and all the assets
+	// will be using the same tag.
 	AssetTypes []TagAssetType `json:"asset_types,omitempty" yaml:"asset_types,omitempty"`
-	// Text tag name.
+	// Tag name.
 	Text string `json:"text,omitempty" yaml:"text,omitempty"`
 }
 

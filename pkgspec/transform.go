@@ -35,18 +35,17 @@ func (v *Transform) UnmarshalYAML(node *yamlv3.Node) error {
 }
 
 type TransformDest struct {
-	// Aliases the aliases that the destination index for the transform should have.
+	// The aliases that the destination index for the transform should have.
 	Aliases  []TransformDestAlias `json:"aliases,omitempty" yaml:"aliases,omitempty"`
 	Index    string               `json:"index" yaml:"index"`
 	Pipeline string               `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 }
 
 type TransformDestAlias struct {
-	// Alias the name of the alias
+	// The name of the alias
 	Alias string `json:"alias" yaml:"alias"`
-	// MoveOnCreation whether or not the destination index should be the only index in this alias. If
-	// true, all the other indices will be removed from this alias before adding the destination index
-	// to this alias.
+	// Whether or not the destination index should be the only index in this alias. If true, all the
+	// other indices will be removed from this alias before adding the destination index to this alias.
 	MoveOnCreation *bool `json:"move_on_creation,omitempty" yaml:"move_on_creation,omitempty"`
 }
 
@@ -60,16 +59,16 @@ const (
 
 type TransformDestIndexSettings struct {
 	Codec IndexCodec `json:"codec,omitempty" yaml:"codec,omitempty"`
-	// Hidden makes the index hidden.
+	// Makes the index hidden.
 	Hidden  *bool              `json:"hidden,omitempty" yaml:"hidden,omitempty"`
 	Mapping IndexMappingConfig `json:"mapping,omitempty" yaml:"mapping,omitempty"`
-	// Mode index mode for lookup indices.
+	// Index mode for lookup indices.
 	Mode TransformDestIndexMode `json:"mode,omitempty" yaml:"mode,omitempty"`
-	// NumberOfRoutingShards number used when splitting shards.
+	// Number used when splitting shards.
 	NumberOfRoutingShards int `json:"number_of_routing_shards,omitempty" yaml:"number_of_routing_shards,omitempty"`
 	NumberOfShards        int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
-	// RefreshInterval how often to perform a refresh operation, which makes recent changes to the index
-	// visible to search.
+	// How often to perform a refresh operation, which makes recent changes to the index visible to
+	// search.
 	RefreshInterval string    `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
 	Sort            IndexSort `json:"sort,omitempty" yaml:"sort,omitempty"`
 }
@@ -94,9 +93,9 @@ type TransformLatest struct {
 
 type TransformManifest struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// DestinationIndexTemplate elasticsearch index template for the transform's destination index
+	// Elasticsearch index template for the transform's destination index
 	DestinationIndexTemplate TransformDestIndexTemplate `json:"destination_index_template,omitempty" yaml:"destination_index_template,omitempty"`
-	// Start determines if the transform will be started upon installation
+	// Determines if the transform will be started upon installation
 	Start *bool `json:"start,omitempty" yaml:"start,omitempty"`
 }
 
@@ -123,7 +122,7 @@ type TransformPivot struct {
 }
 
 type TransformRetentionPolicy struct {
-	// Time schema definition for a retention policy
+	// Schema definition for a retention policy
 	Time TransformRetentionPolicyTime `json:"time,omitempty" yaml:"time,omitempty"`
 }
 

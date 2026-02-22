@@ -117,7 +117,7 @@ func (e *Emitter) emitStruct(f *File, goType *GoType) {
 
 	for _, field := range goType.Fields {
 		if field.Doc != "" {
-			for _, line := range wrapComment(formatDocComment(field.Name, field.Doc), 100) {
+			for _, line := range wrapComment(formatFieldDocComment(field.Doc), 100) {
 				fields = append(fields, Comment(line))
 			}
 		}
@@ -431,8 +431,8 @@ type docCommentLink struct {
 	url  string
 }
 
-// formatDocComment formats a Go doc comment for a type or field.
-// It ensures the comment starts with the type/field name per Go convention,
+// formatDocComment formats a Go doc comment for a type or enum.
+// It ensures the comment starts with the type name per Go convention,
 // normalizes whitespace, and converts Markdown links to Go doc link references.
 func formatDocComment(name, doc string) docComment {
 	// Normalize: collapse all whitespace (newlines, tabs, multiple spaces)
@@ -475,6 +475,36 @@ func formatDocComment(name, doc string) docComment {
 	}
 
 	return docComment{text: name + " " + firstChar + doc[1:], links: links}
+}
+
+// formatFieldDocComment formats a doc comment for a struct field.
+// Unlike type-level comments, field comments do not prepend the field name,
+// since the field name is already visible in the struct declaration.
+func formatFieldDocComment(doc string) docComment {
+	doc = strings.Join(strings.Fields(doc), " ")
+	if doc == "" {
+		return docComment{}
+	}
+
+	// Extract Markdown links [text](url) → [text], collecting definitions.
+	var links []docCommentLink
+	seen := map[string]bool{}
+	doc = mdLinkRe.ReplaceAllStringFunc(doc, func(match string) string {
+		m := mdLinkRe.FindStringSubmatch(match)
+		linkText, linkURL := m[1], m[2]
+		if !seen[linkText] {
+			seen[linkText] = true
+			links = append(links, docCommentLink{text: linkText, url: linkURL})
+		}
+		return "[" + linkText + "]"
+	})
+
+	// Capitalize the first letter for a proper sentence.
+	if len(doc) > 0 {
+		doc = strings.ToUpper(doc[:1]) + doc[1:]
+	}
+
+	return docComment{text: doc, links: links}
 }
 
 // wrapComment word-wraps a docComment into lines that fit within maxWidth

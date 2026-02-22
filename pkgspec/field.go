@@ -7,13 +7,13 @@ import yamlv3 "gopkg.in/yaml.v3"
 // Field represents a field definition in a data stream's field mapping.
 type Field struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Analyzer name of the analyzer to use for indexing. Unless search_analyzer is specified this
-	// analyzer is used for both indexing and searching. Only valid for 'type: text'.
+	// Name of the analyzer to use for indexing. Unless search_analyzer is specified this analyzer is
+	// used for both indexing and searching. Only valid for 'type: text'.
 	Analyzer string `json:"analyzer,omitempty" yaml:"analyzer,omitempty"`
-	// CopyTo the copy_to parameter allows you to copy the values of multiple fields into a group field,
-	// which can then be queried as a single field.
+	// The copy_to parameter allows you to copy the values of multiple fields into a group field, which
+	// can then be queried as a single field.
 	CopyTo string `json:"copy_to,omitempty" yaml:"copy_to,omitempty"`
-	// DateFormat the date format(s) that can be parsed. Type date format default to
+	// The date format(s) that can be parsed. Type date format default to
 	// `strict_date_optional_time||epoch_millis`, see the [doc]. In JSON documents, dates are
 	// represented as strings. Elasticsearch uses a set of preconfigured formats to recognize and parse
 	// these strings into a long value representing _milliseconds-since-the-epoch_ in UTC. Besides the
@@ -25,127 +25,124 @@ type Field struct {
 	// [custom formats]: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html#custom-date-formats
 	DateFormat    string `json:"date_format,omitempty" yaml:"date_format,omitempty"`
 	DefaultMetric any    `json:"default_metric,omitempty" yaml:"default_metric,omitempty"`
-	// Description short description of field
+	// Short description of field
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	// Dimension declare a field as dimension of time series. This is attached to the field as a
+	// Declare a field as dimension of time series. This is attached to the field as a
 	// `time_series_dimension` mapping parameter.
 	Dimension *bool `json:"dimension,omitempty" yaml:"dimension,omitempty"`
-	// DocValues controls whether doc values are enabled for a field. All fields which support doc
-	// values have them enabled by default. If you are sure that you don’t need to sort or aggregate
-	// on a field, or access the field value from a script, you can disable doc values in order to save
-	// disk space. You cannot disable doc values for wildcard fields.
+	// Controls whether doc values are enabled for a field. All fields which support doc values have
+	// them enabled by default. If you are sure that you don’t need to sort or aggregate on a field,
+	// or access the field value from a script, you can disable doc values in order to save disk space.
+	// You cannot disable doc values for wildcard fields.
 	DocValues *bool `json:"doc_values,omitempty" yaml:"doc_values,omitempty"`
 	// Dynamic controls whether new fields are added dynamically. Accepts true, false, "strict", or
 	// "runtime".
 	Dynamic any `json:"dynamic,omitempty" yaml:"dynamic,omitempty"`
-	// Enabled the enabled setting, which can be applied only to the top-level mapping definition and to
-	// object fields, causes Elasticsearch to skip parsing of the contents of the field entirely. The
-	// JSON can still be retrieved from the _source field, but it is not searchable or stored in any
-	// other way.
+	// The enabled setting, which can be applied only to the top-level mapping definition and to object
+	// fields, causes Elasticsearch to skip parsing of the contents of the field entirely. The JSON can
+	// still be retrieved from the _source field, but it is not searchable or stored in any other way.
 	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	// Example values for this field.
 	Example any `json:"example,omitempty" yaml:"example,omitempty"`
-	// ExpectedValues an array of expected values for the field. When defined, these are the only
-	// expected values.
+	// An array of expected values for the field. When defined, these are the only expected values.
 	ExpectedValues []string `json:"expected_values,omitempty" yaml:"expected_values,omitempty"`
 	// External source reference
 	External FieldExternal `json:"external,omitempty" yaml:"external,omitempty"`
-	// Fields sub-fields, when type is group
+	// Sub-fields, when type is group
 	Fields []Field `json:"fields,omitempty" yaml:"fields,omitempty"`
-	// IgnoreAbove strings longer than the ignore_above setting will not be indexed or stored. For
-	// arrays of strings, ignore_above will be applied for each array element separately and string
-	// elements longer than ignore_above will not be indexed or stored. Fleet honors this for `keyword`
-	// and `wildcard` types. Defaults to 1024.
+	// Strings longer than the ignore_above setting will not be indexed or stored. For arrays of
+	// strings, ignore_above will be applied for each array element separately and string elements
+	// longer than ignore_above will not be indexed or stored. Fleet honors this for `keyword` and
+	// `wildcard` types. Defaults to 1024.
 	IgnoreAbove int `json:"ignore_above,omitempty" yaml:"ignore_above,omitempty"`
-	// IgnoreMalformed trying to index the wrong data type into a field throws an exception by default,
-	// and rejects the whole document. The ignore_malformed parameter, if set to true, allows the
-	// exception to be ignored. The malformed field is not indexed, but other fields in the document are
-	// processed normally. Defaults to false.
+	// Trying to index the wrong data type into a field throws an exception by default, and rejects the
+	// whole document. The ignore_malformed parameter, if set to true, allows the exception to be
+	// ignored. The malformed field is not indexed, but other fields in the document are processed
+	// normally. Defaults to false.
 	IgnoreMalformed *bool `json:"ignore_malformed,omitempty" yaml:"ignore_malformed,omitempty"`
-	// IncludeInParent for nested field types, this specifies if all fields in the nested object are
-	// also added to the parent document as standard (flat) fields.
+	// For nested field types, this specifies if all fields in the nested object are also added to the
+	// parent document as standard (flat) fields.
 	IncludeInParent *bool `json:"include_in_parent,omitempty" yaml:"include_in_parent,omitempty"`
-	// IncludeInRoot for nested field types, this specifies if all fields in the nested object are also
-	// added to the root document as standard (flat) fields.
+	// For nested field types, this specifies if all fields in the nested object are also added to the
+	// root document as standard (flat) fields.
 	IncludeInRoot *bool `json:"include_in_root,omitempty" yaml:"include_in_root,omitempty"`
-	// Index the index option controls whether field values are indexed. Fields that are not indexed are
+	// The index option controls whether field values are indexed. Fields that are not indexed are
 	// typically not queryable.
 	Index *bool `json:"index,omitempty" yaml:"index,omitempty"`
-	// InferenceID for semantic_text fields, this specifies the id of the inference endpoint associated
-	// with the field
+	// For semantic_text fields, this specifies the id of the inference endpoint associated with the
+	// field
 	InferenceID string `json:"inference_id,omitempty" yaml:"inference_id,omitempty"`
-	// MetricType the metric type of a numeric field. This is attached to the field as a
-	// `time_series_metric` mapping parameter. A gauge is a single-value measurement that can go up or
-	// down over time, such as a temperature. A counter is a single-value cumulative counter that only
-	// goes up, such as the number of requests processed by a web server. By default, no metric type is
-	// associated with a field.
+	// The metric type of a numeric field. This is attached to the field as a `time_series_metric`
+	// mapping parameter. A gauge is a single-value measurement that can go up or down over time, such
+	// as a temperature. A counter is a single-value cumulative counter that only goes up, such as the
+	// number of requests processed by a web server. By default, no metric type is associated with a
+	// field.
 	MetricType FieldMetricType `json:"metric_type,omitempty" yaml:"metric_type,omitempty"`
 	Metrics    any             `json:"metrics,omitempty" yaml:"metrics,omitempty"`
-	// MultiFields it is often useful to index the same field in different ways for different purposes.
-	// This is the purpose of multi-fields. For instance, a string field could be mapped as a text field
-	// for full-text search, and as a keyword field for sorting or aggregations. Fleet honors this for
+	// It is often useful to index the same field in different ways for different purposes. This is the
+	// purpose of multi-fields. For instance, a string field could be mapped as a text field for
+	// full-text search, and as a keyword field for sorting or aggregations. Fleet honors this for
 	// `keyword`, `text`, and `wildcard` types.
 	MultiFields []Field `json:"multi_fields,omitempty" yaml:"multi_fields,omitempty"`
 	// Name of field. Names containing dots are automatically split into sub-fields. Names with
 	// wildcards generate dynamic mappings.
 	Name string `json:"name" yaml:"name"`
-	// Normalize specifies the expected normalizations for a field. `array` normalization implies that
-	// the values in the field should always be an array, even if they are single values.
+	// Specifies the expected normalizations for a field. `array` normalization implies that the values
+	// in the field should always be an array, even if they are single values.
 	Normalize []FieldNormalize `json:"normalize,omitempty" yaml:"normalize,omitempty"`
-	// Normalizer specifies the name of a normalizer to apply to keyword fields. A simple normalizer
-	// called lowercase ships with elasticsearch and can be used. Custom normalizers can be defined as
-	// part of analysis index settings.
+	// Specifies the name of a normalizer to apply to keyword fields. A simple normalizer called
+	// lowercase ships with elasticsearch and can be used. Custom normalizers can be defined as part of
+	// analysis index settings.
 	Normalizer string `json:"normalizer,omitempty" yaml:"normalizer,omitempty"`
-	// NullValue the null_value parameter allows you to replace explicit null values with the specified
-	// value so that it can be indexed and searched. A null value cannot be indexed or searched. When a
-	// field is set to null, (or an empty array or an array of null values) it is treated as though that
-	// field has no values. The null_value needs to be the same data type as the field. For instance, a
-	// long field cannot have a string null_value. The null_value only influences how data is indexed,
-	// it doesn’t modify the _source document.
+	// The null_value parameter allows you to replace explicit null values with the specified value so
+	// that it can be indexed and searched. A null value cannot be indexed or searched. When a field is
+	// set to null, (or an empty array or an array of null values) it is treated as though that field
+	// has no values. The null_value needs to be the same data type as the field. For instance, a long
+	// field cannot have a string null_value. The null_value only influences how data is indexed, it
+	// doesn’t modify the _source document.
 	NullValue any `json:"null_value,omitempty" yaml:"null_value,omitempty"`
-	// ObjectType type of the members of the object when `type: object` is used. In these cases a
-	// dynamic template is created so direct subobjects of this field have the type indicated. When
+	// Type of the members of the object when `type: object` is used. In these cases a dynamic template
+	// is created so direct subobjects of this field have the type indicated. When
 	// `object_type_mapping_type` is also used, the dynamic mapping is only applied to values that have
 	// the given type, as detected by the JSON parser.
 	ObjectType FieldObjectType `json:"object_type,omitempty" yaml:"object_type,omitempty"`
-	// ObjectTypeMappingType type that members of a field of with `type: object` must have in the source
-	// document. This type corresponds to the data type detected by the JSON parser, and is translated
-	// to the `match_mapping_type` parameter of Elasticsearch dynamic templates.
+	// Type that members of a field of with `type: object` must have in the source document. This type
+	// corresponds to the data type detected by the JSON parser, and is translated to the
+	// `match_mapping_type` parameter of Elasticsearch dynamic templates.
 	ObjectTypeMappingType FieldObjectTypeMappingType `json:"object_type_mapping_type,omitempty" yaml:"object_type_mapping_type,omitempty"`
-	// Path for alias type fields this is the path to the target field. Note that this must be the full
-	// path, including any parent objects (e.g. object1.object2.field).
+	// For alias type fields this is the path to the target field. Note that this must be the full path,
+	// including any parent objects (e.g. object1.object2.field).
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
-	// Pattern regular expression pattern matching the allowed values for the field. This is used for
+	// Regular expression pattern matching the allowed values for the field. This is used for
 	// development-time data validation.
 	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 	// Runtime specifies if this field is evaluated at query time. Can be a boolean or a script string.
 	Runtime any `json:"runtime,omitempty" yaml:"runtime,omitempty"`
-	// ScalingFactor the scaling factor to use when encoding values. Values will be multiplied by this
-	// factor at index time and rounded to the closest long value. For instance, a scaled_float with a
-	// scaling_factor of 10 would internally store 2.34 as 23 and all search-time operations (queries,
-	// aggregations, sorting) will behave as if the document had a value of 2.3. High values of
-	// scaling_factor improve accuracy but also increase space requirements. Only valid for 'type:
-	// scaled_float'.
+	// The scaling factor to use when encoding values. Values will be multiplied by this factor at index
+	// time and rounded to the closest long value. For instance, a scaled_float with a scaling_factor of
+	// 10 would internally store 2.34 as 23 and all search-time operations (queries, aggregations,
+	// sorting) will behave as if the document had a value of 2.3. High values of scaling_factor improve
+	// accuracy but also increase space requirements. Only valid for 'type: scaled_float'.
 	ScalingFactor int `json:"scaling_factor,omitempty" yaml:"scaling_factor,omitempty"`
-	// SearchAnalyzer name of the analyzer to use for searching. Only valid for 'type: text'.
+	// Name of the analyzer to use for searching. Only valid for 'type: text'.
 	SearchAnalyzer string `json:"search_analyzer,omitempty" yaml:"search_analyzer,omitempty"`
-	// Store by default, field values are indexed, but not stored. This means that the field can be
-	// queried, but the original field cannot be retrieved. Setting this value to true ensures that the
-	// field is also stored, what is useful in situations where the field would not be available even in
-	// the _source, like when synthetic source mode is enabled.
+	// By default, field values are indexed, but not stored. This means that the field can be queried,
+	// but the original field cannot be retrieved. Setting this value to true ensures that the field is
+	// also stored, what is useful in situations where the field would not be available even in the
+	// _source, like when synthetic source mode is enabled.
 	Store *bool `json:"store,omitempty" yaml:"store,omitempty"`
-	// Subobjects specifies if field names containing dots should be expanded into subobjects. For
-	// example, if this is set to `true`, a field named `foo.bar` will be expanded into an object with a
-	// field named `bar` inside an object named `foo`.
+	// Specifies if field names containing dots should be expanded into subobjects. For example, if this
+	// is set to `true`, a field named `foo.bar` will be expanded into an object with a field named
+	// `bar` inside an object named `foo`.
 	Subobjects *bool `json:"subobjects,omitempty" yaml:"subobjects,omitempty"`
-	// Type datatype of field. If the type is set to object, a dynamic mapping is created. In this case,
-	// if the name doesn't contain any wildcard, the wildcard is added as the last segment of the path.
+	// Datatype of field. If the type is set to object, a dynamic mapping is created. In this case, if
+	// the name doesn't contain any wildcard, the wildcard is added as the last segment of the path.
 	Type FieldType `json:"type,omitempty" yaml:"type,omitempty"`
 	// Unit type to associate with a numeric field. This is attached to the field as metadata (via
 	// `meta`). By default, a field does not have a unit. The convention for percents is to use value 1
 	// to mean 100%.
 	Unit FieldUnit `json:"unit,omitempty" yaml:"unit,omitempty"`
-	// Value the value to associate with a constant_keyword field.
+	// The value to associate with a constant_keyword field.
 	Value string `json:"value,omitempty" yaml:"value,omitempty"`
 }
 

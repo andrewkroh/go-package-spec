@@ -7,9 +7,9 @@ import yamlv3 "gopkg.in/yaml.v3"
 // AgentPreStartScript optional: Custom sh script to be executed before starting the Elastic Agent
 // process (e.g. export environment variables)
 type AgentPreStartScript struct {
-	// Contents code to run before starting the Elastic Agent.
+	// Code to run before starting the Elastic Agent.
 	Contents string `json:"contents" yaml:"contents"`
-	// Language programming language of the pre-start script. Currently, only "sh" is supported.
+	// Programming language of the pre-start script. Currently, only "sh" is supported.
 	Language AgentPreStartScriptLanguage `json:"language,omitempty" yaml:"language,omitempty"`
 }
 
@@ -25,9 +25,9 @@ const (
 // AgentProvisioningScript optional: Script to run to customize the system where Elastic Agent runs
 // (e.g. installing new libraries/dependencies)
 type AgentProvisioningScript struct {
-	// Contents code to run as a provisioning script.
+	// Code to run as a provisioning script.
 	Contents string `json:"contents" yaml:"contents"`
-	// Language programming language of the provisioning script.
+	// Programming language of the provisioning script.
 	Language string `json:"language,omitempty" yaml:"language,omitempty"`
 }
 
@@ -35,9 +35,9 @@ type AgentProvisioningScript struct {
 // (_dev/test/config.yml).
 type InputTestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Policy configuration for policy tests
+	// Configuration for policy tests
 	Policy TestCategoryConfig `json:"policy,omitempty" yaml:"policy,omitempty"`
-	// System configuration for system tests
+	// Configuration for system tests
 	System TestCategoryConfig `json:"system,omitempty" yaml:"system,omitempty"`
 }
 
@@ -58,11 +58,11 @@ func (v *InputTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 // (test-common-config.yml).
 type PipelineTestCommonConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// DynamicFields dynamic fields with regular expressions defining their variable values.
+	// Dynamic fields with regular expressions defining their variable values.
 	DynamicFields map[string]any `json:"dynamic_fields,omitempty" yaml:"dynamic_fields,omitempty"`
-	// Fields field definitions
+	// Field definitions
 	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
-	// Multiline multi-line configuration
+	// Multi-line configuration
 	Multiline map[string]any `json:"multiline,omitempty" yaml:"multiline,omitempty"`
 	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
 	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
@@ -88,7 +88,7 @@ func (v *PipelineTestCommonConfig) UnmarshalYAML(node *yamlv3.Node) error {
 // PipelineTestEvent holds the input events for a JSON pipeline test (test-*.json).
 type PipelineTestEvent struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Events given events
+	// Given events
 	Events []map[string]any `json:"events" yaml:"events"`
 }
 
@@ -129,9 +129,9 @@ func (v *PipelineTestExpected) UnmarshalYAML(node *yamlv3.Node) error {
 // (test-*.json-config.yml).
 type PipelineTestJSONConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// DynamicFields dynamic fields with regular expressions defining their variable values.
+	// Dynamic fields with regular expressions defining their variable values.
 	DynamicFields map[string]any `json:"dynamic_fields,omitempty" yaml:"dynamic_fields,omitempty"`
-	// Fields field definitions
+	// Field definitions
 	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
 	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
 	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
@@ -158,11 +158,11 @@ func (v *PipelineTestJSONConfig) UnmarshalYAML(node *yamlv3.Node) error {
 // (test-*.log-config.yml).
 type PipelineTestRawConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// DynamicFields dynamic fields with regular expressions defining their variable values.
+	// Dynamic fields with regular expressions defining their variable values.
 	DynamicFields map[string]any `json:"dynamic_fields,omitempty" yaml:"dynamic_fields,omitempty"`
-	// Fields field definitions
+	// Field definitions
 	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
-	// Multiline multi-line configuration
+	// Multi-line configuration
 	Multiline map[string]any `json:"multiline,omitempty" yaml:"multiline,omitempty"`
 	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
 	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
@@ -188,12 +188,12 @@ func (v *PipelineTestRawConfig) UnmarshalYAML(node *yamlv3.Node) error {
 // PolicyTestConfig holds configuration for a policy test case (test-*.yml).
 type PolicyTestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// DataStream configuration for the data stream.
+	// Configuration for the data stream.
 	DataStream *PolicyTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	// Input the input of the package to test.
+	// The input of the package to test.
 	Input string   `json:"input,omitempty" yaml:"input,omitempty"`
 	Skip  TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
-	// Vars variables used to configure settings defined in the package manifest.
+	// Variables used to configure settings defined in the package manifest.
 	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
@@ -211,7 +211,7 @@ func (v *PolicyTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 }
 
 type PolicyTestDataStream struct {
-	// Vars variables used to configure settings defined in the data stream manifest.
+	// Variables used to configure settings defined in the data stream manifest.
 	Vars *TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
@@ -236,25 +236,24 @@ func (v *StaticTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 
 // SystemTestAgent configuration overrides for the Elastic Agent
 type SystemTestAgent struct {
-	// BaseImage elastic Agent image to be used for testing. Setting `default` will be used the same
-	// Elastic Agent image as the stack. Setting `systemd` will use the image containing all the
-	// binaries for running Beats (collectors) based in an OS compatible with systemd. Setting
-	// `complete` will use the "complete" image, that includes all supported collectors plus a web
-	// browser and the required runtime for synthetic testing.
+	// Elastic Agent image to be used for testing. Setting `default` will be used the same Elastic Agent
+	// image as the stack. Setting `systemd` will use the image containing all the binaries for running
+	// Beats (collectors) based in an OS compatible with systemd. Setting `complete` will use the
+	// "complete" image, that includes all supported collectors plus a web browser and the required
+	// runtime for synthetic testing.
 	BaseImage SystemTestAgentBaseImage `json:"base_image,omitempty" yaml:"base_image,omitempty"`
-	// LinuxCapabilities linux Capabilities that must been enabled in the system to run the Elastic
-	// Agent process
+	// Linux Capabilities that must been enabled in the system to run the Elastic Agent process
 	LinuxCapabilities []SystemTestAgentLinuxCapability `json:"linux_capabilities,omitempty" yaml:"linux_capabilities,omitempty"`
-	// PidMode control access to PID namespaces. When set to `host`, the Elastic Agent will have access
-	// to the PID namespace of the host.
+	// Control access to PID namespaces. When set to `host`, the Elastic Agent will have access to the
+	// PID namespace of the host.
 	PidMode SystemTestAgentPidMode `json:"pid_mode,omitempty" yaml:"pid_mode,omitempty"`
-	// Ports list of ports to be exposed to access to the Elastic Agent
+	// List of ports to be exposed to access to the Elastic Agent
 	Ports []string `json:"ports,omitempty" yaml:"ports,omitempty"`
-	// PreStartScript optional: Custom sh script to be executed before starting the Elastic Agent
-	// process (e.g. export environment variables)
+	// Optional: Custom sh script to be executed before starting the Elastic Agent process (e.g. export
+	// environment variables)
 	PreStartScript AgentPreStartScript `json:"pre_start_script,omitempty" yaml:"pre_start_script,omitempty"`
-	// ProvisioningScript optional: Script to run to customize the system where Elastic Agent runs (e.g.
-	// installing new libraries/dependencies)
+	// Optional: Script to run to customize the system where Elastic Agent runs (e.g. installing new
+	// libraries/dependencies)
 	ProvisioningScript AgentProvisioningScript `json:"provisioning_script,omitempty" yaml:"provisioning_script,omitempty"`
 	// Runtime to run the Elastic Agent process
 	Runtime SystemTestAgentRuntime `json:"runtime,omitempty" yaml:"runtime,omitempty"`
@@ -344,18 +343,18 @@ const (
 // SystemTestConfig holds configuration for a system test case (test-*-config.yml).
 type SystemTestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Agent configuration overrides for the Elastic Agent
+	// Configuration overrides for the Elastic Agent
 	Agent      SystemTestAgent       `json:"agent,omitempty" yaml:"agent,omitempty"`
 	DataStream *SystemTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
 	Skip       TestSkip              `json:"skip,omitempty" yaml:"skip,omitempty"`
-	// SkipIgnoredFields if listed here, elastic-package system tests will not fail if values for the
-	// specified field names can't be indexed for any incoming documents. This should only be used if
-	// the failure is related to the test environment and wouldn't happen in production. Mitigate the
-	// issue via mapping or pipeline changes otherwise.
+	// If listed here, elastic-package system tests will not fail if values for the specified field
+	// names can't be indexed for any incoming documents. This should only be used if the failure is
+	// related to the test environment and wouldn't happen in production. Mitigate the issue via mapping
+	// or pipeline changes otherwise.
 	SkipIgnoredFields []string `json:"skip_ignored_fields,omitempty" yaml:"skip_ignored_fields,omitempty"`
-	// Vars variables used to configure settings defined in the package manifest.
+	// Variables used to configure settings defined in the package manifest.
 	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
-	// WaitForDataTimeout timeout for waiting for metrics data during a system test.
+	// Timeout for waiting for metrics data during a system test.
 	WaitForDataTimeout string `json:"wait_for_data_timeout,omitempty" yaml:"wait_for_data_timeout,omitempty"`
 }
 
@@ -373,13 +372,13 @@ func (v *SystemTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 }
 
 type SystemTestDataStream struct {
-	// Vars variables used to configure settings defined in the data stream manifest.
+	// Variables used to configure settings defined in the data stream manifest.
 	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // TestCategoryConfig controls parallelism and skip for a test category.
 type TestCategoryConfig struct {
-	// Parallel tests defined can be run in parallel (default true).
+	// Tests defined can be run in parallel (default true).
 	Parallel *bool    `json:"parallel,omitempty" yaml:"parallel,omitempty"`
 	Skip     TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 }
@@ -388,15 +387,15 @@ type TestCategoryConfig struct {
 // (_dev/test/config.yml).
 type TestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Asset configuration for asset tests
+	// Configuration for asset tests
 	Asset TestCategoryConfig `json:"asset,omitempty" yaml:"asset,omitempty"`
-	// Pipeline configuration for pipeline tests
+	// Configuration for pipeline tests
 	Pipeline TestCategoryConfig `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	// Policy configuration for policy tests
+	// Configuration for policy tests
 	Policy TestCategoryConfig `json:"policy,omitempty" yaml:"policy,omitempty"`
-	// Static configuration for static tests
+	// Configuration for static tests
 	Static TestCategoryConfig `json:"static,omitempty" yaml:"static,omitempty"`
-	// System configuration for system tests
+	// Configuration for system tests
 	System TestCategoryConfig `json:"system,omitempty" yaml:"system,omitempty"`
 }
 
@@ -417,7 +416,7 @@ func (v *TestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 type TestSkip struct {
 	// Link to issue with more details about skipped test or to track re-enabling skipped test.
 	Link string `json:"link" yaml:"link"`
-	// Reason short explanation for why test has been skipped.
+	// Short explanation for why test has been skipped.
 	Reason string `json:"reason" yaml:"reason"`
 }
 

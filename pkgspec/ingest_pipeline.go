@@ -9,9 +9,9 @@ type IngestPipeline struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// Description of the pipeline.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	// OnFailure list of processors to apply in case of failure.
+	// List of processors to apply in case of failure.
 	OnFailure []*Processor `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`
-	// Processors list of processors that conform the pipeline.
+	// List of processors that conform the pipeline.
 	Processors []*Processor `json:"processors,omitempty" yaml:"processors,omitempty"`
 }
 
