@@ -1,0 +1,5 @@
+description: Common shared pipeline
+processors:
+  - set:
+      field: event.kind
+      value: event

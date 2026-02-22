@@ -29,8 +29,10 @@ type Package struct {
 
 	DataStreams map[string]*DataStream    // type:integration only
 	Fields      map[string]*FieldsFile    // type:input only
+	Pipelines   map[string]*PipelineFile  // package-level elasticsearch/ingest_pipeline/
 	Transforms  map[string]*TransformData // nil if absent
 	Tags        []packagespec.Tag         // nil if absent
+	Lifecycle   *packagespec.Lifecycle    // type:input only, nil if absent
 
 	Commit string // git HEAD commit ID, empty unless WithGitMetadata used
 
@@ -209,6 +211,14 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 		}
 		pkg.DataStreams = ds
 
+		// Read package-level ingest pipelines.
+		pipelinesDir := path.Join(root, "elasticsearch", "ingest_pipeline")
+		pipelines, err := readPipelines(cfg.fsys, pipelinesDir)
+		if err != nil {
+			return nil, fmt.Errorf("reading pipelines: %w", err)
+		}
+		pkg.Pipelines = pipelines
+
 		// Read transforms.
 		transforms, err := readTransforms(cfg.fsys, root, cfg)
 		if err != nil {
@@ -224,6 +234,17 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			return nil, fmt.Errorf("reading fields: %w", err)
 		}
 		pkg.Fields = fields
+
+		// Read lifecycle (optional).
+		lifecyclePath := path.Join(root, "lifecycle.yml")
+		lifecycle, err := readOptionalYAML[packagespec.Lifecycle](cfg.fsys, lifecyclePath, cfg.knownFields)
+		if err != nil {
+			return nil, fmt.Errorf("reading lifecycle: %w", err)
+		}
+		if lifecycle != nil {
+			packagespec.AnnotateFileMetadata(lifecyclePath, lifecycle)
+			pkg.Lifecycle = lifecycle
+		}
 	}
 
 	// Git metadata enrichment.

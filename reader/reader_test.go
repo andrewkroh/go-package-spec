@@ -96,6 +96,45 @@ func TestReadIntegrationPackage(t *testing.T) {
 		t.Errorf("fields file count = %d, want 2", len(ds.Fields))
 	}
 
+	// Pipelines.
+	if len(ds.Pipelines) != 1 {
+		t.Fatalf("pipeline file count = %d, want 1", len(ds.Pipelines))
+	}
+	pf, ok := ds.Pipelines["default.yml"]
+	if !ok {
+		t.Fatal("pipeline file 'default.yml' not found")
+	}
+	if pf.Pipeline.Description != "Test pipeline" {
+		t.Errorf("pipeline description = %q, want Test pipeline", pf.Pipeline.Description)
+	}
+	if len(pf.Pipeline.Processors) != 2 {
+		t.Fatalf("pipeline processors count = %d, want 2", len(pf.Pipeline.Processors))
+	}
+	if pf.Pipeline.Processors[0].Type != "set" {
+		t.Errorf("pipeline processor[0] type = %q, want set", pf.Pipeline.Processors[0].Type)
+	}
+	if len(pf.Pipeline.OnFailure) != 1 {
+		t.Fatalf("pipeline on_failure count = %d, want 1", len(pf.Pipeline.OnFailure))
+	}
+	if pf.Pipeline.OnFailure[0].Type != "set" {
+		t.Errorf("pipeline on_failure[0] type = %q, want set", pf.Pipeline.OnFailure[0].Type)
+	}
+
+	// Package-level pipelines.
+	if len(pkg.Pipelines) != 1 {
+		t.Fatalf("package pipeline count = %d, want 1", len(pkg.Pipelines))
+	}
+	ppf, ok := pkg.Pipelines["common.yml"]
+	if !ok {
+		t.Fatal("package pipeline 'common.yml' not found")
+	}
+	if ppf.Pipeline.Description != "Common shared pipeline" {
+		t.Errorf("package pipeline description = %q, want Common shared pipeline", ppf.Pipeline.Description)
+	}
+	if len(ppf.Pipeline.Processors) != 1 {
+		t.Errorf("package pipeline processors count = %d, want 1", len(ppf.Pipeline.Processors))
+	}
+
 	// Transforms.
 	if len(pkg.Transforms) != 1 {
 		t.Fatalf("transforms count = %d, want 1", len(pkg.Transforms))
@@ -155,6 +194,14 @@ func TestReadInputPackage(t *testing.T) {
 	}
 	if len(ff.Fields) != 2 {
 		t.Errorf("fields count = %d, want 2", len(ff.Fields))
+	}
+
+	// Lifecycle.
+	if pkg.Lifecycle == nil {
+		t.Fatal("Lifecycle is nil for input package")
+	}
+	if pkg.Lifecycle.DataRetention != "30d" {
+		t.Errorf("data_retention = %q, want 30d", pkg.Lifecycle.DataRetention)
 	}
 
 	// Changelog.
@@ -254,6 +301,16 @@ func TestFileMetadata(t *testing.T) {
 	ds := pkg.DataStreams["logs"]
 	if ds.Manifest.FilePath() != "data_stream/logs/manifest.yml" {
 		t.Errorf("ds manifest file path = %q, want data_stream/logs/manifest.yml", ds.Manifest.FilePath())
+	}
+
+	// Pipeline file metadata.
+	pf := ds.Pipelines["default.yml"]
+	wantPipelinePath := "data_stream/logs/elasticsearch/ingest_pipeline/default.yml"
+	if pf.Pipeline.FilePath() != wantPipelinePath {
+		t.Errorf("pipeline file path = %q, want %s", pf.Pipeline.FilePath(), wantPipelinePath)
+	}
+	if pf.Pipeline.Processors[0].FilePath() != wantPipelinePath {
+		t.Errorf("processor file path = %q, want %s", pf.Pipeline.Processors[0].FilePath(), wantPipelinePath)
 	}
 }
 

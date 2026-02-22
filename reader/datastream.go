@@ -13,8 +13,9 @@ import (
 // DataStream represents a fully-loaded data stream within an integration package.
 type DataStream struct {
 	Manifest  packagespec.DataStreamManifest
-	Fields    map[string]*FieldsFile // keyed by filename
-	Lifecycle *packagespec.Lifecycle // nil if absent
+	Fields    map[string]*FieldsFile   // keyed by filename
+	Pipelines map[string]*PipelineFile // keyed by filename (e.g., "default.yml")
+	Lifecycle *packagespec.Lifecycle   // nil if absent
 	path      string
 }
 
@@ -41,6 +42,17 @@ type FieldsFile struct {
 // Path returns the file path relative to the package root.
 func (ff *FieldsFile) Path() string {
 	return ff.path
+}
+
+// PipelineFile represents a single ingest pipeline YAML file.
+type PipelineFile struct {
+	Pipeline packagespec.IngestPipeline
+	path     string
+}
+
+// Path returns the file path relative to the package root.
+func (pf *PipelineFile) Path() string {
+	return pf.path
 }
 
 func readDataStreams(fsys fs.FS, root string, cfg *config) (map[string]*DataStream, error) {
@@ -104,6 +116,14 @@ func readDataStream(fsys fs.FS, dsPath string, cfg *config) (*DataStream, error)
 	}
 	ds.Fields = fields
 
+	// Read ingest pipelines.
+	pipelinesDir := path.Join(dsPath, "elasticsearch", "ingest_pipeline")
+	pipelines, err := readPipelines(fsys, pipelinesDir)
+	if err != nil {
+		return nil, fmt.Errorf("reading pipelines: %w", err)
+	}
+	ds.Pipelines = pipelines
+
 	return ds, nil
 }
 
@@ -149,6 +169,42 @@ func readFieldsFile(fsys fs.FS, filePath string, cfg *config) (*FieldsFile, erro
 		Fields: fields,
 		path:   filePath,
 	}, nil
+}
+
+func readPipelines(fsys fs.FS, dir string) (map[string]*PipelineFile, error) {
+	entries, err := fs.ReadDir(fsys, dir)
+	if err != nil {
+		if isNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("reading pipeline directory %s: %w", dir, err)
+	}
+
+	result := make(map[string]*PipelineFile, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
+			continue
+		}
+
+		filePath := path.Join(dir, name)
+		var pipeline packagespec.IngestPipeline
+		// Pipelines contain arbitrary ES DSL; always decode with knownFields=false.
+		if err := decodeYAML(fsys, filePath, &pipeline, false); err != nil {
+			return nil, fmt.Errorf("reading pipeline file %s: %w", name, err)
+		}
+		packagespec.AnnotateFileMetadata(filePath, &pipeline)
+
+		result[name] = &PipelineFile{
+			Pipeline: pipeline,
+			path:     filePath,
+		}
+	}
+
+	return result, nil
 }
 
 func isNotExist(err error) bool {

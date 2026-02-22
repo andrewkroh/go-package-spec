@@ -14,15 +14,17 @@ internal/generator/            Code generation pipeline
   loader.go                    JSON Schema parser + $ref resolution
   naming.go                    Go identifier conventions
   typemap.go                   JSON Schema -> GoType conversion
-packagespec/                   Generated data model (DO NOT EDIT except annotation.go)
+packagespec/                   Generated data model (DO NOT EDIT except annotation.go and processor.go)
   annotation.go                Hand-written: exports AnnotateFileMetadata
+  processor.go                 Hand-written: Processor type with custom marshal/unmarshal
   metadata.go                  Generated: FileMetadata type + reflection walker
   manifest.go                  Manifest base type + Integration/Input/Content manifests
+  ingest_pipeline.go           Generated: IngestPipeline type
   *.go                         Other generated types (changelog, field, transform, etc.)
 reader/                        Package reader (loads from disk into packagespec types)
   reader.go                    Read() entry point, Package type, options
   decode.go                    YAML decoding helpers
-  datastream.go                DataStream + FieldsFile types
+  datastream.go                DataStream + FieldsFile + PipelineFile types
   transform.go                 TransformData type
   git.go                       Git commit + git blame for changelog dates
 augment.yml                    Type/field augmentation config
@@ -42,7 +44,7 @@ go run ./cmd/generate/ \
   -package packagespec
 ```
 
-All files in `packagespec/` except `annotation.go` are generated. Never hand-edit them.
+All files in `packagespec/` except `annotation.go` and `processor.go` are generated. Never hand-edit them.
 
 ### Generator pipeline
 
@@ -68,13 +70,109 @@ All files in `packagespec/` except `annotation.go` are generated. Never hand-edi
 - **Required vs optional**: Required fields use bare struct tags (`json:"name"`), optional fields use `omitempty` (`json:"title,omitempty"`). Only optional booleans use pointer types (`*bool`).
 - **Qualified types**: `parseTypeRef` handles `pkg.Type` patterns (e.g. `time.Time`) via `GoTypeRef.Package`/`QualName`, emitted as `jen.Qual()`.
 
+## Package structure (from package-spec, excluding _dev/)
+
+### Integration package
+
+```
+manifest.yml                                      required  schema:integration/manifest.spec.yml
+changelog.yml                                     required  schema:integration/changelog.spec.yml
+validation.yml                                    optional  schema:integration/validation.spec.yml
+NOTICE.txt                                        optional  plain text
+LICENSE.txt                                       optional  plain text
+docs/                                             required
+  README.md                                       required  markdown (usually generated)
+  *.md                                            optional  markdown
+  knowledge_base/*.md                             optional  markdown (AI assistant context)
+img/                                              optional  images (additionalContents: true)
+agent/                                            optional
+  input/stream/*.yml.hbs                          required  Handlebars templates
+kibana/                                           optional
+  tags.yml                                        optional  schema:integration/kibana/tags.spec.yml
+  dashboard/*.json                                optional  opaque JSON saved objects
+  visualization/*.json                            optional  "
+  search/*.json                                   optional  "
+  map/*.json                                      optional  "
+  lens/*.json                                     optional  "
+  index_pattern/*.json                            optional  "
+  security_rule/*.json                            optional  "
+  csp_rule_template/*.json                        optional  "
+  ml_module/*.json                                optional  "
+  tag/*.json                                      optional  "
+  osquery_pack_asset/*.json                       optional  "
+  osquery_saved_query/*.json                      optional  "
+  alerting_rule_template/*.json                   optional  "
+  slo_template/*.json                             optional  "
+elasticsearch/                                    optional
+  ingest_pipeline/*.yml|*.json                    optional  schema:integration/elasticsearch/pipeline.spec.yml
+  ml_model/{PKG_NAME}_*.json                      optional  opaque JSON
+  transform/<name>/                               optional
+    transform.yml                                 required  schema:elasticsearch/transform/transform.spec.yml
+    manifest.yml                                  optional  schema:elasticsearch/transform/manifest.spec.yml
+    fields/*.yml                                  optional  schema:data_stream/fields/fields.spec.yml
+  esql_view/*.yml                                 optional  schema:elasticsearch/view.spec.yml (3.6.0+)
+data_stream/<name>/                               optional
+  manifest.yml                                    required  schema:data_stream/manifest.spec.yml
+  fields/*.yml                                    required  schema:data_stream/fields/fields.spec.yml
+  sample_event.json                               optional  opaque JSON
+  routing_rules.yml                               optional  schema:data_stream/routing_rules.spec.yml (tech preview)
+  lifecycle.yml                                   optional  schema:data_stream/lifecycle.spec.yml (tech preview)
+  agent/stream/*.yml.hbs                          optional  Handlebars templates
+  elasticsearch/
+    ingest_pipeline/*.yml|*.json                   optional  schema:elasticsearch/pipeline.spec.yml
+    ilm/*.yml|*.json                               optional  opaque YAML/JSON
+```
+
+### Input package
+
+```
+manifest.yml                                      required  schema:input/manifest.spec.yml
+changelog.yml                                     required  schema:integration/changelog.spec.yml
+LICENSE.txt                                       optional  plain text
+validation.yml                                    optional  schema:integration/validation.spec.yml
+lifecycle.yml                                     optional  schema:data_stream/lifecycle.spec.yml (tech preview)
+sample_event.json                                 optional  opaque JSON
+agent/                                            required
+  input/*.yml.hbs                                 required  Handlebars templates
+docs/                                             required
+  README.md                                       required  markdown
+  *.md                                            optional  markdown
+  knowledge_base/*.md                             optional  markdown
+fields/*.yml                                      optional  schema:data_stream/fields/fields.spec.yml
+img/                                              optional  images
+```
+
+### Content package
+
+```
+manifest.yml                                      required  schema:content/manifest.spec.yml
+changelog.yml                                     required  schema:integration/changelog.spec.yml
+LICENSE.txt                                       optional  plain text
+validation.yml                                    optional  schema:integration/validation.spec.yml
+docs/                                             required
+  README.md                                       required  markdown
+  *.md                                            optional  markdown
+  knowledge_base/*.md                             optional  markdown
+img/                                              optional  images
+kibana/                                           optional
+  tags.yml                                        optional  schema:integration/kibana/tags.spec.yml
+  dashboard/*.json                                optional  opaque JSON saved objects
+  security_ai_prompt/*.json                       optional  "
+  security_rule/*.json                            optional  "
+  alerting_rule_template/*.json                   optional  "
+  slo_template/*.json                             optional  "
+elasticsearch/                                    optional
+  esql_view/*.yml                                 optional  schema:elasticsearch/view.spec.yml (3.6.0+)
+```
+
 ## Reader package
 
 - Uses `io/fs.FS` for filesystem abstraction (testable with `fstest.MapFS`)
 - Detects package type from `manifest.yml` `type` field
 - Options: `WithFS()`, `WithKnownFields()`, `WithGitMetadata()`
 - `Package.Manifest()` returns the common `*packagespec.Manifest` for any package type
-- Transform files always decoded with `knownFields=false` (contain arbitrary ES DSL)
+- Transform and pipeline files always decoded with `knownFields=false` (contain arbitrary ES DSL)
+- Ingest pipelines loaded from `data_stream/<name>/elasticsearch/ingest_pipeline/*.yml`
 - Git operations require real filesystem path (shell out to `git`)
 
 ## Testing
