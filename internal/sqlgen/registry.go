@@ -84,3 +84,20 @@ func LookupType(name string) (reflect.Type, bool) {
 	t, ok := typeRegistry[name]
 	return t, ok
 }
+
+// RegisteredPkgPaths returns the unique package import paths referenced
+// by types in the registry.
+func RegisteredPkgPaths() []string {
+	seen := make(map[string]bool)
+	for _, rt := range typeRegistry {
+		if p := rt.PkgPath(); p != "" {
+			seen[p] = true
+		}
+	}
+
+	paths := make([]string, 0, len(seen))
+	for p := range seen {
+		paths = append(paths, p)
+	}
+	return paths
+}

@@ -197,10 +197,10 @@ INSERT INTO ingest_pipelines (
 -- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
-  json_pointer,
-  ordinal,
   type,
-  attributes
+  attributes,
+  json_pointer,
+  ordinal
 ) VALUES (
   ?,
   ?,
@@ -434,8 +434,8 @@ INSERT INTO package_vars (
 
 -- name: InsertPolicyTemplateInputVars :one
 INSERT INTO policy_template_input_vars (
-  policy_template_input_id,
-  var_id
+  var_id,
+  policy_template_input_id
 ) VALUES (
   ?,
   ?

@@ -385,10 +385,10 @@ func (q *Queries) InsertIngestPipelines(ctx context.Context, arg InsertIngestPip
 const insertIngestProcessors = `-- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
-  json_pointer,
-  ordinal,
   type,
-  attributes
+  attributes,
+  json_pointer,
+  ordinal
 ) VALUES (
   ?,
   ?,
@@ -400,19 +400,19 @@ INSERT INTO ingest_processors (
 
 type InsertIngestProcessorsParams struct {
 	IngestPipelinesID int64
-	JsonPointer       string
-	Ordinal           int64
 	Type              string
 	Attributes        sql.NullString
+	JsonPointer       string
+	Ordinal           int64
 }
 
 func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestProcessorsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertIngestProcessors,
 		arg.IngestPipelinesID,
-		arg.JsonPointer,
-		arg.Ordinal,
 		arg.Type,
 		arg.Attributes,
+		arg.JsonPointer,
+		arg.Ordinal,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -648,8 +648,8 @@ func (q *Queries) InsertPolicyTemplateCategories(ctx context.Context, arg Insert
 
 const insertPolicyTemplateInputVars = `-- name: InsertPolicyTemplateInputVars :one
 INSERT INTO policy_template_input_vars (
-  policy_template_input_id,
-  var_id
+  var_id,
+  policy_template_input_id
 ) VALUES (
   ?,
   ?
@@ -657,12 +657,12 @@ INSERT INTO policy_template_input_vars (
 `
 
 type InsertPolicyTemplateInputVarsParams struct {
-	PolicyTemplateInputID int64
 	VarID                 int64
+	PolicyTemplateInputID int64
 }
 
 func (q *Queries) InsertPolicyTemplateInputVars(ctx context.Context, arg InsertPolicyTemplateInputVarsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateInputVars, arg.PolicyTemplateInputID, arg.VarID)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateInputVars, arg.VarID, arg.PolicyTemplateInputID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err

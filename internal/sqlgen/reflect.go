@@ -37,7 +37,7 @@ type TableDef struct {
 
 // ResolveColumns walks the Go type for a table and produces column definitions.
 // It validates that all exported fields are accounted for in the configuration.
-func ResolveColumns(tableName string, tc *TableConfig) ([]ColumnDef, error) {
+func ResolveColumns(tableName string, tc *TableConfig, docs DocMap) ([]ColumnDef, error) {
 	var cols []ColumnDef
 
 	// Add id column.
@@ -104,7 +104,7 @@ func ResolveColumns(tableName string, tc *TableConfig) ([]ColumnDef, error) {
 	excludeSet := toSet(tc.Exclude)
 
 	// Walk struct fields.
-	structCols, err := walkStruct(rt, "", "", inlineSet, jsonColSet, excludeSet, tc.Columns)
+	structCols, err := walkStruct(rt, "", "", inlineSet, jsonColSet, excludeSet, tc.Columns, docs)
 	if err != nil {
 		return nil, fmt.Errorf("table %q: %w", tableName, err)
 	}
@@ -119,7 +119,7 @@ func ResolveColumns(tableName string, tc *TableConfig) ([]ColumnDef, error) {
 }
 
 // walkStruct recursively walks a struct type and produces column definitions.
-func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, exclude map[string]bool, overrides map[string]*ColumnOverride) ([]ColumnDef, error) {
+func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, exclude map[string]bool, overrides map[string]*ColumnOverride, docs DocMap) ([]ColumnDef, error) {
 	var cols []ColumnDef
 
 	for i := 0; i < rt.NumField(); i++ {
@@ -154,7 +154,7 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 				fieldType = fieldType.Elem()
 			}
 			if fieldType.Kind() == reflect.Struct {
-				embeddedCols, err := walkStruct(fieldType, prefix, goPrefix, inline, jsonCols, exclude, overrides)
+				embeddedCols, err := walkStruct(fieldType, prefix, goPrefix, inline, jsonCols, exclude, overrides, docs)
 				if err != nil {
 					return nil, err
 				}
@@ -172,7 +172,7 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 			if fieldType.Kind() != reflect.Struct {
 				return nil, fmt.Errorf("inline field %q is not a struct", fullFieldName)
 			}
-			inlineCols, err := walkStruct(fieldType, prefix+ToSQLName(fieldName)+"_", fullFieldName+".", inline, jsonCols, exclude, overrides)
+			inlineCols, err := walkStruct(fieldType, prefix+ToSQLName(fieldName)+"_", fullFieldName+".", inline, jsonCols, exclude, overrides, docs)
 			if err != nil {
 				return nil, err
 			}
@@ -184,6 +184,9 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 		if jsonCols[fieldName] || jsonCols[fullFieldName] {
 			sqlName := prefix + jsonColumnName(fieldName)
 			comment := "JSON-encoded " + fieldName
+			if doc := docs[rt.Name()+"."+fieldName]; doc != "" {
+				comment = doc
+			}
 			if override, ok := overrides[sqlName]; ok && override.Comment != "" {
 				comment = override.Comment
 			}
@@ -204,8 +207,9 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 		}
 		sqlName := prefix + jsonTag
 		omitempty := hasOmitempty(sf)
+		docComment := docs[rt.Name()+"."+fieldName]
 
-		col, err := goTypeToColumn(sf.Type, sqlName, fullFieldName, omitempty, overrides)
+		col, err := goTypeToColumn(sf.Type, sqlName, fullFieldName, docComment, omitempty, overrides)
 		if err != nil {
 			return nil, fmt.Errorf("field %q: %w", fullFieldName, err)
 		}
@@ -216,14 +220,19 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 }
 
 // goTypeToColumn maps a Go type to a ColumnDef.
-func goTypeToColumn(t reflect.Type, sqlName, goField string, omitempty bool, overrides map[string]*ColumnOverride) (ColumnDef, error) {
+func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitempty bool, overrides map[string]*ColumnOverride) (ColumnDef, error) {
 	col := ColumnDef{
 		Name:    sqlName,
 		GoField: goField,
 		Comment: goField,
 	}
 
-	// Apply column overrides.
+	// Apply Go doc comment if available.
+	if docComment != "" {
+		col.Comment = docComment
+	}
+
+	// Apply column overrides (highest priority).
 	if override, ok := overrides[sqlName]; ok {
 		if override.Comment != "" {
 			col.Comment = override.Comment

@@ -106,10 +106,10 @@ type IngestPipeline struct {
 type IngestProcessor struct {
 	ID                int64
 	IngestPipelinesID int64
-	JsonPointer       string
-	Ordinal           int64
 	Type              string
 	Attributes        sql.NullString
+	JsonPointer       string
+	Ordinal           int64
 }
 
 type Package struct {
@@ -200,8 +200,8 @@ type PolicyTemplateInput struct {
 
 type PolicyTemplateInputVar struct {
 	ID                    int64
-	PolicyTemplateInputID int64
 	VarID                 int64
+	PolicyTemplateInputID int64
 }
 
 type PolicyTemplateVar struct {
