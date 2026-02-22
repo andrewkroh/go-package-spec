@@ -26,7 +26,7 @@ type KibanaSavedObject struct {
 	CoreMigrationVersion string `json:"coreMigrationVersion,omitempty"`
 	// TypeMigrationVersion tracks type-specific migration status relative to
 	// Kibana versions.
-	TypeMigrationVersion map[string]string `json:"typeMigrationVersion,omitempty"`
+	TypeMigrationVersion string `json:"typeMigrationVersion,omitempty"`
 	// MigrationVersion tracks object migration status relative to Kibana versions.
 	MigrationVersion map[string]string `json:"migrationVersion,omitempty"`
 	// Managed indicates whether the object is managed by Kibana (multi-space management).
