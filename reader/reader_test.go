@@ -197,6 +197,14 @@ func TestReadIntegrationPackage(t *testing.T) {
 	if pkg.Fields != nil {
 		t.Error("Fields should be nil for integration package")
 	}
+
+	// Agent templates should be nil without WithAgentTemplates.
+	if pkg.AgentTemplates != nil {
+		t.Error("AgentTemplates should be nil without WithAgentTemplates")
+	}
+	if ds.AgentTemplates != nil {
+		t.Error("DataStream AgentTemplates should be nil without WithAgentTemplates")
+	}
 }
 
 func TestReadInputPackage(t *testing.T) {
@@ -387,4 +395,59 @@ func TestManifestAccessor(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAgentTemplates(t *testing.T) {
+	t.Run("integration", func(t *testing.T) {
+		pkg, err := Read("testdata/integration_pkg", WithAgentTemplates())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Package-level agent templates.
+		if len(pkg.AgentTemplates) != 1 {
+			t.Fatalf("package agent templates count = %d, want 1", len(pkg.AgentTemplates))
+		}
+		tmpl, ok := pkg.AgentTemplates["agent/input/stream/stream.yml.hbs"]
+		if !ok {
+			t.Fatal("package agent template 'agent/input/stream/stream.yml.hbs' not found")
+		}
+		if tmpl.Content == "" {
+			t.Error("package agent template content is empty")
+		}
+		if tmpl.Path() != "agent/input/stream/stream.yml.hbs" {
+			t.Errorf("package agent template path = %q, want agent/input/stream/stream.yml.hbs", tmpl.Path())
+		}
+
+		// Data stream agent templates.
+		ds := pkg.DataStreams["logs"]
+		if len(ds.AgentTemplates) != 1 {
+			t.Fatalf("ds agent templates count = %d, want 1", len(ds.AgentTemplates))
+		}
+		dsTmpl, ok := ds.AgentTemplates["data_stream/logs/agent/stream/stream.yml.hbs"]
+		if !ok {
+			t.Fatal("ds agent template 'data_stream/logs/agent/stream/stream.yml.hbs' not found")
+		}
+		if dsTmpl.Content == "" {
+			t.Error("ds agent template content is empty")
+		}
+	})
+
+	t.Run("input", func(t *testing.T) {
+		pkg, err := Read("testdata/input_pkg", WithAgentTemplates())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(pkg.AgentTemplates) != 1 {
+			t.Fatalf("input agent templates count = %d, want 1", len(pkg.AgentTemplates))
+		}
+		tmpl, ok := pkg.AgentTemplates["agent/input/input.yml.hbs"]
+		if !ok {
+			t.Fatal("input agent template 'agent/input/input.yml.hbs' not found")
+		}
+		if tmpl.Content == "" {
+			t.Error("input agent template content is empty")
+		}
+	})
 }

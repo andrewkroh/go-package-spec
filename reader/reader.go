@@ -34,7 +34,8 @@ type Package struct {
 	Transforms  map[string]*TransformData // nil if absent
 	Tags        []packagespec.Tag         // nil if absent
 	Lifecycle   *packagespec.Lifecycle    // type:input only, nil if absent
-	SampleEvent json.RawMessage          // type:input only, nil if absent
+	SampleEvent     json.RawMessage              // type:input only, nil if absent
+	AgentTemplates  map[string]*AgentTemplate    // type:integration and type:input only, nil unless WithAgentTemplates used
 
 	Commit string // git HEAD commit ID, empty unless WithGitMetadata used
 
@@ -84,10 +85,11 @@ func (p *Package) ContentManifest() *packagespec.ContentManifest {
 type Option func(*config)
 
 type config struct {
-	fsys        fs.FS
-	knownFields bool
-	gitMetadata bool
-	packagePath string // original OS path, needed for git operations
+	fsys            fs.FS
+	knownFields     bool
+	gitMetadata     bool
+	agentTemplates  bool
+	packagePath     string // original OS path, needed for git operations
 }
 
 // WithFS provides a custom filesystem for reading package files. When set,
@@ -104,6 +106,15 @@ func WithFS(fsys fs.FS) Option {
 func WithKnownFields() Option {
 	return func(c *config) {
 		c.knownFields = true
+	}
+}
+
+// WithAgentTemplates enables loading of agent Handlebars template files
+// (.yml.hbs) from agent/ directories. These are skipped by default to
+// avoid unnecessary memory usage when templates are not needed.
+func WithAgentTemplates() Option {
+	return func(c *config) {
+		c.agentTemplates = true
 	}
 }
 
@@ -228,6 +239,16 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 		}
 		pkg.Transforms = transforms
 
+		// Read agent templates (optional, requires WithAgentTemplates).
+		if cfg.agentTemplates {
+			agentDir := path.Join(root, "agent")
+			templates, err := readAgentTemplates(cfg.fsys, agentDir)
+			if err != nil {
+				return nil, fmt.Errorf("reading agent templates: %w", err)
+			}
+			pkg.AgentTemplates = templates
+		}
+
 	case "input":
 		// Read fields from package-root fields/ directory.
 		fieldsDir := path.Join(root, "fields")
@@ -255,6 +276,16 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			return nil, fmt.Errorf("reading sample event: %w", err)
 		}
 		pkg.SampleEvent = sampleEvent
+
+		// Read agent templates (optional, requires WithAgentTemplates).
+		if cfg.agentTemplates {
+			agentDir := path.Join(root, "agent")
+			templates, err := readAgentTemplates(cfg.fsys, agentDir)
+			if err != nil {
+				return nil, fmt.Errorf("reading agent templates: %w", err)
+			}
+			pkg.AgentTemplates = templates
+		}
 	}
 
 	// Git metadata enrichment.

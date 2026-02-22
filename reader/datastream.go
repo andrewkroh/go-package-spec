@@ -18,9 +18,10 @@ type DataStream struct {
 	Pipelines    map[string]*PipelineFile // keyed by filename (e.g., "default.yml")
 	ILMPolicies  map[string]*ILMPolicy    // keyed by filename, nil if absent
 	Lifecycle    *packagespec.Lifecycle    // nil if absent
-	RoutingRules []packagespec.RoutingRuleSet // nil if absent
-	SampleEvent  json.RawMessage          // nil if absent
-	path         string
+	RoutingRules   []packagespec.RoutingRuleSet // nil if absent
+	SampleEvent    json.RawMessage             // nil if absent
+	AgentTemplates map[string]*AgentTemplate   // nil unless WithAgentTemplates used
+	path           string
 }
 
 // Path returns the data stream's directory path relative to the package root.
@@ -165,6 +166,16 @@ func readDataStream(fsys fs.FS, dsPath string, cfg *config) (*DataStream, error)
 		return nil, fmt.Errorf("reading sample event: %w", err)
 	}
 	ds.SampleEvent = sampleEvent
+
+	// Read agent templates (optional, requires WithAgentTemplates).
+	if cfg.agentTemplates {
+		agentDir := path.Join(dsPath, "agent", "stream")
+		templates, err := readAgentTemplates(fsys, agentDir)
+		if err != nil {
+			return nil, fmt.Errorf("reading agent templates: %w", err)
+		}
+		ds.AgentTemplates = templates
+	}
 
 	return ds, nil
 }
