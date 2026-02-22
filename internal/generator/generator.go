@@ -95,7 +95,7 @@ func Run(cfg Config) error {
 	// 8. Emit Go files.
 	pkgName := cfg.PackageName
 	if pkgName == "" {
-		pkgName = "packagespec"
+		pkgName = "pkgspec"
 	}
 	emitter := NewEmitter(pkgName, cfg.OutputDir)
 

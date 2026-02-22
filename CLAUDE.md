@@ -14,7 +14,7 @@ internal/generator/            Code generation pipeline
   loader.go                    JSON Schema parser + $ref resolution
   naming.go                    Go identifier conventions
   typemap.go                   JSON Schema -> GoType conversion
-packagespec/                   Generated data model (DO NOT EDIT except hand-written files below)
+pkgspec/                   Generated data model (DO NOT EDIT except hand-written files below)
   annotation.go                Hand-written: exports AnnotateFileMetadata
   processor.go                 Hand-written: Processor type with custom marshal/unmarshal
   stringorstrings.go           Hand-written: StringOrStrings type for anyOf [string, []string]
@@ -23,7 +23,7 @@ packagespec/                   Generated data model (DO NOT EDIT except hand-wri
   ingest_pipeline.go           Generated: IngestPipeline type
   routing_rules.go             Generated: RoutingRuleSet, RoutingRule types
   *.go                         Other generated types (changelog, field, transform, etc.)
-reader/                        Package reader (loads from disk into packagespec types)
+pkgreader/                        Package reader (loads from disk into pkgspec types)
   reader.go                    Read() entry point, Package type, options
   decode.go                    YAML decoding helpers
   datastream.go                DataStream + FieldsFile + PipelineFile types
@@ -42,11 +42,11 @@ go run ./cmd/generate/ \
   -schema-dir ../package-spec-schema/3.5.7/jsonschema \
   -augment augment.yml \
   -filemap filemap.yml \
-  -output packagespec \
-  -package packagespec
+  -output pkgspec \
+  -package pkgspec
 ```
 
-All files in `packagespec/` except `annotation.go` and `processor.go` are generated. Never hand-edit them.
+All files in `pkgspec/` except `annotation.go` and `processor.go` are generated. Never hand-edit them.
 
 ### Generator pipeline
 
@@ -167,12 +167,12 @@ elasticsearch/                                    optional
   esql_view/*.yml                                 optional  schema:elasticsearch/view.spec.yml (3.6.0+)
 ```
 
-## Reader package
+## Package reader (pkgreader)
 
 - Uses `io/fs.FS` for filesystem abstraction (testable with `fstest.MapFS`)
 - Detects package type from `manifest.yml` `type` field
 - Options: `WithFS()`, `WithKnownFields()`, `WithGitMetadata()`
-- `Package.Manifest()` returns the common `*packagespec.Manifest` for any package type
+- `Package.Manifest()` returns the common `*pkgspec.Manifest` for any package type
 - Transform and pipeline files always decoded with `knownFields=false` (contain arbitrary ES DSL)
 - Ingest pipelines loaded from `data_stream/<name>/elasticsearch/ingest_pipeline/*.yml`
 - Git operations require real filesystem path (shell out to `git`)
@@ -181,17 +181,17 @@ elasticsearch/                                    optional
 
 ```sh
 go test ./...                                                    # unit tests
-INTEGRATIONS_DIR=/path/to/integrations go test ./reader/ -run TestReadAllPackages  # all real packages
+INTEGRATIONS_DIR=/path/to/integrations go test ./pkgreader/ -run TestReadAllPackages  # all real packages
 ```
 
 - Generator tests: schema loading, type mapping, augmentation, naming
-- Packagespec tests: YAML unmarshaling with real 1password package (skipped if unavailable)
-- Reader tests: synthetic testdata packages + optional integration test against all real packages
+- pkgspec tests: YAML unmarshaling with real 1password package (skipped if unavailable)
+- pkgreader tests: synthetic testdata packages + optional integration test against all real packages
 
 ## Go practices
 
 - Never use `github.com/stretchr/testify`
 - Add conventional Go doc comments to all exported types, functions, and methods
 - Format with `gofumpt -extra`
-- Use `path.Join` (not `filepath.Join`) inside reader for `fs.FS` compatibility (forward slashes)
+- Use `path.Join` (not `filepath.Join`) inside pkgreader for `fs.FS` compatibility (forward slashes)
 - Avoid import aliases unless necessary to avoid conflicts.
