@@ -18,7 +18,7 @@ type DataStream struct {
 	Pipelines    map[string]*PipelineFile // keyed by filename (e.g., "default.yml")
 	ILMPolicies  map[string]*ILMPolicy    // keyed by filename, nil if absent
 	Lifecycle    *packagespec.Lifecycle    // nil if absent
-	RoutingRules []RoutingRuleSet         // nil if absent
+	RoutingRules []packagespec.RoutingRuleSet // nil if absent
 	SampleEvent  json.RawMessage          // nil if absent
 	path         string
 }
@@ -69,19 +69,6 @@ type ILMPolicy struct {
 // Path returns the file path relative to the package root.
 func (p *ILMPolicy) Path() string {
 	return p.path
-}
-
-// RoutingRuleSet represents a set of routing rules for a data stream.
-type RoutingRuleSet struct {
-	SourceDataset string        `json:"source_dataset" yaml:"source_dataset"`
-	Rules         []RoutingRule `json:"rules" yaml:"rules"`
-}
-
-// RoutingRule defines a single routing rule within a routing rule set.
-type RoutingRule struct {
-	TargetDataset any    `json:"target_dataset" yaml:"target_dataset"` // string or []string
-	If            string `json:"if" yaml:"if"`
-	Namespace     any    `json:"namespace,omitempty" yaml:"namespace,omitempty"` // string or []string
 }
 
 func readDataStreams(fsys fs.FS, root string, cfg *config) (map[string]*DataStream, error) {
@@ -163,7 +150,7 @@ func readDataStream(fsys fs.FS, dsPath string, cfg *config) (*DataStream, error)
 
 	// Read routing rules (optional).
 	routingRulesPath := path.Join(dsPath, "routing_rules.yml")
-	var routingRules []RoutingRuleSet
+	var routingRules []packagespec.RoutingRuleSet
 	if err := decodeYAML(fsys, routingRulesPath, &routingRules, false); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("reading routing rules: %w", err)

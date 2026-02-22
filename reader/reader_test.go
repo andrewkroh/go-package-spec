@@ -143,6 +143,14 @@ func TestReadIntegrationPackage(t *testing.T) {
 	if len(ds.RoutingRules[0].Rules) != 2 {
 		t.Fatalf("routing rules count = %d, want 2", len(ds.RoutingRules[0].Rules))
 	}
+	// StringOrStrings: bare string "test_integration.errors" → []string{"test_integration.errors"}
+	if got := ds.RoutingRules[0].Rules[0].TargetDataset; len(got) != 1 || got[0] != "test_integration.errors" {
+		t.Errorf("routing rule[0] target_dataset = %v, want [test_integration.errors]", got)
+	}
+	// StringOrStrings: bare string "development" → []string{"development"}
+	if got := ds.RoutingRules[0].Rules[1].Namespace; len(got) != 1 || got[0] != "development" {
+		t.Errorf("routing rule[1] namespace = %v, want [development]", got)
+	}
 
 	// Sample event.
 	if ds.SampleEvent == nil {

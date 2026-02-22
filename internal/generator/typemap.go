@@ -352,6 +352,10 @@ func (m *TypeMapper) processObject(
 		EmbedMeta:  isEntryPoint,
 	}
 
+	// Register type early so that uniqueName detects collisions when
+	// processing nested properties that derive the same suggested name.
+	m.types[name] = goType
+
 	// Collect all properties from the schema tree (properties, allOf, if/then/else).
 	allProps, allRequired, err := m.collectProperties(schema, contextFile)
 	if err != nil {
@@ -396,8 +400,6 @@ func (m *TypeMapper) processObject(
 			Required: isRequired,
 		})
 	}
-
-	m.types[name] = goType
 	return GoTypeRef{Named: name}, nil
 }
 

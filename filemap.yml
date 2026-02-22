@@ -133,6 +133,10 @@ files:
   ingest_pipeline.go:
     - IngestPipeline
 
+  routing_rules.go:
+    - RoutingRuleSet
+    - RoutingRule
+
   kibana.go:
     - Tag
     - TagAssetType

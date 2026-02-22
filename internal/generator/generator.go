@@ -32,6 +32,7 @@ func DefaultEntryPoints() []EntryPoint {
 		{"integration/kibana/tags.jsonschema.json", "Tags"},
 		{"integration/data_stream/lifecycle.jsonschema.json", "Lifecycle"},
 		{"integration/elasticsearch/pipeline.jsonschema.json", "IngestPipeline"},
+		{"integration/data_stream/routing_rules.jsonschema.json", "RoutingRules"},
 	}
 }
 

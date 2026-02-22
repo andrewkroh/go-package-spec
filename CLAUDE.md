@@ -14,12 +14,14 @@ internal/generator/            Code generation pipeline
   loader.go                    JSON Schema parser + $ref resolution
   naming.go                    Go identifier conventions
   typemap.go                   JSON Schema -> GoType conversion
-packagespec/                   Generated data model (DO NOT EDIT except annotation.go and processor.go)
+packagespec/                   Generated data model (DO NOT EDIT except hand-written files below)
   annotation.go                Hand-written: exports AnnotateFileMetadata
   processor.go                 Hand-written: Processor type with custom marshal/unmarshal
+  stringorstrings.go           Hand-written: StringOrStrings type for anyOf [string, []string]
   metadata.go                  Generated: FileMetadata type + reflection walker
   manifest.go                  Manifest base type + Integration/Input/Content manifests
   ingest_pipeline.go           Generated: IngestPipeline type
+  routing_rules.go             Generated: RoutingRuleSet, RoutingRule types
   *.go                         Other generated types (changelog, field, transform, etc.)
 reader/                        Package reader (loads from disk into packagespec types)
   reader.go                    Read() entry point, Package type, options

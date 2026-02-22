@@ -100,6 +100,24 @@ types:
   RequiredVars:
     name: RequiredVars
 
+  # The routing rules schema has a name collision: the top-level array items
+  # object and the #/definitions/routing_rule both singularize to "RoutingRule".
+  # The generator produces RoutingRule (outer set) and RoutingRule2 (inner rule).
+  RoutingRule:
+    name: RoutingRuleSet
+    doc: "RoutingRuleSet represents a set of routing rules for rerouting documents from a source dataset. Routing rules are a technical preview feature."
+
+  RoutingRule2:
+    name: RoutingRule
+    doc: "RoutingRule defines a single routing rule within a RoutingRuleSet (technical preview)."
+    fields:
+      target_dataset:
+        type: StringOrStrings
+        doc: "TargetDataset is the field reference or static value for the dataset part of the data stream name."
+      namespace:
+        type: StringOrStrings
+        doc: "Namespace is the field reference or static value for the namespace part of the data stream name."
+
   Changelog:
     extra_fields:
       - name: Date
