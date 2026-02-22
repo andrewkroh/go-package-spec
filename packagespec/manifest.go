@@ -138,21 +138,10 @@ type ConditionsKibana struct {
 }
 
 type ContentManifest struct {
-	FileMetadata  `json:"-" yaml:"-"`
-	Categories    []Category                `json:"categories,omitempty" yaml:"categories,omitempty"`
-	Conditions    ContentManifestConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	Deprecated    Deprecated                `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description   string                    `json:"description,omitempty" yaml:"description,omitempty"`
-	Discovery     Discovery                 `json:"discovery,omitempty" yaml:"discovery,omitempty"`
-	FormatVersion string                    `json:"format_version,omitempty" yaml:"format_version,omitempty"`
-	Icons         []Icon                    `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Name          string                    `json:"name,omitempty" yaml:"name,omitempty"`
-	Owner         Owner                     `json:"owner,omitempty" yaml:"owner,omitempty"`
-	Screenshots   []Screenshot              `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	Source        Source                    `json:"source,omitempty" yaml:"source,omitempty"`
-	Title         string                    `json:"title,omitempty" yaml:"title,omitempty"`
-	Type          ContentManifestType       `json:"type,omitempty" yaml:"type,omitempty"`
-	Version       string                    `json:"version,omitempty" yaml:"version,omitempty"`
+	Manifest
+	Conditions ContentManifestConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Discovery  Discovery                 `json:"discovery,omitempty" yaml:"discovery,omitempty"`
+	Type       ContentManifestType       `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for ContentManifest.
@@ -161,6 +150,9 @@ func (v *ContentManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	type plainContentManifest ContentManifest
 	x := (*plainContentManifest)(v)
 	if err := node.Decode(x); err != nil {
+		return err
+	}
+	if err := node.Decode(&v.Manifest); err != nil {
 		return err
 	}
 	v.FileMetadata.line = node.Line
@@ -220,24 +212,13 @@ type Icon struct {
 }
 
 type InputManifest struct {
-	FileMetadata    `json:"-" yaml:"-"`
+	Manifest
 	Agent           Agent                         `json:"agent,omitempty" yaml:"agent,omitempty"`
-	Categories      []Category                    `json:"categories,omitempty" yaml:"categories,omitempty"`
 	Conditions      Conditions                    `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	Deprecated      Deprecated                    `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description     string                        `json:"description,omitempty" yaml:"description,omitempty"`
 	Elasticsearch   InputManifestElasticsearch    `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
-	FormatVersion   string                        `json:"format_version,omitempty" yaml:"format_version,omitempty"`
-	Icons           []Icon                        `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Name            string                        `json:"name,omitempty" yaml:"name,omitempty"`
-	Owner           Owner                         `json:"owner,omitempty" yaml:"owner,omitempty"`
 	PolicyTemplates []InputManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
-	Screenshots     []Screenshot                  `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	Source          Source                        `json:"source,omitempty" yaml:"source,omitempty"`
-	Title           string                        `json:"title,omitempty" yaml:"title,omitempty"`
 	Type            InputManifestType             `json:"type,omitempty" yaml:"type,omitempty"`
 	Vars            []Var                         `json:"vars,omitempty" yaml:"vars,omitempty"`
-	Version         string                        `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for InputManifest.
@@ -246,6 +227,9 @@ func (v *InputManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	type plainInputManifest InputManifest
 	x := (*plainInputManifest)(v)
 	if err := node.Decode(x); err != nil {
+		return err
+	}
+	if err := node.Decode(&v.Manifest); err != nil {
 		return err
 	}
 	v.FileMetadata.line = node.Line
@@ -268,26 +252,15 @@ const (
 )
 
 type IntegrationManifest struct {
-	FileMetadata            `json:"-" yaml:"-"`
+	Manifest
 	Agent                   Agent                               `json:"agent,omitempty" yaml:"agent,omitempty"`
-	Categories              []Category                          `json:"categories,omitempty" yaml:"categories,omitempty"`
 	Conditions              Conditions                          `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	Deprecated              Deprecated                          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description             string                              `json:"description,omitempty" yaml:"description,omitempty"`
 	Elasticsearch           IntegrationManifestElasticsearch    `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
-	FormatVersion           string                              `json:"format_version,omitempty" yaml:"format_version,omitempty"`
-	Icons                   []Icon                              `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Name                    string                              `json:"name,omitempty" yaml:"name,omitempty"`
-	Owner                   Owner                               `json:"owner,omitempty" yaml:"owner,omitempty"`
 	PolicyTemplates         []IntegrationManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
 	PolicyTemplatesBehavior string                              `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
-	Screenshots             []Screenshot                        `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	Source                  Source                              `json:"source,omitempty" yaml:"source,omitempty"`
-	Title                   string                              `json:"title,omitempty" yaml:"title,omitempty"`
 	Type                    IntegrationManifestType             `json:"type,omitempty" yaml:"type,omitempty"`
 	VarGroups               []VarGroup                          `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	Vars                    []Var                               `json:"vars,omitempty" yaml:"vars,omitempty"`
-	Version                 string                              `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for IntegrationManifest.
@@ -296,6 +269,9 @@ func (v *IntegrationManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	type plainIntegrationManifest IntegrationManifest
 	x := (*plainIntegrationManifest)(v)
 	if err := node.Decode(x); err != nil {
+		return err
+	}
+	if err := node.Decode(&v.Manifest); err != nil {
 		return err
 	}
 	v.FileMetadata.line = node.Line
@@ -320,6 +296,22 @@ type IntegrationManifestType string
 const (
 	IntegrationManifestTypeIntegration IntegrationManifestType = "integration"
 )
+
+// Manifest contains the common fields shared by all package manifest types.
+type Manifest struct {
+	FileMetadata  `json:"-" yaml:"-"`
+	Categories    []Category   `json:"categories,omitempty" yaml:"categories,omitempty"`
+	Deprecated    Deprecated   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description   string       `json:"description,omitempty" yaml:"description,omitempty"`
+	FormatVersion string       `json:"format_version,omitempty" yaml:"format_version,omitempty"`
+	Icons         []Icon       `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Name          string       `json:"name,omitempty" yaml:"name,omitempty"`
+	Owner         Owner        `json:"owner,omitempty" yaml:"owner,omitempty"`
+	Screenshots   []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	Source        Source       `json:"source,omitempty" yaml:"source,omitempty"`
+	Title         string       `json:"title,omitempty" yaml:"title,omitempty"`
+	Version       string       `json:"version,omitempty" yaml:"version,omitempty"`
+}
 
 type Owner struct {
 	Github string    `json:"github,omitempty" yaml:"github,omitempty"`

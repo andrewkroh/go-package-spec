@@ -110,20 +110,43 @@ func (e *Emitter) emitStruct(f *File, goType *GoType) {
 	f.Type().Id(goType.Name).Struct(fields...)
 	f.Line()
 
-	// Generate UnmarshalYAML method for types with FileMetadata.
-	if goType.EmbedMeta {
+	// Generate UnmarshalYAML for types that need YAML position capture.
+	if goType.EmbedMeta || goType.NeedsUnmarshalYAML {
 		e.emitUnmarshalYAML(f, goType)
 	}
 }
 
 // fieldDecl generates a struct field declaration with tags.
 func (e *Emitter) fieldDecl(field GoField) Code {
+	// Embed fields: no tags unless custom tags are provided.
+	if field.Embed {
+		if field.JSONTag != "" || field.YAMLTag != "" {
+			tags := map[string]string{}
+			if field.JSONTag != "" {
+				tags["json"] = field.JSONTag
+			}
+			if field.YAMLTag != "" {
+				tags["yaml"] = field.YAMLTag
+			}
+			return Id(field.Name).Tag(tags)
+		}
+		return Id(field.Name)
+	}
+
 	// Build tags.
 	jsonTag := field.JSONName + ",omitempty"
 	yamlTag := field.JSONName + ",omitempty"
 	if field.JSONName == "-" {
 		jsonTag = "-"
 		yamlTag = "-"
+	}
+
+	// Allow custom tag overrides from extra fields.
+	if field.JSONTag != "" {
+		jsonTag = field.JSONTag
+	}
+	if field.YAMLTag != "" {
+		yamlTag = field.YAMLTag
 	}
 
 	return Id(field.Name).Add(e.typeExpr(&field.Type)).Tag(map[string]string{
@@ -171,6 +194,9 @@ func (e *Emitter) typeExpr(ref *GoTypeRef) *Statement {
 			return Id(ref.Builtin)
 		}
 	}
+	if ref.QualName != "" {
+		return Qual(ref.Package, ref.QualName)
+	}
 	if ref.Named != "" {
 		return Id(ref.Named)
 	}
@@ -181,30 +207,48 @@ func (e *Emitter) typeExpr(ref *GoTypeRef) *Statement {
 func (e *Emitter) emitUnmarshalYAML(f *File, goType *GoType) {
 	aliasName := "plain" + goType.Name
 
+	// Build the method body.
+	var body []Code
+
+	// type alias = TypeName
+	body = append(body, Type().Id(aliasName).Id(goType.Name))
+	// x := (*alias)(v)
+	body = append(body, Id("x").Op(":=").Parens(Op("*").Id(aliasName)).Parens(Id("v")))
+	// if err := node.Decode(x); err != nil { return err }
+	body = append(body, If(
+		Err().Op(":=").Id("node").Dot("Decode").Call(Id("x")),
+		Err().Op("!=").Nil(),
+	).Block(
+		Return(Err()),
+	))
+
+	// For types with embedded base structs (NeedsUnmarshalYAML), the
+	// type-alias trick doesn't populate promoted fields from Go embeds.
+	// Decode each embedded struct separately to work around this.
+	for _, field := range goType.Fields {
+		if field.Embed && field.Type.Named != "" && field.Name != "FileMetadata" {
+			body = append(body, If(
+				Err().Op(":=").Id("node").Dot("Decode").Call(Op("&").Id("v").Dot(field.Name)),
+				Err().Op("!=").Nil(),
+			).Block(
+				Return(Err()),
+			))
+		}
+	}
+
+	// v.FileMetadata.line = node.Line
+	body = append(body, Id("v").Dot("FileMetadata").Dot("line").Op("=").Id("node").Dot("Line"))
+	// v.FileMetadata.column = node.Column
+	body = append(body, Id("v").Dot("FileMetadata").Dot("column").Op("=").Id("node").Dot("Column"))
+	body = append(body, Return(Nil()))
+
 	f.Comment(fmt.Sprintf("UnmarshalYAML implements yaml.Unmarshaler for %s.", goType.Name))
 	f.Comment("It captures the YAML node position for FileMetadata.")
 	f.Func().Params(
 		Id("v").Op("*").Id(goType.Name),
 	).Id("UnmarshalYAML").Params(
 		Id("node").Op("*").Qual(yamlPkg, "Node"),
-	).Error().Block(
-		// type alias = TypeName
-		Type().Id(aliasName).Id(goType.Name),
-		// x := (*alias)(v)
-		Id("x").Op(":=").Parens(Op("*").Id(aliasName)).Parens(Id("v")),
-		// if err := node.Decode(x); err != nil { return err }
-		If(
-			Err().Op(":=").Id("node").Dot("Decode").Call(Id("x")),
-			Err().Op("!=").Nil(),
-		).Block(
-			Return(Err()),
-		),
-		// v.FileMetadata.line = node.Line
-		Id("v").Dot("FileMetadata").Dot("line").Op("=").Id("node").Dot("Line"),
-		// v.FileMetadata.column = node.Column
-		Id("v").Dot("FileMetadata").Dot("column").Op("=").Id("node").Dot("Column"),
-		Return(Nil()),
-	)
+	).Error().Block(body...)
 	f.Line()
 }
 

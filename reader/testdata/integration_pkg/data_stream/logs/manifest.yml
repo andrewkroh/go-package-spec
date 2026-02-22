@@ -1,0 +1,6 @@
+title: Test Logs
+type: logs
+streams:
+  - input: logfile
+    title: Collect test logs
+    description: Collect test log data.

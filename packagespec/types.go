@@ -2,45 +2,1189 @@
 
 package packagespec
 
-// FieldType represents the Elasticsearch mapping type of a field.
-type FieldType string
+import yamlv3 "gopkg.in/yaml.v3"
 
-// Enum values for FieldType.
+// Agent declarations related to Agent configurations or requirements.
+type Agent struct {
+	Privileges AgentPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
+}
+
+type AgentPrivileges struct {
+	Root *bool `json:"root,omitempty" yaml:"root,omitempty"`
+}
+
+type Category string
+
+// Enum values for Category.
 const (
-	FieldTypeAggregateMetricDouble FieldType = "aggregate_metric_double"
-	FieldTypeAlias                 FieldType = "alias"
-	FieldTypeHistogram             FieldType = "histogram"
-	FieldTypeConstantKeyword       FieldType = "constant_keyword"
-	FieldTypeText                  FieldType = "text"
-	FieldTypeMatchOnlyText         FieldType = "match_only_text"
-	FieldTypeKeyword               FieldType = "keyword"
-	FieldTypeLong                  FieldType = "long"
-	FieldTypeInteger               FieldType = "integer"
-	FieldTypeShort                 FieldType = "short"
-	FieldTypeByte                  FieldType = "byte"
-	FieldTypeDouble                FieldType = "double"
-	FieldTypeFloat                 FieldType = "float"
-	FieldTypeHalfFloat             FieldType = "half_float"
-	FieldTypeScaledFloat           FieldType = "scaled_float"
-	FieldTypeDate                  FieldType = "date"
-	FieldTypeDateNanos             FieldType = "date_nanos"
-	FieldTypeBoolean               FieldType = "boolean"
-	FieldTypeBinary                FieldType = "binary"
-	FieldTypeIntegerRange          FieldType = "integer_range"
-	FieldTypeFloatRange            FieldType = "float_range"
-	FieldTypeLongRange             FieldType = "long_range"
-	FieldTypeDoubleRange           FieldType = "double_range"
-	FieldTypeDateRange             FieldType = "date_range"
-	FieldTypeIPRange               FieldType = "ip_range"
-	FieldTypeGroup                 FieldType = "group"
-	FieldTypeGeoPoint              FieldType = "geo_point"
-	FieldTypeObject                FieldType = "object"
-	FieldTypeIP                    FieldType = "ip"
-	FieldTypeNested                FieldType = "nested"
-	FieldTypeFlattened             FieldType = "flattened"
-	FieldTypeWildcard              FieldType = "wildcard"
-	FieldTypeVersion               FieldType = "version"
-	FieldTypeUnsignedLong          FieldType = "unsigned_long"
-	FieldTypeCountedKeyword        FieldType = "counted_keyword"
-	FieldTypeSemanticText          FieldType = "semantic_text"
+	CategoryAdvancedAnalyticsUeba    Category = "advanced_analytics_ueba"
+	CategoryAnalyticsEngine          Category = "analytics_engine"
+	CategoryApplicationObservability Category = "application_observability"
+	CategoryAppSearch                Category = "app_search"
+	CategoryAssetInventory           Category = "asset_inventory"
+	CategoryAuditd                   Category = "auditd"
+	CategoryAuthentication           Category = "authentication"
+	CategoryAws                      Category = "aws"
+	CategoryAzure                    Category = "azure"
+	CategoryBigData                  Category = "big_data"
+	CategoryCdnSecurity              Category = "cdn_security"
+	CategoryCloud                    Category = "cloud"
+	CategoryCloudsecurityCdr         Category = "cloudsecurity_cdr"
+	CategoryConfigManagement         Category = "config_management"
+	CategoryConnector                Category = "connector"
+	CategoryConnectorClient          Category = "connector_client"
+	CategoryConnectorPackage         Category = "connector_package"
+	CategoryContainers               Category = "containers"
+	CategoryContentSource            Category = "content_source"
+	CategoryCrawler                  Category = "crawler"
+	CategoryCredentialManagement     Category = "credential_management"
+	CategoryCrm                      Category = "crm"
+	CategoryCustom                   Category = "custom"
+	CategoryCustomLogs               Category = "custom_logs"
+	CategoryDatabaseSecurity         Category = "database_security"
+	CategoryDatastore                Category = "datastore"
+	CategoryDNSSecurity              Category = "dns_security"
+	CategoryEdrXdr                   Category = "edr_xdr"
+	CategoryElasticsearchSdk         Category = "elasticsearch_sdk"
+	CategoryElasticStack             Category = "elastic_stack"
+	CategoryEmailSecurity            Category = "email_security"
+	CategoryEnterpriseSearch         Category = "enterprise_search"
+	CategoryFirewallSecurity         Category = "firewall_security"
+	CategoryGoogleCloud              Category = "google_cloud"
+	CategoryIam                      Category = "iam"
+	CategoryIDsIps                   Category = "ids_ips"
+	CategoryInfrastructure           Category = "infrastructure"
+	CategoryJavaObservability        Category = "java_observability"
+	CategoryKubernetes               Category = "kubernetes"
+	CategoryLanguageClient           Category = "language_client"
+	CategoryLanguages                Category = "languages"
+	CategoryLoadBalancer             Category = "load_balancer"
+	CategoryMessageQueue             Category = "message_queue"
+	CategoryMisconfigurationWorkflow Category = "misconfiguration_workflow"
+	CategoryMonitoring               Category = "monitoring"
+	CategoryNativeSearch             Category = "native_search"
+	CategoryNetwork                  Category = "network"
+	CategoryNetworkSecurity          Category = "network_security"
+	CategoryNotification             Category = "notification"
+	CategoryObservability            Category = "observability"
+	CategoryOpentelemetry            Category = "opentelemetry"
+	CategoryOSSystem                 Category = "os_system"
+	CategoryProcessManager           Category = "process_manager"
+	CategoryProductivity             Category = "productivity"
+	CategoryProductivitySecurity     Category = "productivity_security"
+	CategoryProxySecurity            Category = "proxy_security"
+	CategorySdkSearch                Category = "sdk_search"
+	CategorySecurity                 Category = "security"
+	CategorySiem                     Category = "siem"
+	CategoryStreamProcessing         Category = "stream_processing"
+	CategorySupport                  Category = "support"
+	CategoryThreatIntel              Category = "threat_intel"
+	CategoryTicketing                Category = "ticketing"
+	CategoryVersionControl           Category = "version_control"
+	CategoryVirtualization           Category = "virtualization"
+	CategoryVpnSecurity              Category = "vpn_security"
+	CategoryVulnerabilityManagement  Category = "vulnerability_management"
+	CategoryVulnerabilityWorkflow    Category = "vulnerability_workflow"
+	CategoryWeb                      Category = "web"
+	CategoryWebApplicationFirewall   Category = "web_application_firewall"
+	CategoryWebsphere                Category = "websphere"
+	CategoryWorkplaceSearch          Category = "workplace_search"
+)
+
+type Changelog struct {
+	FileMetadata `json:"-" yaml:"-"`
+	Changes      []ChangelogChange `json:"changes,omitempty" yaml:"changes,omitempty"`
+	Version      string            `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for Changelog.
+// It captures the YAML node position for FileMetadata.
+func (v *Changelog) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainChangelog Changelog
+	x := (*plainChangelog)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+type ChangelogChange struct {
+	Description string              `json:"description,omitempty" yaml:"description,omitempty"`
+	Link        string              `json:"link,omitempty" yaml:"link,omitempty"`
+	Type        ChangelogChangeType `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+// ChangelogChangeType type of change.
+type ChangelogChangeType string
+
+// Enum values for ChangelogChangeType.
+const (
+	ChangelogChangeTypeBreakingChange ChangelogChangeType = "breaking-change"
+	ChangelogChangeTypeBugfix         ChangelogChangeType = "bugfix"
+	ChangelogChangeTypeEnhancement    ChangelogChangeType = "enhancement"
+	ChangelogChangeTypeDeprecation    ChangelogChangeType = "deprecation"
+)
+
+// Conditions under which this package can be installed.
+type Conditions struct {
+	Agent   ConditionsAgent   `json:"agent,omitempty" yaml:"agent,omitempty"`
+	Elastic ConditionsElastic `json:"elastic,omitempty" yaml:"elastic,omitempty"`
+	Kibana  ConditionsKibana  `json:"kibana,omitempty" yaml:"kibana,omitempty"`
+}
+
+// ConditionsAgent elastic Agent conditions
+type ConditionsAgent struct {
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// ConditionsElastic elastic conditions
+type ConditionsElastic struct {
+	Capabilities []ConditionsElasticCapability `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
+	Subscription ConditionsElasticSubscription `json:"subscription,omitempty" yaml:"subscription,omitempty"`
+}
+
+type ConditionsElasticCapability string
+
+// Enum values for ConditionsElasticCapability.
+const (
+	ConditionsElasticCapabilityApm              ConditionsElasticCapability = "apm"
+	ConditionsElasticCapabilityEnterpriseSearch ConditionsElasticCapability = "enterprise_search"
+	ConditionsElasticCapabilityObservability    ConditionsElasticCapability = "observability"
+	ConditionsElasticCapabilitySecurity         ConditionsElasticCapability = "security"
+	ConditionsElasticCapabilityServerlessSearch ConditionsElasticCapability = "serverless_search"
+	ConditionsElasticCapabilityUptime           ConditionsElasticCapability = "uptime"
+)
+
+// ConditionsElasticSubscription the subscription required for this package.
+type ConditionsElasticSubscription string
+
+// Enum values for ConditionsElasticSubscription.
+const (
+	ConditionsElasticSubscriptionBasic      ConditionsElasticSubscription = "basic"
+	ConditionsElasticSubscriptionGold       ConditionsElasticSubscription = "gold"
+	ConditionsElasticSubscriptionPlatinum   ConditionsElasticSubscription = "platinum"
+	ConditionsElasticSubscriptionEnterprise ConditionsElasticSubscription = "enterprise"
+)
+
+// ConditionsKibana kibana conditions
+type ConditionsKibana struct {
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+type ConfigurationLink struct {
+	Content string                `json:"content,omitempty" yaml:"content,omitempty"`
+	Title   string                `json:"title,omitempty" yaml:"title,omitempty"`
+	Type    ConfigurationLinkType `json:"type,omitempty" yaml:"type,omitempty"`
+	URL     string                `json:"url,omitempty" yaml:"url,omitempty"`
+}
+
+// ConfigurationLinkType type of link. `next_steps` for links to locations that can be relevant right after configuring the policy. `action` for actions that can be performed while the policy is in use.
+type ConfigurationLinkType string
+
+// Enum values for ConfigurationLinkType.
+const (
+	ConfigurationLinkTypeAction   ConfigurationLinkType = "action"
+	ConfigurationLinkTypeNextStep ConfigurationLinkType = "next_step"
+)
+
+type ContentManifest struct {
+	FileMetadata  `json:"-" yaml:"-"`
+	Categories    []Category                `json:"categories,omitempty" yaml:"categories,omitempty"`
+	Conditions    ContentManifestConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Deprecated    Deprecated                `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description   string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	Discovery     Discovery                 `json:"discovery,omitempty" yaml:"discovery,omitempty"`
+	FormatVersion string                    `json:"format_version,omitempty" yaml:"format_version,omitempty"`
+	Icons         []Icon                    `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Name          string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Owner         Owner                     `json:"owner,omitempty" yaml:"owner,omitempty"`
+	Screenshots   []Screenshot              `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	Source        Source                    `json:"source,omitempty" yaml:"source,omitempty"`
+	Title         string                    `json:"title,omitempty" yaml:"title,omitempty"`
+	Type          ContentManifestType       `json:"type,omitempty" yaml:"type,omitempty"`
+	Version       string                    `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for ContentManifest.
+// It captures the YAML node position for FileMetadata.
+func (v *ContentManifest) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainContentManifest ContentManifest
+	x := (*plainContentManifest)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+// ContentManifestConditions conditions under which this package can be installed.
+type ContentManifestConditions struct {
+	Elastic ConditionsElastic `json:"elastic,omitempty" yaml:"elastic,omitempty"`
+	Kibana  ConditionsKibana  `json:"kibana,omitempty" yaml:"kibana,omitempty"`
+}
+
+// ContentManifestType the type of package.
+type ContentManifestType string
+
+// Enum values for ContentManifestType.
+const (
+	ContentManifestTypeContent ContentManifestType = "content"
+)
+
+type DataStreamManifest struct {
+	FileMetadata    `json:"-" yaml:"-"`
+	Agent           Agent                           `json:"agent,omitempty" yaml:"agent,omitempty"`
+	Categories      []Category                      `json:"categories,omitempty" yaml:"categories,omitempty"`
+	Dataset         string                          `json:"dataset,omitempty" yaml:"dataset,omitempty"`
+	DatasetIsPrefix *bool                           `json:"dataset_is_prefix,omitempty" yaml:"dataset_is_prefix,omitempty"`
+	Deprecated      Deprecated                      `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Elasticsearch   DataStreamManifestElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
+	Hidden          *bool                           `json:"hidden,omitempty" yaml:"hidden,omitempty"`
+	ILMPolicy       string                          `json:"ilm_policy,omitempty" yaml:"ilm_policy,omitempty"`
+	Release         DataStreamManifestRelease       `json:"release,omitempty" yaml:"release,omitempty"`
+	Streams         []DataStreamManifestStream      `json:"streams,omitempty" yaml:"streams,omitempty"`
+	Title           string                          `json:"title,omitempty" yaml:"title,omitempty"`
+	Type            DataStreamManifestType          `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for DataStreamManifest.
+// It captures the YAML node position for FileMetadata.
+func (v *DataStreamManifest) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainDataStreamManifest DataStreamManifest
+	x := (*plainDataStreamManifest)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+// DataStreamManifestElasticsearch elasticsearch asset definitions
+type DataStreamManifestElasticsearch struct {
+	DynamicDataset   *bool                                     `json:"dynamic_dataset,omitempty" yaml:"dynamic_dataset,omitempty"`
+	DynamicNamespace *bool                                     `json:"dynamic_namespace,omitempty" yaml:"dynamic_namespace,omitempty"`
+	IndexMode        ElasticsearchIndexMode                    `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
+	IndexTemplate    ElasticsearchIndexTemplate                `json:"index_template,omitempty" yaml:"index_template,omitempty"`
+	Privileges       DataStreamManifestElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
+	SourceMode       DataStreamManifestElasticsearchSourceMode `json:"source_mode,omitempty" yaml:"source_mode,omitempty"`
+}
+
+// DataStreamManifestElasticsearchPrivileges elasticsearch privilege requirements
+type DataStreamManifestElasticsearchPrivileges struct {
+	Indices []string `json:"indices,omitempty" yaml:"indices,omitempty"`
+}
+
+/*
+DataStreamManifestElasticsearchSourceMode source mode to use. This configures how the document source (`_source`) is stored
+for this data stream.
+If configured as `default`, this mode is not configured and it uses Elasticsearch defaults.
+If configured as `synthetic`, it enables [synthetic source](https://www.elastic.co/guide/en/elasticsearch/reference/8.4/mapping-source-field.html#synthetic-source),
+that doesn't store the source, but tries to rebuild it from the indexed fields when queried.
+If no configured or set to `synthetic`, users may override the setting from Fleet UI.
+*/
+type DataStreamManifestElasticsearchSourceMode string
+
+// Enum values for DataStreamManifestElasticsearchSourceMode.
+const (
+	DataStreamManifestElasticsearchSourceModeDefault   DataStreamManifestElasticsearchSourceMode = "default"
+	DataStreamManifestElasticsearchSourceModeSynthetic DataStreamManifestElasticsearchSourceMode = "synthetic"
+)
+
+// DataStreamManifestRelease stability of data stream.
+type DataStreamManifestRelease string
+
+// Enum values for DataStreamManifestRelease.
+const (
+	DataStreamManifestReleaseExperimental DataStreamManifestRelease = "experimental"
+	DataStreamManifestReleaseBeta         DataStreamManifestRelease = "beta"
+)
+
+type DataStreamManifestStream struct {
+	Description  string       `json:"description,omitempty" yaml:"description,omitempty"`
+	Enabled      *bool        `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Input        string       `json:"input,omitempty" yaml:"input,omitempty"`
+	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
+	TemplatePath string       `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	Title        string       `json:"title,omitempty" yaml:"title,omitempty"`
+	VarGroups    []VarGroup   `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
+	Vars         []Var        `json:"vars,omitempty" yaml:"vars,omitempty"`
+}
+
+// DataStreamManifestType type of data stream
+type DataStreamManifestType string
+
+// Enum values for DataStreamManifestType.
+const (
+	DataStreamManifestTypeMetrics    DataStreamManifestType = "metrics"
+	DataStreamManifestTypeLogs       DataStreamManifestType = "logs"
+	DataStreamManifestTypeSynthetics DataStreamManifestType = "synthetics"
+	DataStreamManifestTypeTraces     DataStreamManifestType = "traces"
+	DataStreamManifestTypeProfiling  DataStreamManifestType = "profiling"
+)
+
+// DeploymentModes options related to the deployment modes. The deployment mode refers to the mode used to deploy the Elastic Agents running this policy.
+type DeploymentModes struct {
+	Agentless DeploymentModesAgentless `json:"agentless,omitempty" yaml:"agentless,omitempty"`
+	Default   DeploymentModesDefault   `json:"default,omitempty" yaml:"default,omitempty"`
+}
+
+// DeploymentModesAgentless options specific to the Agentless deployment mode. This mode is used in offerings where the Elastic Agents running these policies are fully managed for the user.
+type DeploymentModesAgentless struct {
+	Division     string                            `json:"division,omitempty" yaml:"division,omitempty"`
+	Enabled      *bool                             `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	IsDefault    *bool                             `json:"is_default,omitempty" yaml:"is_default,omitempty"`
+	Organization string                            `json:"organization,omitempty" yaml:"organization,omitempty"`
+	Resources    DeploymentModesAgentlessResources `json:"resources,omitempty" yaml:"resources,omitempty"`
+	Team         string                            `json:"team,omitempty" yaml:"team,omitempty"`
+}
+
+// DeploymentModesAgentlessResources the computing resources specifications for the Agentless deployment.
+type DeploymentModesAgentlessResources struct {
+	Requests DeploymentModesAgentlessResourcesRequests `json:"requests,omitempty" yaml:"requests,omitempty"`
+}
+
+// DeploymentModesAgentlessResourcesRequests the computing resources that the Agentless deployment will be initially allocated.
+type DeploymentModesAgentlessResourcesRequests struct {
+	CPU    string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
+	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
+}
+
+// DeploymentModesDefault options specific to the default deployment mode, where agents are normally managed by users, explicitly enrolled to Fleet and visible in UIs.
+type DeploymentModesDefault struct {
+	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+}
+
+// Deprecated information on deprecation of a package or an individual feature.
+type Deprecated struct {
+	Description string               `json:"description,omitempty" yaml:"description,omitempty"`
+	ReplacedBy  DeprecatedReplacedBy `json:"replaced_by,omitempty" yaml:"replaced_by,omitempty"`
+	Since       string               `json:"since,omitempty" yaml:"since,omitempty"`
+}
+
+type DeprecatedReplacedBy struct {
+	DataStream     string `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	Input          string `json:"input,omitempty" yaml:"input,omitempty"`
+	Package        string `json:"package,omitempty" yaml:"package,omitempty"`
+	PolicyTemplate string `json:"policy_template,omitempty" yaml:"policy_template,omitempty"`
+	Variable       string `json:"variable,omitempty" yaml:"variable,omitempty"`
+}
+
+// Discovery description of the data this package can be used with. It can be used to discover the package from elements in the existing data.
+type Discovery struct {
+	Datasets []DiscoveryDataset `json:"datasets,omitempty" yaml:"datasets,omitempty"`
+	Fields   []DiscoveryField   `json:"fields,omitempty" yaml:"fields,omitempty"`
+}
+
+type DiscoveryDataset struct {
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+}
+
+type DiscoveryField struct {
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+}
+
+/*
+ElasticsearchIndexMode index mode to use. Index mode can be used to enable use case specific functionalities.
+This setting must be installed in the composable index template, not in the package component templates.
+*/
+type ElasticsearchIndexMode string
+
+// Enum values for ElasticsearchIndexMode.
+const (
+	ElasticsearchIndexModeTimeSeries ElasticsearchIndexMode = "time_series"
+)
+
+// ElasticsearchIndexTemplate index template definition
+type ElasticsearchIndexTemplate struct {
+	DataStream     ElasticsearchIndexTemplateDataStream     `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	IngestPipeline ElasticsearchIndexTemplateIngestPipeline `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
+	Mappings       ElasticsearchIndexTemplateMappings       `json:"mappings,omitempty" yaml:"mappings,omitempty"`
+	Settings       ElasticsearchIndexTemplateSettings       `json:"settings,omitempty" yaml:"settings,omitempty"`
+}
+
+// ElasticsearchIndexTemplateDataStream data stream section of index template
+type ElasticsearchIndexTemplateDataStream struct {
+	Hidden *bool `json:"hidden,omitempty" yaml:"hidden,omitempty"`
+}
+
+// ElasticsearchIndexTemplateIngestPipeline elasticsearch ingest pipeline settings
+type ElasticsearchIndexTemplateIngestPipeline struct {
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+}
+
+// ElasticsearchIndexTemplateMappings mappings section of index template
+type ElasticsearchIndexTemplateMappings struct {
+	DateDetection      *bool                                                               `json:"date_detection,omitempty" yaml:"date_detection,omitempty"`
+	Dynamic            any                                                                 `json:"dynamic,omitempty" yaml:"dynamic,omitempty"`
+	DynamicDateFormats []string                                                            `json:"dynamic_date_formats,omitempty" yaml:"dynamic_date_formats,omitempty"`
+	DynamicTemplates   []map[string]ElasticsearchIndexTemplateMappingsDynamicTemplateValue `json:"dynamic_templates,omitempty" yaml:"dynamic_templates,omitempty"`
+	Subobjects         *bool                                                               `json:"subobjects,omitempty" yaml:"subobjects,omitempty"`
+}
+
+type ElasticsearchIndexTemplateMappingsDynamicTemplateValue struct {
+	Mapping          ElasticsearchIndexTemplateMappingsDynamicTemplateValueMapping `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	MatchMappingType any                                                           `json:"match_mapping_type,omitempty" yaml:"match_mapping_type,omitempty"`
+}
+
+type ElasticsearchIndexTemplateMappingsDynamicTemplateValueMapping struct {
+	DefaultMetric any   `json:"default_metric,omitempty" yaml:"default_metric,omitempty"`
+	IgnoreAbove   int   `json:"ignore_above,omitempty" yaml:"ignore_above,omitempty"`
+	Index         *bool `json:"index,omitempty" yaml:"index,omitempty"`
+	Metrics       any   `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+	ScalingFactor int   `json:"scaling_factor,omitempty" yaml:"scaling_factor,omitempty"`
+	Type          Type  `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+// ElasticsearchIndexTemplateSettings settings section of index template
+type ElasticsearchIndexTemplateSettings struct {
+	Analysis       IndexTemplateSettingAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
+	Index          IndexTemplateSettingIndex    `json:"index,omitempty" yaml:"index,omitempty"`
+	NumberOfShards int                          `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+}
+
+type Field struct {
+	FileMetadata          `json:"-" yaml:"-"`
+	Analyzer              string                     `json:"analyzer,omitempty" yaml:"analyzer,omitempty"`
+	CopyTo                string                     `json:"copy_to,omitempty" yaml:"copy_to,omitempty"`
+	DateFormat            string                     `json:"date_format,omitempty" yaml:"date_format,omitempty"`
+	DefaultMetric         any                        `json:"default_metric,omitempty" yaml:"default_metric,omitempty"`
+	Description           string                     `json:"description,omitempty" yaml:"description,omitempty"`
+	Dimension             *bool                      `json:"dimension,omitempty" yaml:"dimension,omitempty"`
+	DocValues             *bool                      `json:"doc_values,omitempty" yaml:"doc_values,omitempty"`
+	Dynamic               any                        `json:"dynamic,omitempty" yaml:"dynamic,omitempty"`
+	Enabled               *bool                      `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Example               string                     `json:"example,omitempty" yaml:"example,omitempty"`
+	ExpectedValues        []string                   `json:"expected_values,omitempty" yaml:"expected_values,omitempty"`
+	External              FieldExternal              `json:"external,omitempty" yaml:"external,omitempty"`
+	Fields                []Field                    `json:"fields,omitempty" yaml:"fields,omitempty"`
+	IgnoreAbove           int                        `json:"ignore_above,omitempty" yaml:"ignore_above,omitempty"`
+	IgnoreMalformed       *bool                      `json:"ignore_malformed,omitempty" yaml:"ignore_malformed,omitempty"`
+	IncludeInParent       *bool                      `json:"include_in_parent,omitempty" yaml:"include_in_parent,omitempty"`
+	IncludeInRoot         *bool                      `json:"include_in_root,omitempty" yaml:"include_in_root,omitempty"`
+	Index                 *bool                      `json:"index,omitempty" yaml:"index,omitempty"`
+	InferenceID           string                     `json:"inference_id,omitempty" yaml:"inference_id,omitempty"`
+	MetricType            FieldMetricType            `json:"metric_type,omitempty" yaml:"metric_type,omitempty"`
+	Metrics               any                        `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+	MultiFields           []Field                    `json:"multi_fields,omitempty" yaml:"multi_fields,omitempty"`
+	Name                  string                     `json:"name,omitempty" yaml:"name,omitempty"`
+	Normalize             []FieldNormalize           `json:"normalize,omitempty" yaml:"normalize,omitempty"`
+	Normalizer            string                     `json:"normalizer,omitempty" yaml:"normalizer,omitempty"`
+	NullValue             any                        `json:"null_value,omitempty" yaml:"null_value,omitempty"`
+	ObjectType            FieldObjectType            `json:"object_type,omitempty" yaml:"object_type,omitempty"`
+	ObjectTypeMappingType FieldObjectTypeMappingType `json:"object_type_mapping_type,omitempty" yaml:"object_type_mapping_type,omitempty"`
+	Path                  string                     `json:"path,omitempty" yaml:"path,omitempty"`
+	Pattern               string                     `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	Runtime               any                        `json:"runtime,omitempty" yaml:"runtime,omitempty"`
+	ScalingFactor         int                        `json:"scaling_factor,omitempty" yaml:"scaling_factor,omitempty"`
+	SearchAnalyzer        string                     `json:"search_analyzer,omitempty" yaml:"search_analyzer,omitempty"`
+	Store                 *bool                      `json:"store,omitempty" yaml:"store,omitempty"`
+	Subobjects            *bool                      `json:"subobjects,omitempty" yaml:"subobjects,omitempty"`
+	Type                  Type                       `json:"type,omitempty" yaml:"type,omitempty"`
+	Unit                  FieldUnit                  `json:"unit,omitempty" yaml:"unit,omitempty"`
+	Value                 string                     `json:"value,omitempty" yaml:"value,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for Field.
+// It captures the YAML node position for FileMetadata.
+func (v *Field) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainField Field
+	x := (*plainField)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+// FieldExternal external source reference
+type FieldExternal string
+
+// Enum values for FieldExternal.
+const (
+	FieldExternalECS FieldExternal = "ecs"
+)
+
+// FieldMetricType the metric type of a numeric field. This is attached to the field as a `time_series_metric` mapping parameter. A gauge is a single-value measurement that can go up or down over time, such as a temperature. A counter is a single-value cumulative counter that only goes up, such as the number of requests processed by a web server. By default, no metric type is associated with a field.
+type FieldMetricType string
+
+// Enum values for FieldMetricType.
+const (
+	FieldMetricTypeCounter FieldMetricType = "counter"
+	FieldMetricTypeGauge   FieldMetricType = "gauge"
+)
+
+type FieldNormalize string
+
+// Enum values for FieldNormalize.
+const (
+	FieldNormalizeArray FieldNormalize = "array"
+)
+
+// FieldObjectType type of the members of the object when `type: object` is used. In these cases a dynamic template is created so direct subobjects of this field have the type indicated. When `object_type_mapping_type` is also used, the dynamic mapping is only applied to values that have the given type, as detected by the JSON parser.
+type FieldObjectType string
+
+// Enum values for FieldObjectType.
+const (
+	FieldObjectTypeBoolean      FieldObjectType = "boolean"
+	FieldObjectTypeByte         FieldObjectType = "byte"
+	FieldObjectTypeDouble       FieldObjectType = "double"
+	FieldObjectTypeFloat        FieldObjectType = "float"
+	FieldObjectTypeHistogram    FieldObjectType = "histogram"
+	FieldObjectTypeKeyword      FieldObjectType = "keyword"
+	FieldObjectTypeLong         FieldObjectType = "long"
+	FieldObjectTypeObject       FieldObjectType = "object"
+	FieldObjectTypeShort        FieldObjectType = "short"
+	FieldObjectTypeText         FieldObjectType = "text"
+	FieldObjectTypeInteger      FieldObjectType = "integer"
+	FieldObjectTypeHalfFloat    FieldObjectType = "half_float"
+	FieldObjectTypeScaledFloat  FieldObjectType = "scaled_float"
+	FieldObjectTypeUnsignedLong FieldObjectType = "unsigned_long"
+)
+
+// FieldObjectTypeMappingType type that members of a field of with `type: object` must have in the source document. This type corresponds to the data type detected by the JSON parser, and is translated to the `match_mapping_type` parameter of Elasticsearch dynamic templates.
+type FieldObjectTypeMappingType string
+
+// Enum values for FieldObjectTypeMappingType.
+const (
+	FieldObjectTypeMappingTypeAny    FieldObjectTypeMappingType = "*"
+	FieldObjectTypeMappingTypeArray  FieldObjectTypeMappingType = "array"
+	FieldObjectTypeMappingTypeDouble FieldObjectTypeMappingType = "double"
+	FieldObjectTypeMappingTypeFalse  FieldObjectTypeMappingType = "false"
+	FieldObjectTypeMappingTypeLong   FieldObjectTypeMappingType = "long"
+	FieldObjectTypeMappingTypeNull   FieldObjectTypeMappingType = "null"
+	FieldObjectTypeMappingTypeObject FieldObjectTypeMappingType = "object"
+	FieldObjectTypeMappingTypeString FieldObjectTypeMappingType = "string"
+	FieldObjectTypeMappingTypeTrue   FieldObjectTypeMappingType = "true"
+)
+
+// FieldUnit unit type to associate with a numeric field. This is attached to the field as metadata (via `meta`). By default, a field does not have a unit. The convention for percents is to use value 1 to mean 100%.
+type FieldUnit string
+
+// Enum values for FieldUnit.
+const (
+	FieldUnitByte    FieldUnit = "byte"
+	FieldUnitPercent FieldUnit = "percent"
+	FieldUnitD       FieldUnit = "d"
+	FieldUnitH       FieldUnit = "h"
+	FieldUnitM       FieldUnit = "m"
+	FieldUnitS       FieldUnit = "s"
+	FieldUnitMs      FieldUnit = "ms"
+	FieldUnitMicros  FieldUnit = "micros"
+	FieldUnitNanos   FieldUnit = "nanos"
+)
+
+type Icon struct {
+	DarkMode *bool  `json:"dark_mode,omitempty" yaml:"dark_mode,omitempty"`
+	Size     string `json:"size,omitempty" yaml:"size,omitempty"`
+	Src      string `json:"src,omitempty" yaml:"src,omitempty"`
+	Title    string `json:"title,omitempty" yaml:"title,omitempty"`
+	Type     string `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+type IndexTemplateSettingAnalysis struct {
+	Analyzer map[string]IndexTemplateSettingAnalysisAnalyzerValue `json:"analyzer,omitempty" yaml:"analyzer,omitempty"`
+}
+
+type IndexTemplateSettingAnalysisAnalyzerValue struct {
+	Pattern string                                        `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	Type    IndexTemplateSettingAnalysisAnalyzerValueType `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+// IndexTemplateSettingAnalysisAnalyzerValueType type of analyzer
+type IndexTemplateSettingAnalysisAnalyzerValueType string
+
+// Enum values for IndexTemplateSettingAnalysisAnalyzerValueType.
+const (
+	IndexTemplateSettingAnalysisAnalyzerValueTypePattern IndexTemplateSettingAnalysisAnalyzerValueType = "pattern"
+)
+
+type IndexTemplateSettingIndex struct {
+	Codec   IndexTemplateSettingIndexCodec   `json:"codec,omitempty" yaml:"codec,omitempty"`
+	Mapping IndexTemplateSettingIndexMapping `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	Sort    IndexTemplateSettingIndexSort    `json:"sort,omitempty" yaml:"sort,omitempty"`
+}
+
+// IndexTemplateSettingIndexCodec type of compression to use. The default is to use LZ4, `best_compression` uses DEFLATE, with higher compression but lower ingestion performance.
+type IndexTemplateSettingIndexCodec string
+
+// Enum values for IndexTemplateSettingIndexCodec.
+const (
+	IndexTemplateSettingIndexCodecDefault         IndexTemplateSettingIndexCodec = "default"
+	IndexTemplateSettingIndexCodecBestCompression IndexTemplateSettingIndexCodec = "best_compression"
+)
+
+type IndexTemplateSettingIndexMapping struct{}
+
+type IndexTemplateSettingIndexSort struct {
+	Field any `json:"field,omitempty" yaml:"field,omitempty"`
+	Order any `json:"order,omitempty" yaml:"order,omitempty"`
+}
+
+type InputManifest struct {
+	FileMetadata    `json:"-" yaml:"-"`
+	Agent           Agent                         `json:"agent,omitempty" yaml:"agent,omitempty"`
+	Categories      []Category                    `json:"categories,omitempty" yaml:"categories,omitempty"`
+	Conditions      Conditions                    `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Deprecated      Deprecated                    `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description     string                        `json:"description,omitempty" yaml:"description,omitempty"`
+	Elasticsearch   InputManifestElasticsearch    `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
+	FormatVersion   string                        `json:"format_version,omitempty" yaml:"format_version,omitempty"`
+	Icons           []Icon                        `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Name            string                        `json:"name,omitempty" yaml:"name,omitempty"`
+	Owner           Owner                         `json:"owner,omitempty" yaml:"owner,omitempty"`
+	PolicyTemplates []InputManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
+	Screenshots     []Screenshot                  `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	Source          Source                        `json:"source,omitempty" yaml:"source,omitempty"`
+	Title           string                        `json:"title,omitempty" yaml:"title,omitempty"`
+	Type            InputManifestType             `json:"type,omitempty" yaml:"type,omitempty"`
+	Vars            []Var                         `json:"vars,omitempty" yaml:"vars,omitempty"`
+	Version         string                        `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for InputManifest.
+// It captures the YAML node position for FileMetadata.
+func (v *InputManifest) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainInputManifest InputManifest
+	x := (*plainInputManifest)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+// InputManifestElasticsearch elasticsearch asset definitions
+type InputManifestElasticsearch struct {
+	IndexMode     ElasticsearchIndexMode     `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
+	IndexTemplate ElasticsearchIndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
+}
+
+type InputManifestPolicyTemplate struct {
+	ConfigurationLinks []ConfigurationLink             `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
+	DeploymentModes    DeploymentModes                 `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	Deprecated         Deprecated                      `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description        string                          `json:"description,omitempty" yaml:"description,omitempty"`
+	DynamicSignalTypes *bool                           `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
+	FipsCompatible     *bool                           `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
+	Icons              []Icon                          `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Input              string                          `json:"input,omitempty" yaml:"input,omitempty"`
+	Name               string                          `json:"name,omitempty" yaml:"name,omitempty"`
+	Screenshots        []Screenshot                    `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	TemplatePath       string                          `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	Title              string                          `json:"title,omitempty" yaml:"title,omitempty"`
+	Type               InputManifestPolicyTemplateType `json:"type,omitempty" yaml:"type,omitempty"`
+	Vars               []Var                           `json:"vars,omitempty" yaml:"vars,omitempty"`
+}
+
+// InputManifestPolicyTemplateType type of data stream
+type InputManifestPolicyTemplateType string
+
+// Enum values for InputManifestPolicyTemplateType.
+const (
+	InputManifestPolicyTemplateTypeMetrics    InputManifestPolicyTemplateType = "metrics"
+	InputManifestPolicyTemplateTypeLogs       InputManifestPolicyTemplateType = "logs"
+	InputManifestPolicyTemplateTypeSynthetics InputManifestPolicyTemplateType = "synthetics"
+	InputManifestPolicyTemplateTypeTraces     InputManifestPolicyTemplateType = "traces"
+)
+
+// InputManifestType the type of package.
+type InputManifestType string
+
+// Enum values for InputManifestType.
+const (
+	InputManifestTypeInput InputManifestType = "input"
+)
+
+type IntegrationManifest struct {
+	FileMetadata            `json:"-" yaml:"-"`
+	Agent                   Agent                               `json:"agent,omitempty" yaml:"agent,omitempty"`
+	Categories              []Category                          `json:"categories,omitempty" yaml:"categories,omitempty"`
+	Conditions              Conditions                          `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Deprecated              Deprecated                          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description             string                              `json:"description,omitempty" yaml:"description,omitempty"`
+	Elasticsearch           IntegrationManifestElasticsearch    `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
+	FormatVersion           string                              `json:"format_version,omitempty" yaml:"format_version,omitempty"`
+	Icons                   []Icon                              `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Name                    string                              `json:"name,omitempty" yaml:"name,omitempty"`
+	Owner                   Owner                               `json:"owner,omitempty" yaml:"owner,omitempty"`
+	PolicyTemplates         []IntegrationManifestPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
+	PolicyTemplatesBehavior string                              `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
+	Screenshots             []Screenshot                        `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	Source                  Source                              `json:"source,omitempty" yaml:"source,omitempty"`
+	Title                   string                              `json:"title,omitempty" yaml:"title,omitempty"`
+	Type                    IntegrationManifestType             `json:"type,omitempty" yaml:"type,omitempty"`
+	VarGroups               []VarGroup                          `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
+	Vars                    []Var                               `json:"vars,omitempty" yaml:"vars,omitempty"`
+	Version                 string                              `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for IntegrationManifest.
+// It captures the YAML node position for FileMetadata.
+func (v *IntegrationManifest) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainIntegrationManifest IntegrationManifest
+	x := (*plainIntegrationManifest)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+// IntegrationManifestElasticsearch elasticsearch requirements
+type IntegrationManifestElasticsearch struct {
+	Privileges IntegrationManifestElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
+}
+
+// IntegrationManifestElasticsearchPrivileges elasticsearch privilege requirements
+type IntegrationManifestElasticsearchPrivileges struct {
+	Cluster []string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+}
+
+type IntegrationManifestPolicyTemplate struct {
+	Categories         []Category                               `json:"categories,omitempty" yaml:"categories,omitempty"`
+	ConfigurationLinks []ConfigurationLink                      `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
+	DataStreams        []string                                 `json:"data_streams,omitempty" yaml:"data_streams,omitempty"`
+	DeploymentModes    DeploymentModes                          `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	Deprecated         Deprecated                               `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description        string                                   `json:"description,omitempty" yaml:"description,omitempty"`
+	FipsCompatible     *bool                                    `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
+	Icons              []Icon                                   `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Inputs             []IntegrationManifestPolicyTemplateInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Multiple           *bool                                    `json:"multiple,omitempty" yaml:"multiple,omitempty"`
+	Name               string                                   `json:"name,omitempty" yaml:"name,omitempty"`
+	Screenshots        []Screenshot                             `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	Title              string                                   `json:"title,omitempty" yaml:"title,omitempty"`
+	Vars               []Var                                    `json:"vars,omitempty" yaml:"vars,omitempty"`
+}
+
+type IntegrationManifestPolicyTemplateInput struct {
+	DeploymentModes       []IntegrationManifestPolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	Deprecated            Deprecated                                             `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description           string                                                 `json:"description,omitempty" yaml:"description,omitempty"`
+	HideInVarGroupOptions map[string][]string                                    `json:"hide_in_var_group_options,omitempty" yaml:"hide_in_var_group_options,omitempty"`
+	InputGroup            IntegrationManifestPolicyTemplateInputInputGroup       `json:"input_group,omitempty" yaml:"input_group,omitempty"`
+	Multi                 *bool                                                  `json:"multi,omitempty" yaml:"multi,omitempty"`
+	RequiredVars          RequiredVars                                           `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
+	TemplatePath          string                                                 `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	Title                 string                                                 `json:"title,omitempty" yaml:"title,omitempty"`
+	Type                  string                                                 `json:"type,omitempty" yaml:"type,omitempty"`
+	Vars                  []Var                                                  `json:"vars,omitempty" yaml:"vars,omitempty"`
+}
+
+type IntegrationManifestPolicyTemplateInputDeploymentMode string
+
+// Enum values for IntegrationManifestPolicyTemplateInputDeploymentMode.
+const (
+	IntegrationManifestPolicyTemplateInputDeploymentModeDefault   IntegrationManifestPolicyTemplateInputDeploymentMode = "default"
+	IntegrationManifestPolicyTemplateInputDeploymentModeAgentless IntegrationManifestPolicyTemplateInputDeploymentMode = "agentless"
+)
+
+// IntegrationManifestPolicyTemplateInputInputGroup name of the input group
+type IntegrationManifestPolicyTemplateInputInputGroup string
+
+// Enum values for IntegrationManifestPolicyTemplateInputInputGroup.
+const (
+	IntegrationManifestPolicyTemplateInputInputGroupLogs    IntegrationManifestPolicyTemplateInputInputGroup = "logs"
+	IntegrationManifestPolicyTemplateInputInputGroupMetrics IntegrationManifestPolicyTemplateInputInputGroup = "metrics"
+)
+
+// IntegrationManifestType the type of package.
+type IntegrationManifestType string
+
+// Enum values for IntegrationManifestType.
+const (
+	IntegrationManifestTypeIntegration IntegrationManifestType = "integration"
+)
+
+type Lifecycle struct {
+	FileMetadata  `json:"-" yaml:"-"`
+	DataRetention string `json:"data_retention,omitempty" yaml:"data_retention,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for Lifecycle.
+// It captures the YAML node position for FileMetadata.
+func (v *Lifecycle) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainLifecycle Lifecycle
+	x := (*plainLifecycle)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+type Owner struct {
+	Github string    `json:"github,omitempty" yaml:"github,omitempty"`
+	Type   OwnerType `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+// OwnerType describes who owns the package and the level of support that is provided. The 'elastic' value indicates that the package is built and maintained by Elastic. The 'partner' value indicates that the package is built and maintained by a partner vendor and may include involvement from Elastic. The 'community' value indicates the package is built and maintained by non-Elastic community members.
+type OwnerType string
+
+// Enum values for OwnerType.
+const (
+	OwnerTypeElastic   OwnerType = "elastic"
+	OwnerTypePartner   OwnerType = "partner"
+	OwnerTypeCommunity OwnerType = "community"
+)
+
+// RequiredVars required conditional variables for the package.
+type RequiredVars struct{}
+
+type Screenshot struct {
+	Size  string `json:"size,omitempty" yaml:"size,omitempty"`
+	Src   string `json:"src,omitempty" yaml:"src,omitempty"`
+	Title string `json:"title,omitempty" yaml:"title,omitempty"`
+	Type  string `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+// Source information about the source of the package.
+type Source struct {
+	License SourceLicense `json:"license,omitempty" yaml:"license,omitempty"`
+}
+
+// SourceLicense identifier of the license of the package, as specified in https://spdx.org/licenses/.
+type SourceLicense string
+
+// Enum values for SourceLicense.
+const (
+	SourceLicenseApache20  SourceLicense = "Apache-2.0"
+	SourceLicenseElastic20 SourceLicense = "Elastic-2.0"
+)
+
+type Tag struct {
+	FileMetadata `json:"-" yaml:"-"`
+	AssetIDs     []string       `json:"asset_ids,omitempty" yaml:"asset_ids,omitempty"`
+	AssetTypes   []TagAssetType `json:"asset_types,omitempty" yaml:"asset_types,omitempty"`
+	Text         string         `json:"text,omitempty" yaml:"text,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for Tag.
+// It captures the YAML node position for FileMetadata.
+func (v *Tag) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainTag Tag
+	x := (*plainTag)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+type TagAssetType string
+
+// Enum values for TagAssetType.
+const (
+	TagAssetTypeDashboard            TagAssetType = "dashboard"
+	TagAssetTypeVisualization        TagAssetType = "visualization"
+	TagAssetTypeSearch               TagAssetType = "search"
+	TagAssetTypeMap                  TagAssetType = "map"
+	TagAssetTypeLens                 TagAssetType = "lens"
+	TagAssetTypeIndexPattern         TagAssetType = "index_pattern"
+	TagAssetTypeSecurityRule         TagAssetType = "security_rule"
+	TagAssetTypeCspRuleTemplate      TagAssetType = "csp_rule_template"
+	TagAssetTypeAlertingRuleTemplate TagAssetType = "alerting_rule_template"
+	TagAssetTypeSloTemplate          TagAssetType = "slo_template"
+	TagAssetTypeMlModule             TagAssetType = "ml_module"
+	TagAssetTypeOsqueryPackAsset     TagAssetType = "osquery_pack_asset"
+	TagAssetTypeOsquerySavedQuery    TagAssetType = "osquery_saved_query"
+)
+
+// Transform schema definition for transform configuration object
+type Transform struct {
+	FileMetadata    `json:"-" yaml:"-"`
+	Meta            map[string]any           `json:"_meta,omitempty" yaml:"_meta,omitempty"`
+	Description     string                   `json:"description,omitempty" yaml:"description,omitempty"`
+	Dest            TransformDest            `json:"dest,omitempty" yaml:"dest,omitempty"`
+	Frequency       string                   `json:"frequency,omitempty" yaml:"frequency,omitempty"`
+	ID              string                   `json:"id,omitempty" yaml:"id,omitempty"`
+	Latest          TransformLatest          `json:"latest,omitempty" yaml:"latest,omitempty"`
+	Pivot           TransformPivot           `json:"pivot,omitempty" yaml:"pivot,omitempty"`
+	RetentionPolicy TransformRetentionPolicy `json:"retention_policy,omitempty" yaml:"retention_policy,omitempty"`
+	Settings        TransformSettings        `json:"settings,omitempty" yaml:"settings,omitempty"`
+	Source          TransformSource          `json:"source,omitempty" yaml:"source,omitempty"`
+	Sync            TransformSync            `json:"sync,omitempty" yaml:"sync,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for Transform.
+// It captures the YAML node position for FileMetadata.
+func (v *Transform) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainTransform Transform
+	x := (*plainTransform)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+type TransformDest struct {
+	Aliases  []TransformDestAlias `json:"aliases,omitempty" yaml:"aliases,omitempty"`
+	Index    string               `json:"index,omitempty" yaml:"index,omitempty"`
+	Pipeline string               `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+}
+
+type TransformDestAlias struct {
+	Alias          string `json:"alias,omitempty" yaml:"alias,omitempty"`
+	MoveOnCreation *bool  `json:"move_on_creation,omitempty" yaml:"move_on_creation,omitempty"`
+}
+
+type TransformLatest struct {
+	Sort      string `json:"sort,omitempty" yaml:"sort,omitempty"`
+	UniqueKey []any  `json:"unique_key,omitempty" yaml:"unique_key,omitempty"`
+}
+
+type TransformManifest struct {
+	FileMetadata             `json:"-" yaml:"-"`
+	DestinationIndexTemplate TransformManifestDestinationIndexTemplate `json:"destination_index_template,omitempty" yaml:"destination_index_template,omitempty"`
+	Start                    *bool                                     `json:"start,omitempty" yaml:"start,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for TransformManifest.
+// It captures the YAML node position for FileMetadata.
+func (v *TransformManifest) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainTransformManifest TransformManifest
+	x := (*plainTransformManifest)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+// TransformManifestDestinationIndexTemplate elasticsearch index template for the transform's destination index
+type TransformManifestDestinationIndexTemplate struct {
+	DataStream     ElasticsearchIndexTemplateDataStream              `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	IngestPipeline ElasticsearchIndexTemplateIngestPipeline          `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
+	Mappings       ElasticsearchIndexTemplateMappings                `json:"mappings,omitempty" yaml:"mappings,omitempty"`
+	Settings       TransformManifestDestinationIndexTemplateSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+}
+
+type TransformManifestDestinationIndexTemplateSettings struct {
+	Analysis IndexTemplateSettingAnalysis                           `json:"analysis,omitempty" yaml:"analysis,omitempty"`
+	Index    TransformManifestDestinationIndexTemplateSettingsIndex `json:"index,omitempty" yaml:"index,omitempty"`
+}
+
+type TransformManifestDestinationIndexTemplateSettingsIndex struct {
+	Codec                 IndexTemplateSettingIndexCodec                             `json:"codec,omitempty" yaml:"codec,omitempty"`
+	Hidden                *bool                                                      `json:"hidden,omitempty" yaml:"hidden,omitempty"`
+	Mapping               IndexTemplateSettingIndexMapping                           `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	Mode                  TransformManifestDestinationIndexTemplateSettingsIndexMode `json:"mode,omitempty" yaml:"mode,omitempty"`
+	NumberOfRoutingShards int                                                        `json:"number_of_routing_shards,omitempty" yaml:"number_of_routing_shards,omitempty"`
+	NumberOfShards        int                                                        `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	RefreshInterval       string                                                     `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
+	Sort                  IndexTemplateSettingIndexSort                              `json:"sort,omitempty" yaml:"sort,omitempty"`
+}
+
+// TransformManifestDestinationIndexTemplateSettingsIndexMode index mode for lookup indices.
+type TransformManifestDestinationIndexTemplateSettingsIndexMode string
+
+// Enum values for TransformManifestDestinationIndexTemplateSettingsIndexMode.
+const (
+	TransformManifestDestinationIndexTemplateSettingsIndexModeLookup TransformManifestDestinationIndexTemplateSettingsIndexMode = "lookup"
+)
+
+type TransformPivot struct {
+	Aggregations map[string]any `json:"aggregations,omitempty" yaml:"aggregations,omitempty"`
+	Aggs         map[string]any `json:"aggs,omitempty" yaml:"aggs,omitempty"`
+	GroupBy      map[string]any `json:"group_by,omitempty" yaml:"group_by,omitempty"`
+}
+
+type TransformRetentionPolicy struct {
+	Time TransformRetentionPolicyTime `json:"time,omitempty" yaml:"time,omitempty"`
+}
+
+// TransformRetentionPolicyTime schema definition for a retention policy
+type TransformRetentionPolicyTime struct {
+	Field  string `json:"field,omitempty" yaml:"field,omitempty"`
+	MaxAge string `json:"max_age,omitempty" yaml:"max_age,omitempty"`
+}
+
+type TransformSettings struct {
+	AlignCheckpoints   *bool   `json:"align_checkpoints,omitempty" yaml:"align_checkpoints,omitempty"`
+	DatesAsEpochMillis *bool   `json:"dates_as_epoch_millis,omitempty" yaml:"dates_as_epoch_millis,omitempty"`
+	DeduceMappings     *bool   `json:"deduce_mappings,omitempty" yaml:"deduce_mappings,omitempty"`
+	DocsPerSecond      float64 `json:"docs_per_second,omitempty" yaml:"docs_per_second,omitempty"`
+	MaxPageSearchSize  int     `json:"max_page_search_size,omitempty" yaml:"max_page_search_size,omitempty"`
+	Unattended         *bool   `json:"unattended,omitempty" yaml:"unattended,omitempty"`
+	UsePointInTime     *bool   `json:"use_point_in_time,omitempty" yaml:"use_point_in_time,omitempty"`
+}
+
+type TransformSource struct {
+	Index           any            `json:"index,omitempty" yaml:"index,omitempty"`
+	Query           map[string]any `json:"query,omitempty" yaml:"query,omitempty"`
+	RuntimeMappings map[string]any `json:"runtime_mappings,omitempty" yaml:"runtime_mappings,omitempty"`
+}
+
+type TransformSync struct {
+	Time TransformSyncTime `json:"time,omitempty" yaml:"time,omitempty"`
+}
+
+type TransformSyncTime struct {
+	Delay string `json:"delay,omitempty" yaml:"delay,omitempty"`
+	Field string `json:"field,omitempty" yaml:"field,omitempty"`
+}
+
+// Type datatype of field. If the type is set to object, a dynamic mapping is created. In this case, if the name doesn't contain any wildcard, the wildcard is added as the last segment of the path.
+type Type string
+
+// Enum values for Type.
+const (
+	TypeAggregateMetricDouble Type = "aggregate_metric_double"
+	TypeAlias                 Type = "alias"
+	TypeHistogram             Type = "histogram"
+	TypeConstantKeyword       Type = "constant_keyword"
+	TypeText                  Type = "text"
+	TypeMatchOnlyText         Type = "match_only_text"
+	TypeKeyword               Type = "keyword"
+	TypeLong                  Type = "long"
+	TypeInteger               Type = "integer"
+	TypeShort                 Type = "short"
+	TypeByte                  Type = "byte"
+	TypeDouble                Type = "double"
+	TypeFloat                 Type = "float"
+	TypeHalfFloat             Type = "half_float"
+	TypeScaledFloat           Type = "scaled_float"
+	TypeDate                  Type = "date"
+	TypeDateNanos             Type = "date_nanos"
+	TypeBoolean               Type = "boolean"
+	TypeBinary                Type = "binary"
+	TypeIntegerRange          Type = "integer_range"
+	TypeFloatRange            Type = "float_range"
+	TypeLongRange             Type = "long_range"
+	TypeDoubleRange           Type = "double_range"
+	TypeDateRange             Type = "date_range"
+	TypeIPRange               Type = "ip_range"
+	TypeGroup                 Type = "group"
+	TypeGeoPoint              Type = "geo_point"
+	TypeObject                Type = "object"
+	TypeIP                    Type = "ip"
+	TypeNested                Type = "nested"
+	TypeFlattened             Type = "flattened"
+	TypeWildcard              Type = "wildcard"
+	TypeVersion               Type = "version"
+	TypeUnsignedLong          Type = "unsigned_long"
+	TypeCountedKeyword        Type = "counted_keyword"
+	TypeSemanticText          Type = "semantic_text"
+)
+
+type Validation struct {
+	FileMetadata          `json:"-" yaml:"-"`
+	DocsStructureEnforced ValidationDocsStructureEnforced `json:"docs_structure_enforced,omitempty" yaml:"docs_structure_enforced,omitempty"`
+	Errors                ValidationErrors                `json:"errors,omitempty" yaml:"errors,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for Validation.
+// It captures the YAML node position for FileMetadata.
+func (v *Validation) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainValidation Validation
+	x := (*plainValidation)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
+}
+
+// ValidationDocsStructureEnforced rules to manage the documentation structure
+type ValidationDocsStructureEnforced struct {
+	Enabled *bool                                 `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Skip    []ValidationDocsStructureEnforcedSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Version int                                   `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+type ValidationDocsStructureEnforcedSkip struct {
+	Reason string `json:"reason,omitempty" yaml:"reason,omitempty"`
+	Title  string `json:"title,omitempty" yaml:"title,omitempty"`
+}
+
+// ValidationErrors rules to manage the validation results
+type ValidationErrors struct {
+	ExcludeChecks []string `json:"exclude_checks,omitempty" yaml:"exclude_checks,omitempty"`
+}
+
+type Var struct {
+	Default               any                       `json:"default,omitempty" yaml:"default,omitempty"`
+	Deprecated            Deprecated                `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Description           string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	HideInDeploymentModes []VarHideInDeploymentMode `json:"hide_in_deployment_modes,omitempty" yaml:"hide_in_deployment_modes,omitempty"`
+	MaxDuration           string                    `json:"max_duration,omitempty" yaml:"max_duration,omitempty"`
+	MinDuration           string                    `json:"min_duration,omitempty" yaml:"min_duration,omitempty"`
+	Multi                 *bool                     `json:"multi,omitempty" yaml:"multi,omitempty"`
+	Name                  string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Options               any                       `json:"options,omitempty" yaml:"options,omitempty"`
+	Required              *bool                     `json:"required,omitempty" yaml:"required,omitempty"`
+	Secret                *bool                     `json:"secret,omitempty" yaml:"secret,omitempty"`
+	ShowUser              *bool                     `json:"show_user,omitempty" yaml:"show_user,omitempty"`
+	Title                 string                    `json:"title,omitempty" yaml:"title,omitempty"`
+	Type                  VarType                   `json:"type,omitempty" yaml:"type,omitempty"`
+	URLAllowedSchemes     []string                  `json:"url_allowed_schemes,omitempty" yaml:"url_allowed_schemes,omitempty"`
+}
+
+type VarGroup struct {
+	Description   string           `json:"description,omitempty" yaml:"description,omitempty"`
+	Name          string           `json:"name,omitempty" yaml:"name,omitempty"`
+	Options       []VarGroupOption `json:"options,omitempty" yaml:"options,omitempty"`
+	Required      *bool            `json:"required,omitempty" yaml:"required,omitempty"`
+	SelectorTitle string           `json:"selector_title,omitempty" yaml:"selector_title,omitempty"`
+	Title         string           `json:"title,omitempty" yaml:"title,omitempty"`
+}
+
+type VarGroupOption struct {
+	Description           string                               `json:"description,omitempty" yaml:"description,omitempty"`
+	HideInDeploymentModes []VarGroupOptionHideInDeploymentMode `json:"hide_in_deployment_modes,omitempty" yaml:"hide_in_deployment_modes,omitempty"`
+	Name                  string                               `json:"name,omitempty" yaml:"name,omitempty"`
+	Title                 string                               `json:"title,omitempty" yaml:"title,omitempty"`
+	Vars                  []string                             `json:"vars,omitempty" yaml:"vars,omitempty"`
+}
+
+type VarGroupOptionHideInDeploymentMode string
+
+// Enum values for VarGroupOptionHideInDeploymentMode.
+const (
+	VarGroupOptionHideInDeploymentModeDefault   VarGroupOptionHideInDeploymentMode = "default"
+	VarGroupOptionHideInDeploymentModeAgentless VarGroupOptionHideInDeploymentMode = "agentless"
+)
+
+type VarHideInDeploymentMode string
+
+// Enum values for VarHideInDeploymentMode.
+const (
+	VarHideInDeploymentModeDefault   VarHideInDeploymentMode = "default"
+	VarHideInDeploymentModeAgentless VarHideInDeploymentMode = "agentless"
+)
+
+/*
+VarType data type of variable.
+A duration type is a sequence of decimal numbers, each with a unit suffix, such as "60s", "1m" or "2h45m". Duration values must follow these rules: - Use time units of "ms", "s", "m", "h". - When using min_duration, default, and max_duration,
+
+	they must satisfy: 0 <= min_duration <= default <= max_duration
+*/
+type VarType string
+
+// Enum values for VarType.
+const (
+	VarTypeBool     VarType = "bool"
+	VarTypeEmail    VarType = "email"
+	VarTypeInteger  VarType = "integer"
+	VarTypePassword VarType = "password"
+	VarTypeSelect   VarType = "select"
+	VarTypeText     VarType = "text"
+	VarTypeTextarea VarType = "textarea"
+	VarTypeTimeZone VarType = "time_zone"
+	VarTypeURL      VarType = "url"
+	VarTypeYAML     VarType = "yaml"
+	VarTypeDuration VarType = "duration"
 )

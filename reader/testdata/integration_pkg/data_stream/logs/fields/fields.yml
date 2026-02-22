@@ -1,0 +1,10 @@
+- name: test
+  type: group
+  description: Test fields.
+  fields:
+    - name: message
+      type: text
+      description: The log message.
+    - name: level
+      type: keyword
+      description: The log level.

@@ -1,0 +1,3 @@
+- name: host.name
+  type: keyword
+  description: Name of the host.

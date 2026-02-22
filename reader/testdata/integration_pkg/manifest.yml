@@ -1,0 +1,21 @@
+format_version: "3.3.0"
+name: test_integration
+title: Test Integration
+version: "1.0.0"
+type: integration
+description: A test integration package.
+categories:
+  - security
+owner:
+  github: elastic/test-team
+  type: elastic
+source:
+  license: Elastic-2.0
+policy_templates:
+  - name: test_policy
+    title: Test Policy
+    description: Collect test data.
+    inputs:
+      - type: logfile
+        title: Collect logs
+        description: Collect test logs.

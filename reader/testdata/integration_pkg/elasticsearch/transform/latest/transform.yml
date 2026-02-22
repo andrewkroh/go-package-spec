@@ -1,0 +1,19 @@
+source:
+  index:
+    - logs-test.*
+dest:
+  index: test-latest
+pivot:
+  group_by:
+    host.name:
+      terms:
+        field: host.name
+  aggregations:
+    "@timestamp":
+      max:
+        field: "@timestamp"
+frequency: "5m"
+sync:
+  time:
+    field: event.ingested
+    delay: "60s"

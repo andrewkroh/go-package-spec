@@ -91,3 +91,33 @@ types:
   # RequiredVars uses patternProperties and needs a map type.
   RequiredVars:
     name: RequiredVars
+
+  Changelog:
+    extra_fields:
+      - name: Date
+        type: "*time.Time"
+        doc: "Date is the approximate release date, populated via git blame when WithGitMetadata is used."
+        json: "date,omitempty"
+        yaml: "-"
+
+base_types:
+  Manifest:
+    doc: "Manifest contains the common fields shared by all package manifest types."
+    embed_meta: true
+    output_file: manifest.go
+    sources:
+      - IntegrationManifest
+      - InputManifest
+      - ContentManifest
+    fields:
+      - categories
+      - deprecated
+      - description
+      - format_version
+      - icons
+      - name
+      - owner
+      - screenshots
+      - source
+      - title
+      - version

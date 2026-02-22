@@ -18,16 +18,17 @@ const (
 
 // GoType represents a Go type to be generated.
 type GoType struct {
-	Name       string
-	Doc        string
-	SchemaFile string
-	SchemaPath string // JSON pointer within the file
-	Kind       GoTypeKind
-	Fields     []GoField
-	EnumValues []GoEnumVal
-	AliasOf    GoTypeRef
-	OutputFile string
-	EmbedMeta  bool // Whether to embed FileMetadata
+	Name               string
+	Doc                string
+	SchemaFile         string
+	SchemaPath         string // JSON pointer within the file
+	Kind               GoTypeKind
+	Fields             []GoField
+	EnumValues         []GoEnumVal
+	AliasOf            GoTypeRef
+	OutputFile         string
+	EmbedMeta          bool // Whether to embed FileMetadata
+	NeedsUnmarshalYAML bool // Whether to generate UnmarshalYAML (set by base type extraction)
 }
 
 // GoField represents a field in a Go struct.
@@ -37,6 +38,9 @@ type GoField struct {
 	Doc      string
 	Type     GoTypeRef
 	Required bool
+	Embed    bool   // True for embedded/anonymous fields
+	JSONTag  string // Custom JSON tag value (overrides default)
+	YAMLTag  string // Custom YAML tag value (overrides default)
 }
 
 // GoEnumVal represents a single enum constant.
@@ -49,6 +53,8 @@ type GoEnumVal struct {
 type GoTypeRef struct {
 	Builtin  string // "string", "int", "bool", "float64", "any"
 	Named    string // reference to a GoType by name
+	Package  string // import path for qualified types (e.g., "time")
+	QualName string // type name for qualified types (e.g., "Time")
 	Pointer  bool
 	Slice    bool
 	Map      bool
@@ -84,6 +90,12 @@ func (r GoTypeRef) String() string {
 		s = "[]" + elem
 	case r.Builtin != "":
 		s = r.Builtin
+	case r.QualName != "":
+		if r.Package != "" {
+			s = r.Package + "." + r.QualName
+		} else {
+			s = r.QualName
+		}
 	case r.Named != "":
 		s = r.Named
 	default:

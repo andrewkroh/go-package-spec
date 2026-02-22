@@ -71,9 +71,10 @@ func Run(cfg Config) error {
 		}
 	}
 
-	// 5. Apply augmentations.
+	// 5. Apply augmentations and base types.
 	types := mapper.TypesByName()
 	ApplyAugmentations(types, augConfig)
+	ApplyBaseTypes(types, augConfig)
 
 	// 6. Assign output files.
 	if fileMap != nil {

@@ -1,0 +1,10 @@
+- version: "1.0.0"
+  changes:
+    - description: Initial release.
+      type: enhancement
+      link: https://github.com/test/test/pull/1
+- version: "0.1.0"
+  changes:
+    - description: Beta release.
+      type: enhancement
+      link: https://github.com/test/test/pull/2

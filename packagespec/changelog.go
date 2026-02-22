@@ -2,12 +2,16 @@
 
 package packagespec
 
-import yamlv3 "gopkg.in/yaml.v3"
+import (
+	yamlv3 "gopkg.in/yaml.v3"
+	"time"
+)
 
 type Changelog struct {
 	FileMetadata `json:"-" yaml:"-"`
 	Changes      []ChangelogChange `json:"changes,omitempty" yaml:"changes,omitempty"`
 	Version      string            `json:"version,omitempty" yaml:"version,omitempty"`
+	Date         *time.Time        `json:"date,omitempty" yaml:"-"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for Changelog.

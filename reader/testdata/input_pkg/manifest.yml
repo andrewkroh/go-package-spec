@@ -1,0 +1,17 @@
+format_version: "3.3.0"
+name: test_input
+title: Test Input
+version: "1.0.0"
+type: input
+description: A test input package.
+categories:
+  - custom
+owner:
+  github: elastic/test-team
+  type: elastic
+policy_templates:
+  - name: test_input
+    type: logs
+    title: Test Input
+    description: Collect test data.
+    input: test-input

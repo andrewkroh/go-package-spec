@@ -10,14 +10,16 @@ import (
 
 // AugmentConfig holds type and field overrides loaded from augment.yml.
 type AugmentConfig struct {
-	Types map[string]AugmentType `yaml:"types"`
+	Types     map[string]AugmentType     `yaml:"types"`
+	BaseTypes map[string]AugmentBaseType `yaml:"base_types"`
 }
 
 // AugmentType holds overrides for a single Go type.
 type AugmentType struct {
-	Name   string                  `yaml:"name,omitempty"`
-	Doc    string                  `yaml:"doc,omitempty"`
-	Fields map[string]AugmentField `yaml:"fields,omitempty"`
+	Name        string                  `yaml:"name,omitempty"`
+	Doc         string                  `yaml:"doc,omitempty"`
+	Fields      map[string]AugmentField `yaml:"fields,omitempty"`
+	ExtraFields []AugmentExtraField     `yaml:"extra_fields,omitempty"`
 }
 
 // AugmentField holds overrides for a single field.
@@ -25,6 +27,24 @@ type AugmentField struct {
 	Name string `yaml:"name,omitempty"`
 	Doc  string `yaml:"doc,omitempty"`
 	Type string `yaml:"type,omitempty"` // "any", "*bool", "[]string", "map[string]any"
+}
+
+// AugmentExtraField defines a field to inject that is not present in the JSON schema.
+type AugmentExtraField struct {
+	Name string `yaml:"name"`
+	Type string `yaml:"type"` // e.g., "*time.Time"
+	Doc  string `yaml:"doc"`
+	JSON string `yaml:"json"` // json tag value
+	YAML string `yaml:"yaml"` // yaml tag value
+}
+
+// AugmentBaseType defines a base type to extract from multiple source types.
+type AugmentBaseType struct {
+	Doc        string   `yaml:"doc"`
+	EmbedMeta  bool     `yaml:"embed_meta"`
+	OutputFile string   `yaml:"output_file"`
+	Sources    []string `yaml:"sources"`
+	Fields     []string `yaml:"fields"` // JSON field names to extract
 }
 
 // LoadAugmentations reads and parses an augment.yml file.
@@ -100,6 +120,111 @@ func ApplyAugmentations(types map[string]*GoType, config *AugmentConfig) {
 				}
 			}
 		}
+
+		// Append extra fields.
+		for _, ef := range aug.ExtraFields {
+			goType.Fields = append(goType.Fields, GoField{
+				Name:     ef.Name,
+				JSONName: ef.JSON,
+				Doc:      ef.Doc,
+				Type:     parseTypeRef(ef.Type),
+				JSONTag:  ef.JSON,
+				YAMLTag:  ef.YAML,
+			})
+		}
+	}
+}
+
+// ApplyBaseTypes creates base types by extracting common fields from source
+// types and embedding the base type in each source.
+func ApplyBaseTypes(types map[string]*GoType, config *AugmentConfig) {
+	if config == nil {
+		return
+	}
+
+	for baseName, baseCfg := range config.BaseTypes {
+		if len(baseCfg.Sources) == 0 || len(baseCfg.Fields) == 0 {
+			continue
+		}
+
+		// Find the first source to copy field definitions from.
+		firstSource, ok := types[baseCfg.Sources[0]]
+		if !ok {
+			continue
+		}
+
+		// Build a set of JSON field names to extract.
+		extractFields := make(map[string]bool, len(baseCfg.Fields))
+		for _, f := range baseCfg.Fields {
+			extractFields[f] = true
+		}
+
+		// Create the base type with extracted fields.
+		baseType := &GoType{
+			Name: baseName,
+			Doc:  baseCfg.Doc,
+			Kind: GoTypeStruct,
+		}
+		if baseCfg.OutputFile != "" {
+			baseType.OutputFile = baseCfg.OutputFile
+		}
+
+		// Copy matching fields from the first source type.
+		for _, field := range firstSource.Fields {
+			if extractFields[field.JSONName] {
+				baseType.Fields = append(baseType.Fields, field)
+			}
+		}
+
+		// If embed_meta is requested, add the FileMetadata embed field
+		// directly. We do NOT set EmbedMeta=true on the base type because
+		// that would also generate UnmarshalYAML, which would conflict
+		// with the concrete types' YAML decoding.
+		if baseCfg.EmbedMeta {
+			metaField := GoField{
+				Name:    "FileMetadata",
+				Embed:   true,
+				JSONTag: "-",
+				YAMLTag: "-",
+			}
+			baseType.Fields = append([]GoField{metaField}, baseType.Fields...)
+		}
+		types[baseName] = baseType
+
+		// Update each source type: remove extracted fields, remove EmbedMeta,
+		// add embed of the base type.
+		for _, srcName := range baseCfg.Sources {
+			srcType, ok := types[srcName]
+			if !ok {
+				continue
+			}
+
+			// Remove extracted fields.
+			var remaining []GoField
+			for _, field := range srcType.Fields {
+				if !extractFields[field.JSONName] {
+					remaining = append(remaining, field)
+				}
+			}
+			srcType.Fields = remaining
+
+			// The source type no longer directly embeds FileMetadata
+			// (it comes through the base type embed), but still needs
+			// UnmarshalYAML to capture line/column on the promoted
+			// FileMetadata.
+			if srcType.EmbedMeta {
+				srcType.EmbedMeta = false
+				srcType.NeedsUnmarshalYAML = true
+			}
+
+			// Prepend embed field for the base type.
+			embedField := GoField{
+				Name:  baseName,
+				Type:  GoTypeRef{Named: baseName},
+				Embed: true,
+			}
+			srcType.Fields = append([]GoField{embedField}, srcType.Fields...)
+		}
 	}
 }
 
@@ -168,6 +293,15 @@ func parseTypeRef(s string) GoTypeRef {
 	switch s {
 	case "any", "string", "int", "bool", "float64", "int64":
 		return GoTypeRef{Builtin: s}
+	}
+
+	// Qualified type (e.g., "time.Time").
+	if dotIdx := strings.LastIndex(s, "."); dotIdx > 0 {
+		pkg := s[:dotIdx]
+		name := s[dotIdx+1:]
+		if name != "" {
+			return GoTypeRef{Package: pkg, QualName: name}
+		}
 	}
 
 	// Named type.
