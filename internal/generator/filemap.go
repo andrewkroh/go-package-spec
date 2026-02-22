@@ -7,9 +7,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// ExcludeFile is a sentinel OutputFile value indicating a type should be
+// excluded from code generation.
+const ExcludeFile = "_"
+
 // FileMap assigns Go types to output files.
 type FileMap struct {
-	Files map[string][]string `yaml:"files"` // filename → list of type names
+	Files   map[string][]string `yaml:"files"`   // filename → list of type names
+	Exclude []string            `yaml:"exclude"` // type names to exclude from generation
 	// Reverse lookup: type name → filename.
 	lookup map[string]string
 }
@@ -37,6 +42,9 @@ func (fm *FileMap) buildLookup() {
 		for _, typeName := range types {
 			fm.lookup[typeName] = file
 		}
+	}
+	for _, typeName := range fm.Exclude {
+		fm.lookup[typeName] = ExcludeFile
 	}
 }
 

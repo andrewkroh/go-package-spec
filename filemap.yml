@@ -1,3 +1,7 @@
+exclude:
+  - Processor
+  - ProcessorForeach
+
 files:
   manifest.go:
     - Manifest
@@ -125,6 +129,9 @@ files:
     - TransformSource
     - TransformSync
     - TransformSyncTime
+
+  ingest_pipeline.go:
+    - IngestPipeline
 
   kibana.go:
     - Tag

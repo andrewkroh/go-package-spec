@@ -35,10 +35,13 @@ func (e *Emitter) Emit(types []*GoType) error {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
 
-	// Group types by output file.
+	// Group types by output file, skipping excluded types.
 	fileTypes := make(map[string][]*GoType)
 	for _, t := range types {
 		file := t.OutputFile
+		if file == ExcludeFile {
+			continue
+		}
 		if file == "" {
 			file = "types.go"
 		}

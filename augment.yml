@@ -82,6 +82,14 @@ types:
         type: "map[string]any"
         doc: "Meta holds user-defined metadata about the transform."
 
+  IngestPipeline:
+    doc: "IngestPipeline represents an Elasticsearch ingest pipeline definition."
+    fields:
+      processors:
+        type: "[]*Processor"
+      on_failure:
+        type: "[]*Processor"
+
   IntegrationManifestPolicyTemplateInput:
     fields:
       hide_in_var_group_options:
