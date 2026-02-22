@@ -121,6 +121,49 @@ const (
 	FieldObjectTypeMappingTypeTrue   FieldObjectTypeMappingType = "true"
 )
 
+// FieldType represents the Elasticsearch mapping type of a field.
+type FieldType string
+
+// Enum values for FieldType.
+const (
+	FieldTypeAggregateMetricDouble FieldType = "aggregate_metric_double"
+	FieldTypeAlias                 FieldType = "alias"
+	FieldTypeHistogram             FieldType = "histogram"
+	FieldTypeConstantKeyword       FieldType = "constant_keyword"
+	FieldTypeText                  FieldType = "text"
+	FieldTypeMatchOnlyText         FieldType = "match_only_text"
+	FieldTypeKeyword               FieldType = "keyword"
+	FieldTypeLong                  FieldType = "long"
+	FieldTypeInteger               FieldType = "integer"
+	FieldTypeShort                 FieldType = "short"
+	FieldTypeByte                  FieldType = "byte"
+	FieldTypeDouble                FieldType = "double"
+	FieldTypeFloat                 FieldType = "float"
+	FieldTypeHalfFloat             FieldType = "half_float"
+	FieldTypeScaledFloat           FieldType = "scaled_float"
+	FieldTypeDate                  FieldType = "date"
+	FieldTypeDateNanos             FieldType = "date_nanos"
+	FieldTypeBoolean               FieldType = "boolean"
+	FieldTypeBinary                FieldType = "binary"
+	FieldTypeIntegerRange          FieldType = "integer_range"
+	FieldTypeFloatRange            FieldType = "float_range"
+	FieldTypeLongRange             FieldType = "long_range"
+	FieldTypeDoubleRange           FieldType = "double_range"
+	FieldTypeDateRange             FieldType = "date_range"
+	FieldTypeIPRange               FieldType = "ip_range"
+	FieldTypeGroup                 FieldType = "group"
+	FieldTypeGeoPoint              FieldType = "geo_point"
+	FieldTypeObject                FieldType = "object"
+	FieldTypeIP                    FieldType = "ip"
+	FieldTypeNested                FieldType = "nested"
+	FieldTypeFlattened             FieldType = "flattened"
+	FieldTypeWildcard              FieldType = "wildcard"
+	FieldTypeVersion               FieldType = "version"
+	FieldTypeUnsignedLong          FieldType = "unsigned_long"
+	FieldTypeCountedKeyword        FieldType = "counted_keyword"
+	FieldTypeSemanticText          FieldType = "semantic_text"
+)
+
 // FieldUnit unit type to associate with a numeric field. This is attached to the field as metadata (via `meta`). By default, a field does not have a unit. The convention for percents is to use value 1 to mean 100%.
 type FieldUnit string
 

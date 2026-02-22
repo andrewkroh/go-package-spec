@@ -74,6 +74,7 @@ files:
     - FieldObjectType
     - FieldObjectTypeMappingType
     - FieldUnit
+    - FieldType
     - Type
 
   changelog.go:
