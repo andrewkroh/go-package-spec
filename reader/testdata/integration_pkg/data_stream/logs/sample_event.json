@@ -1,0 +1,6 @@
+{
+  "message": "test log message",
+  "event": {
+    "kind": "event"
+  }
+}

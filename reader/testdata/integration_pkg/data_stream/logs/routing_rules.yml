@@ -1,0 +1,7 @@
+- source_dataset: test_integration.logs
+  rules:
+    - target_dataset: test_integration.errors
+      if: "ctx?.log?.level == 'error'"
+    - target_dataset: test_integration.debug
+      if: "ctx?.log?.level == 'debug'"
+      namespace: development

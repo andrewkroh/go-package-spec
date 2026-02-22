@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -12,11 +13,14 @@ import (
 
 // DataStream represents a fully-loaded data stream within an integration package.
 type DataStream struct {
-	Manifest  packagespec.DataStreamManifest
-	Fields    map[string]*FieldsFile   // keyed by filename
-	Pipelines map[string]*PipelineFile // keyed by filename (e.g., "default.yml")
-	Lifecycle *packagespec.Lifecycle   // nil if absent
-	path      string
+	Manifest     packagespec.DataStreamManifest
+	Fields       map[string]*FieldsFile   // keyed by filename
+	Pipelines    map[string]*PipelineFile // keyed by filename (e.g., "default.yml")
+	ILMPolicies  map[string]*ILMPolicy    // keyed by filename, nil if absent
+	Lifecycle    *packagespec.Lifecycle    // nil if absent
+	RoutingRules []RoutingRuleSet         // nil if absent
+	SampleEvent  json.RawMessage          // nil if absent
+	path         string
 }
 
 // Path returns the data stream's directory path relative to the package root.
@@ -53,6 +57,31 @@ type PipelineFile struct {
 // Path returns the file path relative to the package root.
 func (pf *PipelineFile) Path() string {
 	return pf.path
+}
+
+// ILMPolicy represents a single ILM policy file. The contents are opaque
+// YAML/JSON with no typed schema defined by package-spec.
+type ILMPolicy struct {
+	Content json.RawMessage // raw JSON representation of the policy
+	path    string
+}
+
+// Path returns the file path relative to the package root.
+func (p *ILMPolicy) Path() string {
+	return p.path
+}
+
+// RoutingRuleSet represents a set of routing rules for a data stream.
+type RoutingRuleSet struct {
+	SourceDataset string        `json:"source_dataset" yaml:"source_dataset"`
+	Rules         []RoutingRule `json:"rules" yaml:"rules"`
+}
+
+// RoutingRule defines a single routing rule within a routing rule set.
+type RoutingRule struct {
+	TargetDataset any    `json:"target_dataset" yaml:"target_dataset"` // string or []string
+	If            string `json:"if" yaml:"if"`
+	Namespace     any    `json:"namespace,omitempty" yaml:"namespace,omitempty"` // string or []string
 }
 
 func readDataStreams(fsys fs.FS, root string, cfg *config) (map[string]*DataStream, error) {
@@ -123,6 +152,32 @@ func readDataStream(fsys fs.FS, dsPath string, cfg *config) (*DataStream, error)
 		return nil, fmt.Errorf("reading pipelines: %w", err)
 	}
 	ds.Pipelines = pipelines
+
+	// Read ILM policies.
+	ilmDir := path.Join(dsPath, "elasticsearch", "ilm")
+	ilmPolicies, err := readILMPolicies(fsys, ilmDir)
+	if err != nil {
+		return nil, fmt.Errorf("reading ILM policies: %w", err)
+	}
+	ds.ILMPolicies = ilmPolicies
+
+	// Read routing rules (optional).
+	routingRulesPath := path.Join(dsPath, "routing_rules.yml")
+	var routingRules []RoutingRuleSet
+	if err := decodeYAML(fsys, routingRulesPath, &routingRules, false); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("reading routing rules: %w", err)
+		}
+	}
+	ds.RoutingRules = routingRules
+
+	// Read sample event (optional).
+	sampleEventPath := path.Join(dsPath, "sample_event.json")
+	sampleEvent, err := readOptionalFile(fsys, sampleEventPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading sample event: %w", err)
+	}
+	ds.SampleEvent = sampleEvent
 
 	return ds, nil
 }
@@ -205,6 +260,68 @@ func readPipelines(fsys fs.FS, dir string) (map[string]*PipelineFile, error) {
 	}
 
 	return result, nil
+}
+
+func readILMPolicies(fsys fs.FS, dir string) (map[string]*ILMPolicy, error) {
+	entries, err := fs.ReadDir(fsys, dir)
+	if err != nil {
+		if isNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("reading ILM directory %s: %w", dir, err)
+	}
+
+	result := make(map[string]*ILMPolicy, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") && !strings.HasSuffix(name, ".json") {
+			continue
+		}
+
+		filePath := path.Join(dir, name)
+		data, err := fs.ReadFile(fsys, filePath)
+		if err != nil {
+			return nil, fmt.Errorf("reading ILM policy %s: %w", name, err)
+		}
+
+		// Convert YAML to JSON for uniform storage.
+		var raw any
+		if strings.HasSuffix(name, ".json") {
+			if err := json.Unmarshal(data, &raw); err != nil {
+				return nil, fmt.Errorf("parsing ILM policy %s: %w", name, err)
+			}
+		} else {
+			if err := decodeYAMLBytes(data, &raw); err != nil {
+				return nil, fmt.Errorf("parsing ILM policy %s: %w", name, err)
+			}
+		}
+
+		content, err := json.Marshal(raw)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling ILM policy %s: %w", name, err)
+		}
+
+		result[name] = &ILMPolicy{
+			Content: content,
+			path:    filePath,
+		}
+	}
+
+	return result, nil
+}
+
+func readOptionalFile(fsys fs.FS, filePath string) ([]byte, error) {
+	data, err := fs.ReadFile(fsys, filePath)
+	if err != nil {
+		if isNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return data, nil
 }
 
 func isNotExist(err error) bool {

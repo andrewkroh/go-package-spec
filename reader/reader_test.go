@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 	"testing/fstest"
@@ -120,6 +121,37 @@ func TestReadIntegrationPackage(t *testing.T) {
 		t.Errorf("pipeline on_failure[0] type = %q, want set", pf.Pipeline.OnFailure[0].Type)
 	}
 
+	// ILM policies.
+	if len(ds.ILMPolicies) != 1 {
+		t.Fatalf("ILM policy count = %d, want 1", len(ds.ILMPolicies))
+	}
+	ilm, ok := ds.ILMPolicies["default.yml"]
+	if !ok {
+		t.Fatal("ILM policy 'default.yml' not found")
+	}
+	if !json.Valid(ilm.Content) {
+		t.Error("ILM policy content is not valid JSON")
+	}
+
+	// Routing rules.
+	if len(ds.RoutingRules) != 1 {
+		t.Fatalf("routing rule sets = %d, want 1", len(ds.RoutingRules))
+	}
+	if ds.RoutingRules[0].SourceDataset != "test_integration.logs" {
+		t.Errorf("routing source_dataset = %q, want test_integration.logs", ds.RoutingRules[0].SourceDataset)
+	}
+	if len(ds.RoutingRules[0].Rules) != 2 {
+		t.Fatalf("routing rules count = %d, want 2", len(ds.RoutingRules[0].Rules))
+	}
+
+	// Sample event.
+	if ds.SampleEvent == nil {
+		t.Fatal("data stream sample event is nil")
+	}
+	if !json.Valid(ds.SampleEvent) {
+		t.Error("data stream sample event is not valid JSON")
+	}
+
 	// Package-level pipelines.
 	if len(pkg.Pipelines) != 1 {
 		t.Fatalf("package pipeline count = %d, want 1", len(pkg.Pipelines))
@@ -202,6 +234,14 @@ func TestReadInputPackage(t *testing.T) {
 	}
 	if pkg.Lifecycle.DataRetention != "30d" {
 		t.Errorf("data_retention = %q, want 30d", pkg.Lifecycle.DataRetention)
+	}
+
+	// Sample event.
+	if pkg.SampleEvent == nil {
+		t.Fatal("input package sample event is nil")
+	}
+	if !json.Valid(pkg.SampleEvent) {
+		t.Error("input package sample event is not valid JSON")
 	}
 
 	// Changelog.

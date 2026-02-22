@@ -31,6 +31,11 @@ func decodeYAML(fsys fs.FS, filePath string, v any, knownFields bool) error {
 	return nil
 }
 
+// decodeYAMLBytes decodes YAML from a byte slice into v.
+func decodeYAMLBytes(data []byte, v any) error {
+	return yaml.Unmarshal(data, v)
+}
+
 // readOptionalYAML reads an optional YAML file. If the file does not exist,
 // it returns (nil, nil). On success it returns the decoded value.
 func readOptionalYAML[T any](fsys fs.FS, filePath string, knownFields bool) (*T, error) {

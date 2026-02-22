@@ -11,6 +11,7 @@
 package reader
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -33,6 +34,7 @@ type Package struct {
 	Transforms  map[string]*TransformData // nil if absent
 	Tags        []packagespec.Tag         // nil if absent
 	Lifecycle   *packagespec.Lifecycle    // type:input only, nil if absent
+	SampleEvent json.RawMessage          // type:input only, nil if absent
 
 	Commit string // git HEAD commit ID, empty unless WithGitMetadata used
 
@@ -245,6 +247,14 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			packagespec.AnnotateFileMetadata(lifecyclePath, lifecycle)
 			pkg.Lifecycle = lifecycle
 		}
+
+		// Read sample event (optional).
+		sampleEventPath := path.Join(root, "sample_event.json")
+		sampleEvent, err := readOptionalFile(cfg.fsys, sampleEventPath)
+		if err != nil {
+			return nil, fmt.Errorf("reading sample event: %w", err)
+		}
+		pkg.SampleEvent = sampleEvent
 	}
 
 	// Git metadata enrichment.
