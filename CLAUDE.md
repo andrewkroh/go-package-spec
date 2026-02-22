@@ -29,6 +29,7 @@ pkgspec/                   Generated data model (DO NOT EDIT except hand-written
   test.go                      Generated: Test config types (TestConfig, SystemTestConfig, etc.)
   ingest_pipeline.go           Generated: IngestPipeline type
   routing_rules.go             Generated: RoutingRuleSet, RoutingRule types
+  version.go                   Generated: SpecVersion constant (package-spec schema version)
   *.go                         Other generated types (changelog, field, transform, etc.)
 pkgreader/                        Package reader (loads from disk into pkgspec types)
   reader.go                    Read() entry point, Package type, options
@@ -49,7 +50,8 @@ go run ./cmd/generate/ \
   -augment cmd/generate/augment.yml \
   -filemap cmd/generate/filemap.yml \
   -output pkgspec \
-  -package pkgspec
+  -package pkgspec \
+  -spec-version 3.5.7  # optional; auto-detected from schema $id if omitted
 ```
 
 All files in `pkgspec/` except `annotation.go` and `processor.go` are generated. Never hand-edit them.

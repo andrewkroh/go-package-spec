@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="go-package-spec logo" width="200">
+</p>
+
 # go-package-spec
 
 Go library for
@@ -84,6 +88,15 @@ See the [`example/`](example/) directory:
   annotation feature.
 - **[flatten_fields](example/flatten_fields/)** — Flattens nested group fields
   into dot-joined names and prints sorted results with types and locations.
+
+## Versioning
+
+This project uses independent [semantic versioning](https://semver.org) for
+the Go module. The `pkgspec.SpecVersion` constant tells consumers which
+package-spec schema version the types were generated from.
+
+The Go module version and spec version are decoupled — a new module release
+may update the spec version, add features, or fix bugs independently.
 
 ## License
 

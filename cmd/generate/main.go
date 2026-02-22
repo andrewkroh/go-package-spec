@@ -18,6 +18,7 @@ func main() {
 	flag.StringVar(&cfg.FileMapFile, "filemap", "", "Path to filemap.yml (optional)")
 	flag.StringVar(&cfg.OutputDir, "output", "pkgspec", "Output directory for generated Go files")
 	flag.StringVar(&cfg.PackageName, "package", "pkgspec", "Go package name for generated files")
+	flag.StringVar(&cfg.SpecVersion, "spec-version", "", "Package-spec version override (auto-detected from schema $id if omitted)")
 	flag.Parse()
 
 	if err := generator.Run(cfg); err != nil {

@@ -1,6 +1,9 @@
 package generator
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Config holds all configuration for a generator run.
 type Config struct {
@@ -9,6 +12,7 @@ type Config struct {
 	FileMapFile string
 	OutputDir   string
 	PackageName string
+	SpecVersion string // Package-spec version override (auto-detected from schema $id if empty).
 }
 
 // EntryPoint defines a schema file and the Go type name for its root.
@@ -84,12 +88,25 @@ func Run(cfg Config) error {
 		}
 	}
 
-	// 5. Apply augmentations and base types.
+	// 5. Auto-detect spec version from schema $id if not provided.
+	if cfg.SpecVersion == "" {
+		for _, s := range registry.schemas {
+			if v := extractSpecVersion(s.ID); v != "" {
+				cfg.SpecVersion = v
+				break
+			}
+		}
+	}
+	if cfg.SpecVersion == "" {
+		return fmt.Errorf("could not determine spec version: use -spec-version flag or ensure schemas contain a $id with a version")
+	}
+
+	// 6. Apply augmentations and base types.
 	types := mapper.TypesByName()
 	ApplyAugmentations(types, augConfig)
 	ApplyBaseTypes(types, augConfig)
 
-	// 6. Assign output files.
+	// 7. Assign output files.
 	if fileMap != nil {
 		fileMap.AssignOutputFiles(types)
 	} else {
@@ -98,20 +115,35 @@ func Run(cfg Config) error {
 		}
 	}
 
-	// 7. Validate — check for duplicate names.
+	// 8. Validate — check for duplicate names.
 	if err := validate(types); err != nil {
 		return err
 	}
 
-	// 8. Emit Go files.
+	// 9. Emit Go files.
 	pkgName := cfg.PackageName
 	if pkgName == "" {
 		pkgName = "pkgspec"
 	}
-	emitter := NewEmitter(pkgName, cfg.OutputDir)
+	emitter := NewEmitter(pkgName, cfg.OutputDir, cfg.SpecVersion)
 
 	allTypes := mapper.Types()
 	return emitter.Emit(allTypes)
+}
+
+// extractSpecVersion extracts the version from a JSON Schema $id URL.
+// The expected format is "https://schemas.elastic.dev/package-spec/{VERSION}/...".
+func extractSpecVersion(id string) string {
+	const prefix = "package-spec/"
+	idx := strings.Index(id, prefix)
+	if idx < 0 {
+		return ""
+	}
+	rest := id[idx+len(prefix):]
+	if end := strings.Index(rest, "/"); end > 0 {
+		return rest[:end]
+	}
+	return rest
 }
 
 // validate checks for issues in the generated types.
