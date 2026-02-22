@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: gofumpt
+        run: |
+          go install mvdan.cc/gofumpt@latest
+          UNFORMATTED=$(gofumpt -extra -l .)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "Files not formatted with gofumpt -extra:"
+            echo "$UNFORMATTED"
+            exit 1
+          fi
+
+      - name: go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: go test
+        run: go test ./...
+
+      - name: go build examples
+        run: go build ./example/...

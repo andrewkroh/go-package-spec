@@ -1,0 +1,26 @@
+name: Integration Test
+
+on:
+  pull_request:
+  schedule:
+    - cron: '0 12 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Clone elastic/integrations
+        run: git clone --depth 1 https://github.com/elastic/integrations "$RUNNER_TEMP/integrations"
+
+      - name: Run integration tests
+        run: go test ./pkgreader/ -run TestReadAllPackages -v -count=1
+        env:
+          INTEGRATIONS_DIR: ${{ runner.temp }}/integrations

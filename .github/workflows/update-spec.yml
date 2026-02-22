@@ -1,0 +1,117 @@
+name: Update Spec
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Clone package-spec-schema
+        run: git clone --depth 1 https://github.com/andrewkroh/package-spec-schema "$RUNNER_TEMP/package-spec-schema"
+
+      - name: Check for new version
+        id: version
+        run: |
+          CURRENT=$(grep -oP 'SpecVersion = "\K[^"]+' pkgspec/version.go)
+          echo "current=$CURRENT"
+
+          LATEST=$(ls -d "$RUNNER_TEMP/package-spec-schema"/*/jsonschema 2>/dev/null \
+            | xargs -I{} dirname {} \
+            | xargs -I{} basename {} \
+            | sort -V \
+            | tail -1)
+          echo "latest=$LATEST"
+
+          if [ -z "$LATEST" ]; then
+            echo "No schema versions found"
+            exit 1
+          fi
+
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+
+          if [ "$CURRENT" = "$LATEST" ]; then
+            echo "Already up to date ($CURRENT)"
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New version available: $CURRENT -> $LATEST"
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run generator
+        if: steps.version.outputs.updated == 'true'
+        run: |
+          LATEST=${{ steps.version.outputs.latest }}
+          go run ./cmd/generate/ \
+            -schema-dir "$RUNNER_TEMP/package-spec-schema/$LATEST/jsonschema" \
+            -augment cmd/generate/augment.yml \
+            -filemap cmd/generate/filemap.yml \
+            -output pkgspec \
+            -package pkgspec
+
+      - name: Format and tidy
+        if: steps.version.outputs.updated == 'true'
+        run: |
+          go install mvdan.cc/gofumpt@latest
+          gofumpt -extra -w pkgspec/
+          go mod tidy
+
+      - name: Run tests
+        if: steps.version.outputs.updated == 'true'
+        run: go test ./...
+
+      - name: Check for actual changes
+        if: steps.version.outputs.updated == 'true'
+        id: diff
+        run: |
+          if git diff --quiet; then
+            echo "No changes after regeneration"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get schema commit SHA
+        if: steps.version.outputs.updated == 'true' && steps.diff.outputs.changed == 'true'
+        id: schema
+        run: |
+          SHA=$(git -C "$RUNNER_TEMP/package-spec-schema" rev-parse HEAD)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request
+        if: steps.version.outputs.updated == 'true' && steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST=${{ steps.version.outputs.latest }}
+          BRANCH="update-spec-${LATEST}"
+
+          # Check if a PR already exists for this version.
+          EXISTING=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING already exists for $BRANCH"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "Update to package-spec $LATEST"
+          git push -u origin "$BRANCH"
+
+          gh pr create \
+            --title "Update to package-spec $LATEST" \
+            --body "Regenerated types from andrewkroh/package-spec-schema at commit ${{ steps.schema.outputs.sha }}."
