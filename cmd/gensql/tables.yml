@@ -8,6 +8,21 @@ tables:
         not_null: true
         unique: true
         comment: "directory name of the package"
+      conditions_kibana_version:
+        type: TEXT
+        comment: "required Kibana version range"
+      conditions_elastic_subscription:
+        type: TEXT
+        comment: "required Elastic subscription level"
+      agent_privileges_root:
+        type: BOOLEAN
+        comment: "whether collection requires root privileges in the agent"
+      elasticsearch_privileges_cluster:
+        type: JSON
+        comment: "Elasticsearch cluster privilege requirements (JSON array)"
+      policy_templates_behavior:
+        type: TEXT
+        comment: "behavior when multiple policy templates are defined (all, combined_policy, individual_policies)"
     inline:
       - Owner
       - Source
@@ -81,6 +96,16 @@ tables:
         not_null: true
         comment: "category value"
 
+  policy_template_icons:
+    type: Icon
+    parent: policy_templates
+    comment: "Icon definitions for a policy template."
+
+  policy_template_screenshots:
+    type: Screenshot
+    parent: policy_templates
+    comment: "Screenshot definitions for a policy template."
+
   policy_template_inputs:
     type: PolicyTemplateInput
     parent: policy_templates
@@ -112,6 +137,19 @@ tables:
       - Deprecated
       - Elasticsearch.IndexTemplate
       - Elasticsearch.Privileges
+
+  sample_events:
+    comment: "Sample event data for data streams."
+    extra_columns:
+      data_streams_id:
+        type: INTEGER
+        not_null: true
+        fk: data_streams
+        comment: "foreign key to data_streams"
+      event:
+        type: JSON
+        not_null: true
+        comment: "sample event data (JSON)"
 
   streams:
     type: DataStreamStream
@@ -195,7 +233,6 @@ tables:
     flatten: true
     exclude:
       - Fields
-      - MultiFields
       - FileMetadata
       - ECS
     json_columns:
@@ -204,6 +241,7 @@ tables:
       - Example
       - ExpectedValues
       - Metrics
+      - MultiFields
       - Normalize
       - NullValue
       - Runtime
@@ -236,6 +274,20 @@ tables:
         fk: fields
         comment: "foreign key to fields"
 
+  transform_fields:
+    comment: "Join table linking fields to transforms."
+    extra_columns:
+      transform_id:
+        type: INTEGER
+        not_null: true
+        fk: transforms
+        comment: "foreign key to transforms"
+      field_id:
+        type: INTEGER
+        not_null: true
+        fk: fields
+        comment: "foreign key to fields"
+
   ingest_pipelines:
     type: IngestPipeline
     parent: data_streams
@@ -260,7 +312,7 @@ tables:
         not_null: true
         comment: "processor type (e.g. set, grok, rename)"
       attributes:
-        type: TEXT
+        type: JSON
         comment: "JSON-encoded processor attributes"
       json_pointer:
         type: TEXT
@@ -280,6 +332,12 @@ tables:
         type: TEXT
         not_null: true
         comment: "directory name of the transform"
+      manifest_start:
+        type: BOOLEAN
+        comment: "whether to start the transform upon installation"
+      manifest_destination_index_template:
+        type: JSON
+        comment: "Elasticsearch index template for the transform destination (JSON)"
     exclude:
       - ID
     json_columns:
@@ -307,6 +365,46 @@ tables:
     json_columns:
       - AssetIDs
       - AssetTypes
+
+  images:
+    comment: "Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties."
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      src:
+        type: TEXT
+        not_null: true
+        comment: "image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)"
+      width:
+        type: INTEGER
+        comment: "image width in pixels (NULL for SVG)"
+      height:
+        type: INTEGER
+        comment: "image height in pixels (NULL for SVG)"
+      byte_size:
+        type: INTEGER
+        not_null: true
+        comment: "file size in bytes"
+      sha256:
+        type: TEXT
+        not_null: true
+        comment: "hex-encoded SHA-256 hash of file contents"
+
+  discovery_fields:
+    comment: "Fields associated with package discovery capabilities."
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      name:
+        type: TEXT
+        not_null: true
+        comment: "name of the field"
 
   build_manifests:
     type: BuildManifest

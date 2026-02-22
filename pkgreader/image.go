@@ -1,7 +1,10 @@
 package pkgreader
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"image"
+	"io"
 	"io/fs"
 	"path"
 	"strings"
@@ -12,9 +15,10 @@ import (
 
 // ImageFile represents an image file with metadata extracted from its contents.
 type ImageFile struct {
-	Width    int   // pixels
-	Height   int   // pixels
-	ByteSize int64 // file size in bytes
+	Width    int    // pixels
+	Height   int    // pixels
+	ByteSize int64  // file size in bytes
+	SHA256   string // hex-encoded SHA-256 hash of file contents
 	path     string
 }
 
@@ -63,6 +67,13 @@ func readImages(fsys fs.FS, dir string) (map[string]*ImageFile, error) {
 			path:     filePath,
 		}
 
+		// Compute SHA-256 hash.
+		hash, err := hashFile(fsys, filePath)
+		if err != nil {
+			return nil, err
+		}
+		img.SHA256 = hash
+
 		// Decode dimensions for raster formats (not SVG).
 		if !strings.HasSuffix(strings.ToLower(name), ".svg") {
 			w, h, decodeErr := decodeImageDimensions(fsys, filePath)
@@ -79,6 +90,20 @@ func readImages(fsys fs.FS, dir string) (map[string]*ImageFile, error) {
 	}
 
 	return result, nil
+}
+
+func hashFile(fsys fs.FS, filePath string) (string, error) {
+	f, err := fsys.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func decodeImageDimensions(fsys fs.FS, filePath string) (width, height int, err error) {

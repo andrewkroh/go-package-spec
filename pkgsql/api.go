@@ -91,8 +91,42 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 	// Derive dir_name from path.
 	dirName := path.Base(pkg.Path())
 
+	// Extract type-specific fields for the packages table.
+	var (
+		conditionsKibanaVersion       sql.NullString
+		conditionsElasticSubscription sql.NullString
+		agentPrivilegesRoot           sql.NullBool
+		elasticsearchPrivilegesCluster any
+		policyTemplatesBehavior       sql.NullString
+	)
+	switch im := pkg.IntegrationManifest(); {
+	case im != nil:
+		conditionsKibanaVersion = toNullString(im.Conditions.Kibana.Version)
+		conditionsElasticSubscription = toNullString(string(im.Conditions.Elastic.Subscription))
+		agentPrivilegesRoot = toNullBool(im.Agent.Privileges.Root)
+		elasticsearchPrivilegesCluster = jsonNullString(im.Elasticsearch.Privileges.Cluster)
+		policyTemplatesBehavior = toNullString(im.PolicyTemplatesBehavior)
+	default:
+		if inp := pkg.InputManifest(); inp != nil {
+			conditionsKibanaVersion = toNullString(inp.Conditions.Kibana.Version)
+			conditionsElasticSubscription = toNullString(string(inp.Conditions.Elastic.Subscription))
+			agentPrivilegesRoot = toNullBool(inp.Agent.Privileges.Root)
+		} else if cm := pkg.ContentManifest(); cm != nil {
+			conditionsKibanaVersion = toNullString(cm.Conditions.Kibana.Version)
+			conditionsElasticSubscription = toNullString(string(cm.Conditions.Elastic.Subscription))
+		}
+	}
+
 	// Insert package.
-	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(m, dirName))
+	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(
+		m,
+		conditionsKibanaVersion,
+		conditionsElasticSubscription,
+		agentPrivilegesRoot,
+		elasticsearchPrivilegesCluster,
+		policyTemplatesBehavior,
+		dirName,
+	))
 	if err != nil {
 		return fmt.Errorf("inserting package: %w", err)
 	}
@@ -147,6 +181,11 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 		}
 	}
 
+	// Insert images (if image metadata was loaded).
+	if err := writeImages(ctx, q, pkg, pkgID); err != nil {
+		return err
+	}
+
 	// Package type-specific data.
 	switch m.Type {
 	case pkgspec.ManifestTypeIntegration:
@@ -155,6 +194,10 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 		}
 	case pkgspec.ManifestTypeInput:
 		if err := writeInput(ctx, q, pkg, pkgID, cfg); err != nil {
+			return err
+		}
+	case pkgspec.ManifestTypeContent:
+		if err := writeContent(ctx, q, pkg, pkgID); err != nil {
 			return err
 		}
 	}
@@ -195,6 +238,22 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 			})
 			if err != nil {
 				return fmt.Errorf("inserting policy template category: %w", err)
+			}
+		}
+
+		// Insert policy template icons.
+		for j := range pt.Icons {
+			_, err := q.InsertPolicyTemplateIcons(ctx, mapPolicyTemplateIconsParams(&pt.Icons[j], ptID))
+			if err != nil {
+				return fmt.Errorf("inserting policy template icon: %w", err)
+			}
+		}
+
+		// Insert policy template screenshots.
+		for j := range pt.Screenshots {
+			_, err := q.InsertPolicyTemplateScreenshots(ctx, mapPolicyTemplateScreenshotsParams(&pt.Screenshots[j], ptID))
+			if err != nil {
+				return fmt.Errorf("inserting policy template screenshot: %w", err)
 			}
 		}
 
@@ -239,9 +298,26 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 
 	// Insert transforms.
 	for tName, td := range pkg.Transforms {
-		_, err := q.InsertTransforms(ctx, mapTransformsParams(&td.Transform, pkgID, tName))
+		tID, err := q.InsertTransforms(ctx, mapTransformsParams(
+			&td.Transform,
+			pkgID,
+			tName,
+			toNullBool(transformManifestStart(td.Manifest)),
+			jsonNullString(transformManifestDestIndexTemplate(td.Manifest)),
+		))
 		if err != nil {
 			return fmt.Errorf("inserting transform %s: %w", tName, err)
+		}
+
+		// Insert transform fields.
+		if err := writeFields(ctx, q, td.Fields, cfg, func(fieldID int64) error {
+			_, err := q.InsertTransformFields(ctx, InsertTransformFieldsParams{
+				TransformID: tID,
+				FieldID:     fieldID,
+			})
+			return err
+		}); err != nil {
+			return fmt.Errorf("inserting transform %s fields: %w", tName, err)
 		}
 	}
 
@@ -287,10 +363,41 @@ func writeInput(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID i
 	return nil
 }
 
+func writeContent(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID int64) error {
+	cm := pkg.ContentManifest()
+	if cm == nil {
+		return nil
+	}
+
+	// Insert discovery fields.
+	for _, df := range cm.Discovery.Fields {
+		_, err := q.InsertDiscoveryFields(ctx, InsertDiscoveryFieldsParams{
+			PackagesID: pkgID,
+			Name:       df.Name,
+		})
+		if err != nil {
+			return fmt.Errorf("inserting discovery field: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgreader.DataStream, pkgID int64, cfg *writeConfig) error {
 	dsID, err := q.InsertDataStreams(ctx, mapDataStreamsParams(&ds.Manifest, pkgID, dsName))
 	if err != nil {
 		return fmt.Errorf("inserting data stream: %w", err)
+	}
+
+	// Insert sample event.
+	if ds.SampleEvent != nil {
+		_, err := q.InsertSampleEvents(ctx, InsertSampleEventsParams{
+			DataStreamsID: dsID,
+			Event:         string(ds.SampleEvent),
+		})
+		if err != nil {
+			return fmt.Errorf("inserting sample event: %w", err)
+		}
 	}
 
 	// Insert streams.
@@ -382,12 +489,26 @@ func writeFields(ctx context.Context, q *Queries, fieldsMap map[string]*pkgreade
 func writeProcessors(ctx context.Context, q *Queries, processors []*pkgspec.Processor, pipeID int64, basePath string) error {
 	for i, proc := range processors {
 		pointer := fmt.Sprintf("%s/%d/%s", basePath, i, proc.Type)
-		attrs, _ := json.Marshal(proc.Attributes)
+
+		// Build attributes including on_failure so each row is self-contained.
+		fullAttrs := make(map[string]any, len(proc.Attributes)+1)
+		for k, v := range proc.Attributes {
+			fullAttrs[k] = v
+		}
+		if len(proc.OnFailure) > 0 {
+			fullAttrs["on_failure"] = proc.OnFailure
+		}
+		attrs, _ := json.Marshal(fullAttrs)
+
+		var attrsVal any
+		if len(attrs) > 2 {
+			attrsVal = string(attrs)
+		}
 
 		_, err := q.InsertIngestProcessors(ctx, InsertIngestProcessorsParams{
 			IngestPipelinesID: pipeID,
 			Type:              proc.Type,
-			Attributes:        sql.NullString{String: string(attrs), Valid: len(attrs) > 2},
+			Attributes:        attrsVal,
 			JsonPointer:       pointer,
 			Ordinal:           int64(i),
 		})
@@ -406,6 +527,27 @@ func writeProcessors(ctx context.Context, q *Queries, processors []*pkgspec.Proc
 	return nil
 }
 
+func writeImages(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID int64) error {
+	for _, img := range pkg.Images {
+		// Store src with leading "/" to match icon/screenshot src fields
+		// for easy joins (e.g. images.src = package_icons.src).
+		src := "/" + img.Path()
+
+		_, err := q.InsertImages(ctx, InsertImagesParams{
+			PackagesID: pkgID,
+			Src:        src,
+			Width:      toNullInt64(img.Width),
+			Height:     toNullInt64(img.Height),
+			ByteSize:   img.ByteSize,
+			Sha256:     img.SHA256,
+		})
+		if err != nil {
+			return fmt.Errorf("inserting image %s: %w", img.Path(), err)
+		}
+	}
+	return nil
+}
+
 func writeVars(ctx context.Context, q *Queries, vars []pkgspec.Var, link func(varID int64) error) error {
 	for i := range vars {
 		varID, err := q.InsertVars(ctx, mapVarsParams(&vars[i]))
@@ -417,4 +559,21 @@ func writeVars(ctx context.Context, q *Queries, vars []pkgspec.Var, link func(va
 		}
 	}
 	return nil
+}
+
+// transformManifestStart extracts the Start field from a TransformManifest.
+func transformManifestStart(m *pkgspec.TransformManifest) *bool {
+	if m == nil {
+		return nil
+	}
+	return m.Start
+}
+
+// transformManifestDestIndexTemplate extracts the DestinationIndexTemplate
+// for JSON serialization. Returns nil if no manifest or empty template.
+func transformManifestDestIndexTemplate(m *pkgspec.TransformManifest) any {
+	if m == nil {
+		return nil
+	}
+	return m.DestinationIndexTemplate
 }

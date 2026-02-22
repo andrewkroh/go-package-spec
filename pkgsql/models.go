@@ -36,12 +36,12 @@ type DataStream struct {
 	DirName                       string
 	Dataset                       sql.NullString
 	DatasetIsPrefix               sql.NullBool
-	Deprecated                    sql.NullString
+	Deprecated                    interface{}
 	ElasticsearchDynamicDataset   sql.NullBool
 	ElasticsearchDynamicNamespace sql.NullBool
 	ElasticsearchIndexMode        sql.NullString
-	ElasticsearchIndexTemplate    sql.NullString
-	ElasticsearchPrivileges       sql.NullString
+	ElasticsearchIndexTemplate    interface{}
+	ElasticsearchPrivileges       interface{}
 	ElasticsearchSourceMode       sql.NullString
 	Hidden                        sql.NullBool
 	IlmPolicy                     sql.NullString
@@ -56,19 +56,25 @@ type DataStreamField struct {
 	FieldID      int64
 }
 
+type DiscoveryField struct {
+	ID         int64
+	PackagesID int64
+	Name       string
+}
+
 type Field struct {
 	ID                    int64
 	Analyzer              sql.NullString
 	CopyTo                sql.NullString
 	DateFormat            sql.NullString
-	DefaultMetric         sql.NullString
+	DefaultMetric         interface{}
 	Description           sql.NullString
 	Dimension             sql.NullBool
 	DocValues             sql.NullBool
-	Dynamic               sql.NullString
+	Dynamic               interface{}
 	Enabled               sql.NullBool
-	Example               sql.NullString
-	ExpectedValues        sql.NullString
+	Example               interface{}
+	ExpectedValues        interface{}
 	External              sql.NullString
 	IgnoreAbove           sql.NullInt64
 	IgnoreMalformed       sql.NullBool
@@ -77,16 +83,17 @@ type Field struct {
 	Index                 sql.NullBool
 	InferenceID           sql.NullString
 	MetricType            sql.NullString
-	Metrics               sql.NullString
+	Metrics               interface{}
+	MultiFields           interface{}
 	Name                  string
-	Normalize             sql.NullString
+	Normalize             interface{}
 	Normalizer            sql.NullString
-	NullValue             sql.NullString
+	NullValue             interface{}
 	ObjectType            sql.NullString
 	ObjectTypeMappingType sql.NullString
 	Path                  sql.NullString
 	Pattern               sql.NullString
-	Runtime               sql.NullString
+	Runtime               interface{}
 	ScalingFactor         sql.NullInt64
 	SearchAnalyzer        sql.NullString
 	Store                 sql.NullBool
@@ -94,6 +101,16 @@ type Field struct {
 	Type                  sql.NullString
 	Unit                  sql.NullString
 	Value                 sql.NullString
+}
+
+type Image struct {
+	ID         int64
+	Src        string
+	Width      sql.NullInt64
+	Height     sql.NullInt64
+	ByteSize   int64
+	Sha256     string
+	PackagesID int64
 }
 
 type IngestPipeline struct {
@@ -107,24 +124,29 @@ type IngestProcessor struct {
 	ID                int64
 	IngestPipelinesID int64
 	Type              string
-	Attributes        sql.NullString
+	Attributes        interface{}
 	JsonPointer       string
 	Ordinal           int64
 }
 
 type Package struct {
-	ID            int64
-	DirName       string
-	Deprecated    sql.NullString
-	Description   string
-	FormatVersion string
-	Name          string
-	OwnerGithub   string
-	OwnerType     string
-	SourceLicense sql.NullString
-	Title         string
-	Type          string
-	Version       string
+	ID                             int64
+	ConditionsKibanaVersion        sql.NullString
+	ConditionsElasticSubscription  sql.NullString
+	AgentPrivilegesRoot            sql.NullBool
+	ElasticsearchPrivilegesCluster interface{}
+	PolicyTemplatesBehavior        sql.NullString
+	DirName                        string
+	Deprecated                     interface{}
+	Description                    string
+	FormatVersion                  string
+	Name                           string
+	OwnerGithub                    string
+	OwnerType                      string
+	SourceLicense                  sql.NullString
+	Title                          string
+	Type                           string
+	Version                        string
 }
 
 type PackageCategory struct {
@@ -160,17 +182,17 @@ type PackageScreenshot struct {
 
 type PackageVar struct {
 	ID        int64
-	PackageID int64
 	VarID     int64
+	PackageID int64
 }
 
 type PolicyTemplate struct {
 	ID                 int64
 	PackagesID         int64
-	ConfigurationLinks sql.NullString
-	DataStreams        sql.NullString
-	DeploymentModes    sql.NullString
-	Deprecated         sql.NullString
+	ConfigurationLinks interface{}
+	DataStreams        interface{}
+	DeploymentModes    interface{}
+	Deprecated         interface{}
 	Description        string
 	FipsCompatible     sql.NullBool
 	Multiple           sql.NullBool
@@ -180,17 +202,27 @@ type PolicyTemplate struct {
 
 type PolicyTemplateCategory struct {
 	ID               int64
-	PolicyTemplateID int64
 	Category         string
+	PolicyTemplateID int64
+}
+
+type PolicyTemplateIcon struct {
+	ID                int64
+	PolicyTemplatesID int64
+	DarkMode          sql.NullBool
+	Size              sql.NullString
+	Src               string
+	Title             sql.NullString
+	Type              sql.NullString
 }
 
 type PolicyTemplateInput struct {
 	ID                    int64
 	PolicyTemplatesID     int64
-	DeploymentModes       sql.NullString
-	Deprecated            sql.NullString
+	DeploymentModes       interface{}
+	Deprecated            interface{}
 	Description           string
-	HideInVarGroupOptions sql.NullString
+	HideInVarGroupOptions interface{}
 	InputGroup            sql.NullString
 	Multi                 sql.NullBool
 	TemplatePath          sql.NullString
@@ -200,8 +232,17 @@ type PolicyTemplateInput struct {
 
 type PolicyTemplateInputVar struct {
 	ID                    int64
-	VarID                 int64
 	PolicyTemplateInputID int64
+	VarID                 int64
+}
+
+type PolicyTemplateScreenshot struct {
+	ID                int64
+	PolicyTemplatesID int64
+	Size              sql.NullString
+	Src               string
+	Title             string
+	Type              sql.NullString
 }
 
 type PolicyTemplateVar struct {
@@ -214,8 +255,14 @@ type RoutingRule struct {
 	ID            int64
 	DataStreamsID int64
 	If            string
-	Namespace     sql.NullString
-	TargetDataset sql.NullString
+	Namespace     interface{}
+	TargetDataset interface{}
+}
+
+type SampleEvent struct {
+	ID            int64
+	DataStreamsID int64
+	Event         interface{}
 }
 
 type Stream struct {
@@ -237,41 +284,49 @@ type StreamVar struct {
 type Tag struct {
 	ID         int64
 	PackagesID int64
-	AssetIds   sql.NullString
-	AssetTypes sql.NullString
+	AssetIds   interface{}
+	AssetTypes interface{}
 	Text       sql.NullString
 }
 
 type Transform struct {
-	ID              int64
-	PackagesID      int64
-	DirName         string
-	Meta            sql.NullString
-	Description     sql.NullString
-	Dest            sql.NullString
-	Frequency       sql.NullString
-	Latest          sql.NullString
-	Pivot           sql.NullString
-	RetentionPolicy sql.NullString
-	Settings        sql.NullString
-	Source          sql.NullString
-	Sync            sql.NullString
+	ID                               int64
+	PackagesID                       int64
+	DirName                          string
+	ManifestStart                    sql.NullBool
+	ManifestDestinationIndexTemplate interface{}
+	Meta                             interface{}
+	Description                      sql.NullString
+	Dest                             interface{}
+	Frequency                        sql.NullString
+	Latest                           interface{}
+	Pivot                            interface{}
+	RetentionPolicy                  interface{}
+	Settings                         interface{}
+	Source                           interface{}
+	Sync                             interface{}
+}
+
+type TransformField struct {
+	ID          int64
+	TransformID int64
+	FieldID     int64
 }
 
 type Var struct {
 	ID                    int64
-	Default               sql.NullString
+	Default               interface{}
 	Description           sql.NullString
-	HideInDeploymentModes sql.NullString
+	HideInDeploymentModes interface{}
 	MaxDuration           sql.NullString
 	MinDuration           sql.NullString
 	Multi                 sql.NullBool
 	Name                  string
-	Options               sql.NullString
+	Options               interface{}
 	Required              sql.NullBool
 	Secret                sql.NullBool
 	ShowUser              sql.NullBool
 	Title                 sql.NullString
 	Type                  string
-	UrlAllowedSchemes     sql.NullString
+	UrlAllowedSchemes     interface{}
 }

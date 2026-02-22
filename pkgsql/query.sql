@@ -20,6 +20,7 @@ INSERT INTO fields (
   inference_id,
   metric_type,
   metrics,
+  multi_fields,
   name,
   normalize,
   normalizer,
@@ -72,12 +73,18 @@ INSERT INTO fields (
   ?,
   ?,
   ?,
+  ?,
   ?
 ) RETURNING id;
 
 -- name: InsertPackages :one
 INSERT INTO packages (
+  conditions_elastic_subscription,
+  agent_privileges_root,
+  elasticsearch_privileges_cluster,
+  policy_templates_behavior,
   dir_name,
+  conditions_kibana_version,
   deprecated,
   description,
   format_version,
@@ -89,6 +96,11 @@ INSERT INTO packages (
   type,
   version
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -183,6 +195,32 @@ INSERT INTO data_stream_fields (
   ?
 ) RETURNING id;
 
+-- name: InsertDiscoveryFields :one
+INSERT INTO discovery_fields (
+  packages_id,
+  name
+) VALUES (
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertImages :one
+INSERT INTO images (
+  packages_id,
+  src,
+  width,
+  height,
+  byte_size,
+  sha256
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertIngestPipelines :one
 INSERT INTO ingest_pipelines (
   data_streams_id,
@@ -197,10 +235,10 @@ INSERT INTO ingest_pipelines (
 -- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
+  ordinal,
   type,
   attributes,
-  json_pointer,
-  ordinal
+  json_pointer
 ) VALUES (
   ?,
   ?,
@@ -286,9 +324,26 @@ INSERT INTO policy_templates (
 
 -- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  policy_template_id,
-  category
+  category,
+  policy_template_id
 ) VALUES (
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertPolicyTemplateIcons :one
+INSERT INTO policy_template_icons (
+  policy_templates_id,
+  dark_mode,
+  size,
+  src,
+  title,
+  type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?
 ) RETURNING id;
@@ -318,6 +373,21 @@ INSERT INTO policy_template_inputs (
   ?
 ) RETURNING id;
 
+-- name: InsertPolicyTemplateScreenshots :one
+INSERT INTO policy_template_screenshots (
+  policy_templates_id,
+  size,
+  src,
+  title,
+  type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertRoutingRules :one
 INSERT INTO routing_rules (
   data_streams_id,
@@ -327,6 +397,15 @@ INSERT INTO routing_rules (
 ) VALUES (
   ?,
   ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSampleEvents :one
+INSERT INTO sample_events (
+  data_streams_id,
+  event
+) VALUES (
   ?,
   ?
 ) RETURNING id;
@@ -365,6 +444,8 @@ INSERT INTO tags (
 INSERT INTO transforms (
   packages_id,
   dir_name,
+  manifest_start,
+  manifest_destination_index_template,
   meta,
   description,
   dest,
@@ -386,6 +467,17 @@ INSERT INTO transforms (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertTransformFields :one
+INSERT INTO transform_fields (
+  transform_id,
+  field_id
+) VALUES (
   ?,
   ?
 ) RETURNING id;
@@ -434,8 +526,8 @@ INSERT INTO package_vars (
 
 -- name: InsertPolicyTemplateInputVars :one
 INSERT INTO policy_template_input_vars (
-  var_id,
-  policy_template_input_id
+  policy_template_input_id,
+  var_id
 ) VALUES (
   ?,
   ?

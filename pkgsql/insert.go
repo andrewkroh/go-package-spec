@@ -106,6 +106,7 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 		InferenceID:           toNullString(v.InferenceID),
 		MetricType:            toNullString(string(v.MetricType)),
 		Metrics:               jsonNullString(v.Metrics),
+		MultiFields:           jsonNullString(v.MultiFields),
 		Name:                  v.Name,
 		Normalize:             jsonNullString(v.Normalize),
 		Normalizer:            toNullString(v.Normalizer),
@@ -126,19 +127,24 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 }
 
 // mapPackagesParams converts a Manifest to InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, dirName string) InsertPackagesParams {
+func mapPackagesParams(v *pkgspec.Manifest, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string, conditionsKibanaVersion sql.NullString) InsertPackagesParams {
 	return InsertPackagesParams{
-		Deprecated:    jsonNullString(v.Deprecated),
-		Description:   v.Description,
-		DirName:       dirName,
-		FormatVersion: v.FormatVersion,
-		Name:          v.Name,
-		OwnerGithub:   v.Owner.Github,
-		OwnerType:     string(v.Owner.Type),
-		SourceLicense: toNullString(string(v.Source.License)),
-		Title:         v.Title,
-		Type:          string(v.Type),
-		Version:       v.Version,
+		AgentPrivilegesRoot:            agentPrivilegesRoot,
+		ConditionsElasticSubscription:  conditionsElasticSubscription,
+		ConditionsKibanaVersion:        conditionsKibanaVersion,
+		Deprecated:                     jsonNullString(v.Deprecated),
+		Description:                    v.Description,
+		DirName:                        dirName,
+		ElasticsearchPrivilegesCluster: elasticsearchPrivilegesCluster,
+		FormatVersion:                  v.FormatVersion,
+		Name:                           v.Name,
+		OwnerGithub:                    v.Owner.Github,
+		OwnerType:                      string(v.Owner.Type),
+		PolicyTemplatesBehavior:        policyTemplatesBehavior,
+		SourceLicense:                  toNullString(string(v.Source.License)),
+		Title:                          v.Title,
+		Type:                           string(v.Type),
+		Version:                        v.Version,
 	}
 }
 
@@ -240,6 +246,18 @@ func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) InsertP
 	}
 }
 
+// mapPolicyTemplateIconsParams converts a Icon to InsertPolicyTemplateIconsParams.
+func mapPolicyTemplateIconsParams(v *pkgspec.Icon, parentID int64) InsertPolicyTemplateIconsParams {
+	return InsertPolicyTemplateIconsParams{
+		DarkMode:          toNullBool(v.DarkMode),
+		PolicyTemplatesID: parentID,
+		Size:              toNullString(v.Size),
+		Src:               v.Src,
+		Title:             toNullString(v.Title),
+		Type:              toNullString(v.Type),
+	}
+}
+
 // mapPolicyTemplateInputsParams converts a PolicyTemplateInput to InsertPolicyTemplateInputsParams.
 func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int64) InsertPolicyTemplateInputsParams {
 	return InsertPolicyTemplateInputsParams{
@@ -253,6 +271,17 @@ func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int6
 		TemplatePath:          toNullString(v.TemplatePath),
 		Title:                 v.Title,
 		Type:                  v.Type,
+	}
+}
+
+// mapPolicyTemplateScreenshotsParams converts a Screenshot to InsertPolicyTemplateScreenshotsParams.
+func mapPolicyTemplateScreenshotsParams(v *pkgspec.Screenshot, parentID int64) InsertPolicyTemplateScreenshotsParams {
+	return InsertPolicyTemplateScreenshotsParams{
+		PolicyTemplatesID: parentID,
+		Size:              toNullString(v.Size),
+		Src:               v.Src,
+		Title:             v.Title,
+		Type:              toNullString(v.Type),
 	}
 }
 
@@ -289,20 +318,22 @@ func mapTagsParams(v *pkgspec.Tag, parentID int64) InsertTagsParams {
 }
 
 // mapTransformsParams converts a Transform to InsertTransformsParams.
-func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string) InsertTransformsParams {
+func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, manifestStart sql.NullBool, manifestDestinationIndexTemplate any) InsertTransformsParams {
 	return InsertTransformsParams{
-		Description:     toNullString(v.Description),
-		Dest:            jsonNullString(v.Dest),
-		DirName:         dirName,
-		Frequency:       toNullString(v.Frequency),
-		Latest:          jsonNullString(v.Latest),
-		Meta:            jsonNullString(v.Meta),
-		PackagesID:      parentID,
-		Pivot:           jsonNullString(v.Pivot),
-		RetentionPolicy: jsonNullString(v.RetentionPolicy),
-		Settings:        jsonNullString(v.Settings),
-		Source:          jsonNullString(v.Source),
-		Sync:            jsonNullString(v.Sync),
+		Description:                      toNullString(v.Description),
+		Dest:                             jsonNullString(v.Dest),
+		DirName:                          dirName,
+		Frequency:                        toNullString(v.Frequency),
+		Latest:                           jsonNullString(v.Latest),
+		ManifestDestinationIndexTemplate: manifestDestinationIndexTemplate,
+		ManifestStart:                    manifestStart,
+		Meta:                             jsonNullString(v.Meta),
+		PackagesID:                       parentID,
+		Pivot:                            jsonNullString(v.Pivot),
+		RetentionPolicy:                  jsonNullString(v.RetentionPolicy),
+		Settings:                         jsonNullString(v.Settings),
+		Source:                           jsonNullString(v.Source),
+		Sync:                             jsonNullString(v.Sync),
 	}
 }
 

@@ -158,12 +158,12 @@ type InsertDataStreamsParams struct {
 	DirName                       string
 	Dataset                       sql.NullString
 	DatasetIsPrefix               sql.NullBool
-	Deprecated                    sql.NullString
+	Deprecated                    interface{}
 	ElasticsearchDynamicDataset   sql.NullBool
 	ElasticsearchDynamicNamespace sql.NullBool
 	ElasticsearchIndexMode        sql.NullString
-	ElasticsearchIndexTemplate    sql.NullString
-	ElasticsearchPrivileges       sql.NullString
+	ElasticsearchIndexTemplate    interface{}
+	ElasticsearchPrivileges       interface{}
 	ElasticsearchSourceMode       sql.NullString
 	Hidden                        sql.NullBool
 	IlmPolicy                     sql.NullString
@@ -196,6 +196,28 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 	return id, err
 }
 
+const insertDiscoveryFields = `-- name: InsertDiscoveryFields :one
+INSERT INTO discovery_fields (
+  packages_id,
+  name
+) VALUES (
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertDiscoveryFieldsParams struct {
+	PackagesID int64
+	Name       string
+}
+
+func (q *Queries) InsertDiscoveryFields(ctx context.Context, arg InsertDiscoveryFieldsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertDiscoveryFields, arg.PackagesID, arg.Name)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertFields = `-- name: InsertFields :one
 INSERT INTO fields (
   analyzer,
@@ -218,6 +240,7 @@ INSERT INTO fields (
   inference_id,
   metric_type,
   metrics,
+  multi_fields,
   name,
   normalize,
   normalizer,
@@ -270,6 +293,7 @@ INSERT INTO fields (
   ?,
   ?,
   ?,
+  ?,
   ?
 ) RETURNING id
 `
@@ -278,14 +302,14 @@ type InsertFieldsParams struct {
 	Analyzer              sql.NullString
 	CopyTo                sql.NullString
 	DateFormat            sql.NullString
-	DefaultMetric         sql.NullString
+	DefaultMetric         interface{}
 	Description           sql.NullString
 	Dimension             sql.NullBool
 	DocValues             sql.NullBool
-	Dynamic               sql.NullString
+	Dynamic               interface{}
 	Enabled               sql.NullBool
-	Example               sql.NullString
-	ExpectedValues        sql.NullString
+	Example               interface{}
+	ExpectedValues        interface{}
 	External              sql.NullString
 	IgnoreAbove           sql.NullInt64
 	IgnoreMalformed       sql.NullBool
@@ -294,16 +318,17 @@ type InsertFieldsParams struct {
 	Index                 sql.NullBool
 	InferenceID           sql.NullString
 	MetricType            sql.NullString
-	Metrics               sql.NullString
+	Metrics               interface{}
+	MultiFields           interface{}
 	Name                  string
-	Normalize             sql.NullString
+	Normalize             interface{}
 	Normalizer            sql.NullString
-	NullValue             sql.NullString
+	NullValue             interface{}
 	ObjectType            sql.NullString
 	ObjectTypeMappingType sql.NullString
 	Path                  sql.NullString
 	Pattern               sql.NullString
-	Runtime               sql.NullString
+	Runtime               interface{}
 	ScalingFactor         sql.NullInt64
 	SearchAnalyzer        sql.NullString
 	Store                 sql.NullBool
@@ -335,6 +360,7 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 		arg.InferenceID,
 		arg.MetricType,
 		arg.Metrics,
+		arg.MultiFields,
 		arg.Name,
 		arg.Normalize,
 		arg.Normalizer,
@@ -351,6 +377,47 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 		arg.Type,
 		arg.Unit,
 		arg.Value,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertImages = `-- name: InsertImages :one
+INSERT INTO images (
+  src,
+  width,
+  height,
+  byte_size,
+  sha256,
+  packages_id
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertImagesParams struct {
+	Src        string
+	Width      sql.NullInt64
+	Height     sql.NullInt64
+	ByteSize   int64
+	Sha256     string
+	PackagesID int64
+}
+
+func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertImages,
+		arg.Src,
+		arg.Width,
+		arg.Height,
+		arg.ByteSize,
+		arg.Sha256,
+		arg.PackagesID,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -401,7 +468,7 @@ INSERT INTO ingest_processors (
 type InsertIngestProcessorsParams struct {
 	IngestPipelinesID int64
 	Type              string
-	Attributes        sql.NullString
+	Attributes        interface{}
 	JsonPointer       string
 	Ordinal           int64
 }
@@ -543,8 +610,8 @@ func (q *Queries) InsertPackageScreenshots(ctx context.Context, arg InsertPackag
 
 const insertPackageVars = `-- name: InsertPackageVars :one
 INSERT INTO package_vars (
-  package_id,
-  var_id
+  var_id,
+  package_id
 ) VALUES (
   ?,
   ?
@@ -552,12 +619,12 @@ INSERT INTO package_vars (
 `
 
 type InsertPackageVarsParams struct {
-	PackageID int64
 	VarID     int64
+	PackageID int64
 }
 
 func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPackageVars, arg.PackageID, arg.VarID)
+	row := q.db.QueryRowContext(ctx, insertPackageVars, arg.VarID, arg.PackageID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -565,6 +632,11 @@ func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsPa
 
 const insertPackages = `-- name: InsertPackages :one
 INSERT INTO packages (
+  conditions_kibana_version,
+  conditions_elastic_subscription,
+  agent_privileges_root,
+  elasticsearch_privileges_cluster,
+  policy_templates_behavior,
   dir_name,
   deprecated,
   description,
@@ -587,26 +659,41 @@ INSERT INTO packages (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id
 `
 
 type InsertPackagesParams struct {
-	DirName       string
-	Deprecated    sql.NullString
-	Description   string
-	FormatVersion string
-	Name          string
-	OwnerGithub   string
-	OwnerType     string
-	SourceLicense sql.NullString
-	Title         string
-	Type          string
-	Version       string
+	ConditionsKibanaVersion        sql.NullString
+	ConditionsElasticSubscription  sql.NullString
+	AgentPrivilegesRoot            sql.NullBool
+	ElasticsearchPrivilegesCluster interface{}
+	PolicyTemplatesBehavior        sql.NullString
+	DirName                        string
+	Deprecated                     interface{}
+	Description                    string
+	FormatVersion                  string
+	Name                           string
+	OwnerGithub                    string
+	OwnerType                      string
+	SourceLicense                  sql.NullString
+	Title                          string
+	Type                           string
+	Version                        string
 }
 
 func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPackages,
+		arg.ConditionsKibanaVersion,
+		arg.ConditionsElasticSubscription,
+		arg.AgentPrivilegesRoot,
+		arg.ElasticsearchPrivilegesCluster,
+		arg.PolicyTemplatesBehavior,
 		arg.DirName,
 		arg.Deprecated,
 		arg.Description,
@@ -626,8 +713,8 @@ func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) 
 
 const insertPolicyTemplateCategories = `-- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  policy_template_id,
-  category
+  category,
+  policy_template_id
 ) VALUES (
   ?,
   ?
@@ -635,12 +722,53 @@ INSERT INTO policy_template_categories (
 `
 
 type InsertPolicyTemplateCategoriesParams struct {
-	PolicyTemplateID int64
 	Category         string
+	PolicyTemplateID int64
 }
 
 func (q *Queries) InsertPolicyTemplateCategories(ctx context.Context, arg InsertPolicyTemplateCategoriesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.PolicyTemplateID, arg.Category)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.Category, arg.PolicyTemplateID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertPolicyTemplateIcons = `-- name: InsertPolicyTemplateIcons :one
+INSERT INTO policy_template_icons (
+  policy_templates_id,
+  dark_mode,
+  size,
+  src,
+  title,
+  type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertPolicyTemplateIconsParams struct {
+	PolicyTemplatesID int64
+	DarkMode          sql.NullBool
+	Size              sql.NullString
+	Src               string
+	Title             sql.NullString
+	Type              sql.NullString
+}
+
+func (q *Queries) InsertPolicyTemplateIcons(ctx context.Context, arg InsertPolicyTemplateIconsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateIcons,
+		arg.PolicyTemplatesID,
+		arg.DarkMode,
+		arg.Size,
+		arg.Src,
+		arg.Title,
+		arg.Type,
+	)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -648,8 +776,8 @@ func (q *Queries) InsertPolicyTemplateCategories(ctx context.Context, arg Insert
 
 const insertPolicyTemplateInputVars = `-- name: InsertPolicyTemplateInputVars :one
 INSERT INTO policy_template_input_vars (
-  var_id,
-  policy_template_input_id
+  policy_template_input_id,
+  var_id
 ) VALUES (
   ?,
   ?
@@ -657,12 +785,12 @@ INSERT INTO policy_template_input_vars (
 `
 
 type InsertPolicyTemplateInputVarsParams struct {
-	VarID                 int64
 	PolicyTemplateInputID int64
+	VarID                 int64
 }
 
 func (q *Queries) InsertPolicyTemplateInputVars(ctx context.Context, arg InsertPolicyTemplateInputVarsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateInputVars, arg.VarID, arg.PolicyTemplateInputID)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateInputVars, arg.PolicyTemplateInputID, arg.VarID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -696,10 +824,10 @@ INSERT INTO policy_template_inputs (
 
 type InsertPolicyTemplateInputsParams struct {
 	PolicyTemplatesID     int64
-	DeploymentModes       sql.NullString
-	Deprecated            sql.NullString
+	DeploymentModes       interface{}
+	Deprecated            interface{}
 	Description           string
-	HideInVarGroupOptions sql.NullString
+	HideInVarGroupOptions interface{}
 	InputGroup            sql.NullString
 	Multi                 sql.NullBool
 	TemplatePath          sql.NullString
@@ -717,6 +845,43 @@ func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPoli
 		arg.InputGroup,
 		arg.Multi,
 		arg.TemplatePath,
+		arg.Title,
+		arg.Type,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertPolicyTemplateScreenshots = `-- name: InsertPolicyTemplateScreenshots :one
+INSERT INTO policy_template_screenshots (
+  policy_templates_id,
+  size,
+  src,
+  title,
+  type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertPolicyTemplateScreenshotsParams struct {
+	PolicyTemplatesID int64
+	Size              sql.NullString
+	Src               string
+	Title             string
+	Type              sql.NullString
+}
+
+func (q *Queries) InsertPolicyTemplateScreenshots(ctx context.Context, arg InsertPolicyTemplateScreenshotsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateScreenshots,
+		arg.PolicyTemplatesID,
+		arg.Size,
+		arg.Src,
 		arg.Title,
 		arg.Type,
 	)
@@ -775,10 +940,10 @@ INSERT INTO policy_templates (
 
 type InsertPolicyTemplatesParams struct {
 	PackagesID         int64
-	ConfigurationLinks sql.NullString
-	DataStreams        sql.NullString
-	DeploymentModes    sql.NullString
-	Deprecated         sql.NullString
+	ConfigurationLinks interface{}
+	DataStreams        interface{}
+	DeploymentModes    interface{}
+	Deprecated         interface{}
 	Description        string
 	FipsCompatible     sql.NullBool
 	Multiple           sql.NullBool
@@ -821,8 +986,8 @@ INSERT INTO routing_rules (
 type InsertRoutingRulesParams struct {
 	DataStreamsID int64
 	If            string
-	Namespace     sql.NullString
-	TargetDataset sql.NullString
+	Namespace     interface{}
+	TargetDataset interface{}
 }
 
 func (q *Queries) InsertRoutingRules(ctx context.Context, arg InsertRoutingRulesParams) (int64, error) {
@@ -832,6 +997,28 @@ func (q *Queries) InsertRoutingRules(ctx context.Context, arg InsertRoutingRules
 		arg.Namespace,
 		arg.TargetDataset,
 	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSampleEvents = `-- name: InsertSampleEvents :one
+INSERT INTO sample_events (
+  data_streams_id,
+  event
+) VALUES (
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSampleEventsParams struct {
+	DataStreamsID int64
+	Event         interface{}
+}
+
+func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEventsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -916,8 +1103,8 @@ INSERT INTO tags (
 
 type InsertTagsParams struct {
 	PackagesID int64
-	AssetIds   sql.NullString
-	AssetTypes sql.NullString
+	AssetIds   interface{}
+	AssetTypes interface{}
 	Text       sql.NullString
 }
 
@@ -933,10 +1120,34 @@ func (q *Queries) InsertTags(ctx context.Context, arg InsertTagsParams) (int64, 
 	return id, err
 }
 
+const insertTransformFields = `-- name: InsertTransformFields :one
+INSERT INTO transform_fields (
+  transform_id,
+  field_id
+) VALUES (
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertTransformFieldsParams struct {
+	TransformID int64
+	FieldID     int64
+}
+
+func (q *Queries) InsertTransformFields(ctx context.Context, arg InsertTransformFieldsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertTransformFields, arg.TransformID, arg.FieldID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertTransforms = `-- name: InsertTransforms :one
 INSERT INTO transforms (
   packages_id,
   dir_name,
+  manifest_start,
+  manifest_destination_index_template,
   meta,
   description,
   dest,
@@ -959,29 +1170,35 @@ INSERT INTO transforms (
   ?,
   ?,
   ?,
+  ?,
+  ?,
   ?
 ) RETURNING id
 `
 
 type InsertTransformsParams struct {
-	PackagesID      int64
-	DirName         string
-	Meta            sql.NullString
-	Description     sql.NullString
-	Dest            sql.NullString
-	Frequency       sql.NullString
-	Latest          sql.NullString
-	Pivot           sql.NullString
-	RetentionPolicy sql.NullString
-	Settings        sql.NullString
-	Source          sql.NullString
-	Sync            sql.NullString
+	PackagesID                       int64
+	DirName                          string
+	ManifestStart                    sql.NullBool
+	ManifestDestinationIndexTemplate interface{}
+	Meta                             interface{}
+	Description                      sql.NullString
+	Dest                             interface{}
+	Frequency                        sql.NullString
+	Latest                           interface{}
+	Pivot                            interface{}
+	RetentionPolicy                  interface{}
+	Settings                         interface{}
+	Source                           interface{}
+	Sync                             interface{}
 }
 
 func (q *Queries) InsertTransforms(ctx context.Context, arg InsertTransformsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertTransforms,
 		arg.PackagesID,
 		arg.DirName,
+		arg.ManifestStart,
+		arg.ManifestDestinationIndexTemplate,
 		arg.Meta,
 		arg.Description,
 		arg.Dest,
@@ -1033,20 +1250,20 @@ INSERT INTO vars (
 `
 
 type InsertVarsParams struct {
-	Default               sql.NullString
+	Default               interface{}
 	Description           sql.NullString
-	HideInDeploymentModes sql.NullString
+	HideInDeploymentModes interface{}
 	MaxDuration           sql.NullString
 	MinDuration           sql.NullString
 	Multi                 sql.NullBool
 	Name                  string
-	Options               sql.NullString
+	Options               interface{}
 	Required              sql.NullBool
 	Secret                sql.NullBool
 	ShowUser              sql.NullBool
 	Title                 sql.NullString
 	Type                  string
-	UrlAllowedSchemes     sql.NullString
+	UrlAllowedSchemes     interface{}
 }
 
 func (q *Queries) InsertVars(ctx context.Context, arg InsertVarsParams) (int64, error) {

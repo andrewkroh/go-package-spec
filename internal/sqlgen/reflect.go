@@ -192,7 +192,7 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 			}
 			cols = append(cols, ColumnDef{
 				Name:    sqlName,
-				SQLType: "TEXT",
+				SQLType: "JSON",
 				Comment: comment,
 				GoField: fullFieldName,
 				IsJSON:  true,
@@ -293,19 +293,19 @@ func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitemp
 		}
 
 	case reflect.Slice:
-		// Slices are stored as JSON text.
-		col.SQLType = "TEXT"
+		// Slices are stored as JSON.
+		col.SQLType = "JSON"
 		col.IsJSON = true
 		col.IsSlice = true
 
 	case reflect.Map:
-		// Maps are stored as JSON text.
-		col.SQLType = "TEXT"
+		// Maps are stored as JSON.
+		col.SQLType = "JSON"
 		col.IsJSON = true
 
 	case reflect.Interface:
-		// any / interface{} stored as JSON text.
-		col.SQLType = "TEXT"
+		// any / interface{} stored as JSON.
+		col.SQLType = "JSON"
 		col.IsJSON = true
 
 	case reflect.Struct:
@@ -320,7 +320,7 @@ func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitemp
 			return col, nil
 		}
 		// Other structs stored as JSON.
-		col.SQLType = "TEXT"
+		col.SQLType = "JSON"
 		col.IsJSON = true
 
 	default:

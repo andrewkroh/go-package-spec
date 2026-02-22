@@ -191,7 +191,7 @@ func emitInsertFunc(f *File, td *TableDef) {
 	// Add extra column parameters.
 	for _, col := range td.Columns {
 		if col.IsExtra && !col.PK && col.FK == "" {
-			funcParams = append(funcParams, Id(toGoParamName(col.Name)).String())
+			funcParams = append(funcParams, Id(toGoParamName(col.Name)).Add(extraColumnGoType(col)))
 		}
 	}
 
@@ -275,6 +275,37 @@ func buildFieldAssignment(col ColumnDef) *Statement {
 		return accessor
 	default:
 		return accessor
+	}
+}
+
+// extraColumnGoType returns the jennifer Code for the Go type of an extra column parameter.
+// This matches what sqlc generates for the InsertXParams field type.
+func extraColumnGoType(col ColumnDef) Code {
+	switch col.SQLType {
+	case "BOOLEAN":
+		if col.NotNull {
+			return Bool()
+		}
+		return Qual(databaseSQLPkg, "NullBool")
+	case "INTEGER":
+		if col.NotNull {
+			return Int64()
+		}
+		return Qual(databaseSQLPkg, "NullInt64")
+	case "REAL":
+		if col.NotNull {
+			return Float64()
+		}
+		return Qual(databaseSQLPkg, "NullFloat64")
+	case "JSON":
+		// sqlc maps JSON columns to interface{}.
+		return Any()
+	default:
+		// TEXT and anything else → string / sql.NullString
+		if col.NotNull {
+			return String()
+		}
+		return Qual(databaseSQLPkg, "NullString")
 	}
 }
 

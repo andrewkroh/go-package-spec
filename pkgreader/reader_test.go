@@ -499,6 +499,12 @@ func TestImageMetadata(t *testing.T) {
 	if png.Path() != "img/icon.png" {
 		t.Errorf("icon.png path = %q, want img/icon.png", png.Path())
 	}
+	if png.SHA256 == "" {
+		t.Error("icon.png SHA256 is empty")
+	}
+	if len(png.SHA256) != 64 {
+		t.Errorf("icon.png SHA256 length = %d, want 64 hex chars", len(png.SHA256))
+	}
 
 	// SVG image — no decoded dimensions, only byte size.
 	svg, ok := pkg.Images["logo.svg"]
@@ -510,6 +516,9 @@ func TestImageMetadata(t *testing.T) {
 	}
 	if svg.ByteSize == 0 {
 		t.Error("logo.svg byte size is 0")
+	}
+	if svg.SHA256 == "" {
+		t.Error("logo.svg SHA256 is empty")
 	}
 }
 
