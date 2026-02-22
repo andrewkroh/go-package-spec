@@ -35,6 +35,9 @@ generator consumes.
 - Git metadata enrichment (commit ID, changelog dates via blame)
 - Image metadata extraction (dimensions, byte sizes)
 - Agent Handlebars template loading
+- Field flattening — expands nested group hierarchies into dot-joined names
+  with optional [ECS](https://github.com/andrewkroh/go-ecs) enrichment via
+  callback
 
 ## Install
 
@@ -79,6 +82,8 @@ See the [`example/`](example/) directory:
 - **[field_locations](example/field_locations/)** — Prints each field's name
   with its source file:line:column location, demonstrating the FileMetadata
   annotation feature.
+- **[flatten_fields](example/flatten_fields/)** — Flattens nested group fields
+  into dot-joined names and prints sorted results with types and locations.
 
 ## License
 

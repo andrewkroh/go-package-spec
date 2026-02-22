@@ -18,6 +18,7 @@ pkgspec/                   Generated data model (DO NOT EDIT except hand-written
   annotation.go                Hand-written: exports AnnotateFileMetadata
   processor.go                 Hand-written: Processor type with custom marshal/unmarshal
   stringorstrings.go           Hand-written: StringOrStrings type for anyOf [string, []string]
+  flatten.go                   Hand-written: FlattenFields with ECS enrichment callback
   metadata.go                  Generated: FileMetadata type + reflection walker
   manifest.go                  Manifest base type + Integration/Input/Content manifests
   ingest_pipeline.go           Generated: IngestPipeline type
