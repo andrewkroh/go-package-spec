@@ -205,6 +205,11 @@ func TestReadIntegrationPackage(t *testing.T) {
 	if ds.AgentTemplates != nil {
 		t.Error("DataStream AgentTemplates should be nil without WithAgentTemplates")
 	}
+
+	// Images should be nil without WithImageMetadata.
+	if pkg.Images != nil {
+		t.Error("Images should be nil without WithImageMetadata")
+	}
 }
 
 func TestReadInputPackage(t *testing.T) {
@@ -450,4 +455,42 @@ func TestAgentTemplates(t *testing.T) {
 			t.Error("input agent template content is empty")
 		}
 	})
+}
+
+func TestImageMetadata(t *testing.T) {
+	pkg, err := Read("testdata/integration_pkg", WithImageMetadata())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(pkg.Images) != 2 {
+		t.Fatalf("images count = %d, want 2", len(pkg.Images))
+	}
+
+	// PNG image with known dimensions.
+	png, ok := pkg.Images["icon.png"]
+	if !ok {
+		t.Fatal("image 'icon.png' not found")
+	}
+	if png.Width != 32 || png.Height != 32 {
+		t.Errorf("icon.png dimensions = %dx%d, want 32x32", png.Width, png.Height)
+	}
+	if png.ByteSize == 0 {
+		t.Error("icon.png byte size is 0")
+	}
+	if png.Path() != "img/icon.png" {
+		t.Errorf("icon.png path = %q, want img/icon.png", png.Path())
+	}
+
+	// SVG image — no decoded dimensions, only byte size.
+	svg, ok := pkg.Images["logo.svg"]
+	if !ok {
+		t.Fatal("image 'logo.svg' not found")
+	}
+	if svg.Width != 0 || svg.Height != 0 {
+		t.Errorf("logo.svg dimensions = %dx%d, want 0x0 (SVG not decoded)", svg.Width, svg.Height)
+	}
+	if svg.ByteSize == 0 {
+		t.Error("logo.svg byte size is 0")
+	}
 }

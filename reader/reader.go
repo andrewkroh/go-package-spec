@@ -36,6 +36,7 @@ type Package struct {
 	Lifecycle   *packagespec.Lifecycle    // type:input only, nil if absent
 	SampleEvent     json.RawMessage              // type:input only, nil if absent
 	AgentTemplates  map[string]*AgentTemplate    // type:integration and type:input only, nil unless WithAgentTemplates used
+	Images          map[string]*ImageFile        // nil unless WithImageMetadata used
 
 	Commit string // git HEAD commit ID, empty unless WithGitMetadata used
 
@@ -89,6 +90,7 @@ type config struct {
 	knownFields     bool
 	gitMetadata     bool
 	agentTemplates  bool
+	imageMetadata   bool
 	packagePath     string // original OS path, needed for git operations
 }
 
@@ -115,6 +117,16 @@ func WithKnownFields() Option {
 func WithAgentTemplates() Option {
 	return func(c *config) {
 		c.agentTemplates = true
+	}
+}
+
+// WithImageMetadata enables loading of image files from the img/ directory.
+// When set, the reader decodes image dimensions (width, height) and records
+// byte sizes for PNG, JPEG, and SVG files. SVG files only have byte size
+// recorded since they are vector images.
+func WithImageMetadata() Option {
+	return func(c *config) {
+		c.imageMetadata = true
 	}
 }
 
@@ -212,6 +224,16 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 		}
 	} else {
 		packagespec.AnnotateFileMetadata(tagsPath, &pkg.Tags)
+	}
+
+	// Read images (optional, requires WithImageMetadata).
+	if cfg.imageMetadata {
+		imgDir := path.Join(root, "img")
+		images, err := readImages(cfg.fsys, imgDir)
+		if err != nil {
+			return nil, fmt.Errorf("reading images: %w", err)
+		}
+		pkg.Images = images
 	}
 
 	// Type-specific components.
