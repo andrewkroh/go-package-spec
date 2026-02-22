@@ -92,5 +92,6 @@ INTEGRATIONS_DIR=/path/to/integrations go test ./reader/ -run TestReadAllPackage
 
 - Never use `github.com/stretchr/testify`
 - Add conventional Go doc comments to all exported types, functions, and methods
-- Format with `gofumpt`
+- Format with `gofumpt -extra`
 - Use `path.Join` (not `filepath.Join`) inside reader for `fs.FS` compatibility (forward slashes)
+- Avoid import aliases unless necessary to avoid conflicts.

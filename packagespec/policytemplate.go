@@ -3,13 +3,21 @@
 package packagespec
 
 type ConfigurationLink struct {
-	Content string                `json:"content,omitempty" yaml:"content,omitempty"`
-	Title   string                `json:"title" yaml:"title"`
-	Type    ConfigurationLinkType `json:"type" yaml:"type"`
-	URL     string                `json:"url" yaml:"url"`
+	// Content link description
+	Content string `json:"content,omitempty" yaml:"content,omitempty"`
+	// Title link title
+	Title string `json:"title" yaml:"title"`
+	// Type of link. `next_steps` for links to locations that can be relevant right after configuring
+	// the policy. `action` for actions that can be performed while the policy is in use.
+	Type ConfigurationLinkType `json:"type" yaml:"type"`
+	// URL link url. Format is `http://...` or `https://...` for external links, `kbn:/app/...` for
+	// links internal to Kibana.
+	URL string `json:"url" yaml:"url"`
 }
 
-// ConfigurationLinkType type of link. `next_steps` for links to locations that can be relevant right after configuring the policy. `action` for actions that can be performed while the policy is in use.
+// ConfigurationLinkType type of link. `next_steps` for links to locations that can be relevant
+// right after configuring the policy. `action` for actions that can be performed while the policy
+// is in use.
 type ConfigurationLinkType string
 
 // Enum values for ConfigurationLinkType.
@@ -18,53 +26,85 @@ const (
 	ConfigurationLinkTypeNextStep ConfigurationLinkType = "next_step"
 )
 
-// DeploymentModes options related to the deployment modes. The deployment mode refers to the mode used to deploy the Elastic Agents running this policy.
+// DeploymentModes options related to the deployment modes. The deployment mode refers to the mode
+// used to deploy the Elastic Agents running this policy.
 type DeploymentModes struct {
+	// Agentless options specific to the Agentless deployment mode. This mode is used in offerings where
+	// the Elastic Agents running these policies are fully managed for the user.
 	Agentless DeploymentModesAgentless `json:"agentless,omitempty" yaml:"agentless,omitempty"`
-	Default   DeploymentModesDefault   `json:"default,omitempty" yaml:"default,omitempty"`
+	// Default options specific to the default deployment mode, where agents are normally managed by
+	// users, explicitly enrolled to Fleet and visible in UIs.
+	Default DeploymentModesDefault `json:"default,omitempty" yaml:"default,omitempty"`
 }
 
-// DeploymentModesAgentless options specific to the Agentless deployment mode. This mode is used in offerings where the Elastic Agents running these policies are fully managed for the user.
+// DeploymentModesAgentless options specific to the Agentless deployment mode. This mode is used in
+// offerings where the Elastic Agents running these policies are fully managed for the user.
 type DeploymentModesAgentless struct {
-	Division     string                            `json:"division,omitempty" yaml:"division,omitempty"`
-	Enabled      *bool                             `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	IsDefault    *bool                             `json:"is_default,omitempty" yaml:"is_default,omitempty"`
-	Organization string                            `json:"organization,omitempty" yaml:"organization,omitempty"`
-	Resources    DeploymentModesAgentlessResources `json:"resources,omitempty" yaml:"resources,omitempty"`
-	Team         string                            `json:"team,omitempty" yaml:"team,omitempty"`
+	// Division the division responsible for the integration. This is used to tag the agentless agent
+	// deployments for monitoring.
+	Division string `json:"division,omitempty" yaml:"division,omitempty"`
+	// Enabled indicates if the agentless deployment mode is available for this template policy. It is
+	// disabled by default.
+	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	// IsDefault on policy templates that support multiple deployment modes, this setting can be set to
+	// true to use agentless mode by default.
+	IsDefault *bool `json:"is_default,omitempty" yaml:"is_default,omitempty"`
+	// Organization the responsible organization of the integration. This is used to tag the agentless
+	// agent deployments for monitoring.
+	Organization string `json:"organization,omitempty" yaml:"organization,omitempty"`
+	// Resources the computing resources specifications for the Agentless deployment.
+	Resources DeploymentModesAgentlessResources `json:"resources,omitempty" yaml:"resources,omitempty"`
+	// Team the team responsible for the integration. This is used to tag the agentless agent
+	// deployments for monitoring.
+	Team string `json:"team,omitempty" yaml:"team,omitempty"`
 }
 
-// DeploymentModesAgentlessResources the computing resources specifications for the Agentless deployment.
+// DeploymentModesAgentlessResources the computing resources specifications for the Agentless
+// deployment.
 type DeploymentModesAgentlessResources struct {
+	// Requests the computing resources that the Agentless deployment will be initially allocated.
 	Requests DeploymentModesAgentlessResourcesRequests `json:"requests,omitempty" yaml:"requests,omitempty"`
 }
 
-// DeploymentModesAgentlessResourcesRequests the computing resources that the Agentless deployment will be initially allocated.
+// DeploymentModesAgentlessResourcesRequests the computing resources that the Agentless deployment
+// will be initially allocated.
 type DeploymentModesAgentlessResourcesRequests struct {
-	CPU    string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
+	// CPU the amount of CPUs that the Agentless deployment will be initially allocated.
+	CPU string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
+	// Memory the amount of memory that the Agentless deployment will be initially allocated.
 	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
 }
 
-// DeploymentModesDefault options specific to the default deployment mode, where agents are normally managed by users, explicitly enrolled to Fleet and visible in UIs.
+// DeploymentModesDefault options specific to the default deployment mode, where agents are normally
+// managed by users, explicitly enrolled to Fleet and visible in UIs.
 type DeploymentModesDefault struct {
+	// Enabled indicates if the default deployment mode is available for this template policy. It is
+	// enabled by default.
 	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 }
 
 type InputManifestPolicyTemplate struct {
-	ConfigurationLinks []ConfigurationLink             `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
-	DeploymentModes    DeploymentModes                 `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
-	Deprecated         Deprecated                      `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description        string                          `json:"description" yaml:"description"`
-	DynamicSignalTypes *bool                           `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
-	FipsCompatible     *bool                           `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
-	Icons              []Icon                          `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Input              string                          `json:"input" yaml:"input"`
-	Name               string                          `json:"name" yaml:"name"`
-	Screenshots        []Screenshot                    `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	TemplatePath       string                          `json:"template_path" yaml:"template_path"`
-	Title              string                          `json:"title" yaml:"title"`
-	Type               InputManifestPolicyTemplateType `json:"type" yaml:"type"`
-	Vars               []Var                           `json:"vars,omitempty" yaml:"vars,omitempty"`
+	ConfigurationLinks []ConfigurationLink `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
+	DeploymentModes    DeploymentModes     `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	Deprecated         Deprecated          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	// Description longer description of policy template.
+	Description string `json:"description" yaml:"description"`
+	// DynamicSignalTypes when enabled, decides the transforms and index templates that need to be
+	// created depending on the pipelines specified in the configuration.
+	DynamicSignalTypes *bool  `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
+	FipsCompatible     *bool  `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
+	Icons              []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Input              string `json:"input" yaml:"input"`
+	// Name of policy template.
+	Name        string       `json:"name" yaml:"name"`
+	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	// TemplatePath path to Elasticsearch index template for stream.
+	TemplatePath string `json:"template_path" yaml:"template_path"`
+	// Title of policy template.
+	Title string `json:"title" yaml:"title"`
+	// Type of data stream
+	Type InputManifestPolicyTemplateType `json:"type" yaml:"type"`
+	Vars []Var                           `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // InputManifestPolicyTemplateType type of data stream
@@ -79,34 +119,48 @@ const (
 )
 
 type IntegrationManifestPolicyTemplate struct {
-	Categories         []Category                               `json:"categories,omitempty" yaml:"categories,omitempty"`
-	ConfigurationLinks []ConfigurationLink                      `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
-	DataStreams        []string                                 `json:"data_streams,omitempty" yaml:"data_streams,omitempty"`
-	DeploymentModes    DeploymentModes                          `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
-	Deprecated         Deprecated                               `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description        string                                   `json:"description" yaml:"description"`
-	FipsCompatible     *bool                                    `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
-	Icons              []Icon                                   `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Inputs             []IntegrationManifestPolicyTemplateInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
-	Multiple           *bool                                    `json:"multiple,omitempty" yaml:"multiple,omitempty"`
-	Name               string                                   `json:"name" yaml:"name"`
-	Screenshots        []Screenshot                             `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	Title              string                                   `json:"title" yaml:"title"`
-	Vars               []Var                                    `json:"vars,omitempty" yaml:"vars,omitempty"`
+	Categories         []Category          `json:"categories,omitempty" yaml:"categories,omitempty"`
+	ConfigurationLinks []ConfigurationLink `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
+	// DataStreams list of data streams compatible with the policy template.
+	DataStreams     []string        `json:"data_streams,omitempty" yaml:"data_streams,omitempty"`
+	DeploymentModes DeploymentModes `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	Deprecated      Deprecated      `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	// Description longer description of policy template.
+	Description    string `json:"description" yaml:"description"`
+	FipsCompatible *bool  `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
+	Icons          []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
+	// Inputs list of inputs supported by policy template.
+	Inputs   []IntegrationManifestPolicyTemplateInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Multiple *bool                                    `json:"multiple,omitempty" yaml:"multiple,omitempty"`
+	// Name of policy template.
+	Name        string       `json:"name" yaml:"name"`
+	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	// Title of policy template.
+	Title string `json:"title" yaml:"title"`
+	Vars  []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 type IntegrationManifestPolicyTemplateInput struct {
-	DeploymentModes       []IntegrationManifestPolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
-	Deprecated            Deprecated                                             `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description           string                                                 `json:"description" yaml:"description"`
-	HideInVarGroupOptions map[string][]string                                    `json:"hide_in_var_group_options,omitempty" yaml:"hide_in_var_group_options,omitempty"`
-	InputGroup            IntegrationManifestPolicyTemplateInputInputGroup       `json:"input_group,omitempty" yaml:"input_group,omitempty"`
-	Multi                 *bool                                                  `json:"multi,omitempty" yaml:"multi,omitempty"`
-	RequiredVars          RequiredVars                                           `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
-	TemplatePath          string                                                 `json:"template_path,omitempty" yaml:"template_path,omitempty"`
-	Title                 string                                                 `json:"title" yaml:"title"`
-	Type                  string                                                 `json:"type" yaml:"type"`
-	Vars                  []Var                                                  `json:"vars,omitempty" yaml:"vars,omitempty"`
+	// DeploymentModes list of deployment modes that this input is compatible with. If not specified,
+	// the input is compatible with all deployment modes.
+	DeploymentModes []IntegrationManifestPolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	Deprecated      Deprecated                                             `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	// Description longer description of input.
+	Description string `json:"description" yaml:"description"`
+	// HideInVarGroupOptions filters out specific var_group options for this input.
+	HideInVarGroupOptions map[string][]string `json:"hide_in_var_group_options,omitempty" yaml:"hide_in_var_group_options,omitempty"`
+	// InputGroup name of the input group
+	InputGroup IntegrationManifestPolicyTemplateInputInputGroup `json:"input_group,omitempty" yaml:"input_group,omitempty"`
+	// Multi can input be defined multiple times
+	Multi        *bool        `json:"multi,omitempty" yaml:"multi,omitempty"`
+	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
+	// TemplatePath path of the config template for the input.
+	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	// Title of input.
+	Title string `json:"title" yaml:"title"`
+	// Type of input.
+	Type string `json:"type" yaml:"type"`
+	Vars []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 type IntegrationManifestPolicyTemplateInputDeploymentMode string

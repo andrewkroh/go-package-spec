@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -88,7 +89,9 @@ func (e *Emitter) emitFile(filename string, types []*GoType) error {
 func (e *Emitter) emitStruct(f *File, goType *GoType) {
 	// Type doc comment.
 	if goType.Doc != "" {
-		f.Comment(formatDocComment(goType.Name, goType.Doc))
+		for _, line := range wrapComment(formatDocComment(goType.Name, goType.Doc), 100) {
+			f.Comment(line)
+		}
 	}
 
 	// Struct definition.
@@ -103,6 +106,11 @@ func (e *Emitter) emitStruct(f *File, goType *GoType) {
 	}
 
 	for _, field := range goType.Fields {
+		if field.Doc != "" {
+			for _, line := range wrapComment(formatDocComment(field.Name, field.Doc), 100) {
+				fields = append(fields, Comment(line))
+			}
+		}
 		fieldCode := e.fieldDecl(field)
 		fields = append(fields, fieldCode)
 	}
@@ -260,7 +268,9 @@ func (e *Emitter) emitUnmarshalYAML(f *File, goType *GoType) {
 // emitEnum generates a string type and const block for enum values.
 func (e *Emitter) emitEnum(f *File, goType *GoType) {
 	if goType.Doc != "" {
-		f.Comment(formatDocComment(goType.Name, goType.Doc))
+		for _, line := range wrapComment(formatDocComment(goType.Name, goType.Doc), 100) {
+			f.Comment(line)
+		}
 	}
 	f.Type().Id(goType.Name).String()
 	f.Line()
@@ -385,17 +395,46 @@ func (e *Emitter) emitMetadata() error {
 	return f.Save(path)
 }
 
+var mdLinkRe = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+
+// docComment holds formatted doc text and any extracted link definitions.
+type docComment struct {
+	text  string            // main text with Markdown links replaced by [text] refs
+	links []docCommentLink  // extracted link definitions in order of appearance
+}
+
+type docCommentLink struct {
+	text string
+	url  string
+}
+
 // formatDocComment formats a Go doc comment for a type or field.
-// It ensures the comment starts with the type/field name per Go convention.
-func formatDocComment(name, doc string) string {
-	doc = strings.TrimSpace(doc)
+// It ensures the comment starts with the type/field name per Go convention,
+// normalizes whitespace, and converts Markdown links to Go doc link references.
+func formatDocComment(name, doc string) docComment {
+	// Normalize: collapse all whitespace (newlines, tabs, multiple spaces)
+	// into single spaces.
+	doc = strings.Join(strings.Fields(doc), " ")
 	if doc == "" {
-		return name + " is a generated type."
+		return docComment{text: name + " is a generated type."}
 	}
+
+	// Extract Markdown links [text](url) → [text], collecting definitions.
+	var links []docCommentLink
+	seen := map[string]bool{}
+	doc = mdLinkRe.ReplaceAllStringFunc(doc, func(match string) string {
+		m := mdLinkRe.FindStringSubmatch(match)
+		linkText, linkURL := m[1], m[2]
+		if !seen[linkText] {
+			seen[linkText] = true
+			links = append(links, docCommentLink{text: linkText, url: linkURL})
+		}
+		return "[" + linkText + "]"
+	})
 
 	// If doc already starts with the name, return as is.
 	if strings.HasPrefix(doc, name+" ") || strings.HasPrefix(doc, name+".") {
-		return doc
+		return docComment{text: doc, links: links}
 	}
 
 	// Prepend name.
@@ -412,5 +451,47 @@ func formatDocComment(name, doc string) string {
 		}
 	}
 
-	return name + " " + firstChar + doc[1:]
+	return docComment{text: name + " " + firstChar + doc[1:], links: links}
+}
+
+// wrapComment word-wraps a docComment into lines that fit within maxWidth
+// characters including the "// " prefix (3 chars). Link definitions are
+// appended after a blank comment line.
+func wrapComment(dc docComment, maxWidth int) []string {
+	contentWidth := maxWidth - 3 // account for "// " prefix
+	if contentWidth < 20 {
+		contentWidth = 20
+	}
+
+	var lines []string
+	text := dc.text
+	for len(text) > 0 {
+		if len(text) <= contentWidth {
+			lines = append(lines, text)
+			break
+		}
+
+		// Find the last space at or before the limit.
+		cut := contentWidth
+		for cut > 0 && text[cut] != ' ' {
+			cut--
+		}
+		if cut == 0 {
+			// No space found; force break at limit.
+			cut = contentWidth
+		}
+
+		lines = append(lines, text[:cut])
+		text = strings.TrimLeft(text[cut:], " ")
+	}
+
+	// Append link definitions.
+	if len(dc.links) > 0 {
+		lines = append(lines, "")
+		for _, link := range dc.links {
+			lines = append(lines, "["+link.text+"]: "+link.url)
+		}
+	}
+
+	return lines
 }

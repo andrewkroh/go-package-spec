@@ -6,7 +6,8 @@ import yamlv3 "gopkg.in/yaml.v3"
 
 // Transform represents an Elasticsearch transform definition.
 type Transform struct {
-	FileMetadata    `json:"-" yaml:"-"`
+	FileMetadata `json:"-" yaml:"-"`
+	// Meta holds user-defined metadata about the transform.
 	Meta            map[string]any           `json:"_meta,omitempty" yaml:"_meta,omitempty"`
 	Description     string                   `json:"description,omitempty" yaml:"description,omitempty"`
 	Dest            TransformDest            `json:"dest" yaml:"dest"`
@@ -34,14 +35,19 @@ func (v *Transform) UnmarshalYAML(node *yamlv3.Node) error {
 }
 
 type TransformDest struct {
+	// Aliases the aliases that the destination index for the transform should have.
 	Aliases  []TransformDestAlias `json:"aliases,omitempty" yaml:"aliases,omitempty"`
 	Index    string               `json:"index" yaml:"index"`
 	Pipeline string               `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 }
 
 type TransformDestAlias struct {
-	Alias          string `json:"alias" yaml:"alias"`
-	MoveOnCreation *bool  `json:"move_on_creation,omitempty" yaml:"move_on_creation,omitempty"`
+	// Alias the name of the alias
+	Alias string `json:"alias" yaml:"alias"`
+	// MoveOnCreation whether or not the destination index should be the only index in this alias. If
+	// true, all the other indices will be removed from this alias before adding the destination index
+	// to this alias.
+	MoveOnCreation *bool `json:"move_on_creation,omitempty" yaml:"move_on_creation,omitempty"`
 }
 
 type TransformLatest struct {
@@ -50,9 +56,11 @@ type TransformLatest struct {
 }
 
 type TransformManifest struct {
-	FileMetadata             `json:"-" yaml:"-"`
+	FileMetadata `json:"-" yaml:"-"`
+	// DestinationIndexTemplate elasticsearch index template for the transform's destination index
 	DestinationIndexTemplate TransformManifestDestinationIndexTemplate `json:"destination_index_template,omitempty" yaml:"destination_index_template,omitempty"`
-	Start                    *bool                                     `json:"start,omitempty" yaml:"start,omitempty"`
+	// Start determines if the transform will be started upon installation
+	Start *bool `json:"start,omitempty" yaml:"start,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for TransformManifest.
@@ -68,7 +76,8 @@ func (v *TransformManifest) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
-// TransformManifestDestinationIndexTemplate elasticsearch index template for the transform's destination index
+// TransformManifestDestinationIndexTemplate elasticsearch index template for the transform's
+// destination index
 type TransformManifestDestinationIndexTemplate struct {
 	DataStream     ElasticsearchIndexTemplateDataStream              `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
 	IngestPipeline ElasticsearchIndexTemplateIngestPipeline          `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
@@ -82,14 +91,19 @@ type TransformManifestDestinationIndexTemplateSettings struct {
 }
 
 type TransformManifestDestinationIndexTemplateSettingsIndex struct {
-	Codec                 IndexTemplateSettingIndexCodec                             `json:"codec,omitempty" yaml:"codec,omitempty"`
-	Hidden                *bool                                                      `json:"hidden,omitempty" yaml:"hidden,omitempty"`
-	Mapping               IndexTemplateSettingIndexMapping                           `json:"mapping,omitempty" yaml:"mapping,omitempty"`
-	Mode                  TransformManifestDestinationIndexTemplateSettingsIndexMode `json:"mode,omitempty" yaml:"mode,omitempty"`
-	NumberOfRoutingShards int                                                        `json:"number_of_routing_shards,omitempty" yaml:"number_of_routing_shards,omitempty"`
-	NumberOfShards        int                                                        `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
-	RefreshInterval       string                                                     `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
-	Sort                  IndexTemplateSettingIndexSort                              `json:"sort,omitempty" yaml:"sort,omitempty"`
+	Codec IndexTemplateSettingIndexCodec `json:"codec,omitempty" yaml:"codec,omitempty"`
+	// Hidden makes the index hidden.
+	Hidden  *bool                            `json:"hidden,omitempty" yaml:"hidden,omitempty"`
+	Mapping IndexTemplateSettingIndexMapping `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	// Mode index mode for lookup indices.
+	Mode TransformManifestDestinationIndexTemplateSettingsIndexMode `json:"mode,omitempty" yaml:"mode,omitempty"`
+	// NumberOfRoutingShards number used when splitting shards.
+	NumberOfRoutingShards int `json:"number_of_routing_shards,omitempty" yaml:"number_of_routing_shards,omitempty"`
+	NumberOfShards        int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	// RefreshInterval how often to perform a refresh operation, which makes recent changes to the index
+	// visible to search.
+	RefreshInterval string                        `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
+	Sort            IndexTemplateSettingIndexSort `json:"sort,omitempty" yaml:"sort,omitempty"`
 }
 
 // TransformManifestDestinationIndexTemplateSettingsIndexMode index mode for lookup indices.
@@ -101,12 +115,16 @@ const (
 )
 
 type TransformPivot struct {
+	// Aggregations defines the aggregations for the pivot.
 	Aggregations any `json:"aggregations,omitempty" yaml:"aggregations,omitempty"`
-	Aggs         any `json:"aggs,omitempty" yaml:"aggs,omitempty"`
-	GroupBy      any `json:"group_by" yaml:"group_by"`
+	// Aggs is an alias for Aggregations.
+	Aggs any `json:"aggs,omitempty" yaml:"aggs,omitempty"`
+	// GroupBy defines the grouping for the pivot.
+	GroupBy any `json:"group_by" yaml:"group_by"`
 }
 
 type TransformRetentionPolicy struct {
+	// Time schema definition for a retention policy
 	Time TransformRetentionPolicyTime `json:"time,omitempty" yaml:"time,omitempty"`
 }
 
@@ -127,8 +145,11 @@ type TransformSettings struct {
 }
 
 type TransformSource struct {
-	Index           any `json:"index" yaml:"index"`
-	Query           any `json:"query,omitempty" yaml:"query,omitempty"`
+	// Index is the source index or indices for the transform.
+	Index any `json:"index" yaml:"index"`
+	// Query filters the source documents.
+	Query any `json:"query,omitempty" yaml:"query,omitempty"`
+	// RuntimeMappings defines runtime fields for the source.
 	RuntimeMappings any `json:"runtime_mappings,omitempty" yaml:"runtime_mappings,omitempty"`
 }
 

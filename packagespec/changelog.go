@@ -9,9 +9,12 @@ import (
 
 type Changelog struct {
 	FileMetadata `json:"-" yaml:"-"`
-	Changes      []ChangelogChange `json:"changes" yaml:"changes"`
-	Version      string            `json:"version" yaml:"version"`
-	Date         *time.Time        `json:"date,omitempty" yaml:"-"`
+	// Changes list of changes in package version.
+	Changes []ChangelogChange `json:"changes" yaml:"changes"`
+	// Version package version.
+	Version string `json:"version" yaml:"version"`
+	// Date is the approximate release date, populated via git blame when WithGitMetadata is used.
+	Date *time.Time `json:"date,omitempty" yaml:"-"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for Changelog.
@@ -28,9 +31,12 @@ func (v *Changelog) UnmarshalYAML(node *yamlv3.Node) error {
 }
 
 type ChangelogChange struct {
-	Description string              `json:"description" yaml:"description"`
-	Link        string              `json:"link" yaml:"link"`
-	Type        ChangelogChangeType `json:"type" yaml:"type"`
+	// Description of change.
+	Description string `json:"description" yaml:"description"`
+	// Link to issue or PR describing change in detail.
+	Link string `json:"link" yaml:"link"`
+	// Type of change.
+	Type ChangelogChangeType `json:"type" yaml:"type"`
 }
 
 // ChangelogChangeType type of change.
