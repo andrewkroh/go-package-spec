@@ -5,7 +5,10 @@ Go data model and reader for Elastic [package-spec](https://github.com/andrewkro
 ## Project layout
 
 ```
-cmd/generate/main.go          CLI entry point for code generator
+cmd/generate/
+  main.go                      CLI entry point for code generator
+  augment.yml                  Type/field augmentation config
+  filemap.yml                  Type -> output file mapping
 internal/generator/            Code generation pipeline
   augment.go                   Type/field overrides + extra_fields + base_types
   emitter.go                   Go source emission via dave/jennifer/jen
@@ -34,8 +37,6 @@ pkgreader/                        Package reader (loads from disk into pkgspec t
   test.go                      DataStreamTests, PipelineTestCase, InputPackageTests + loading
   transform.go                 TransformData type
   git.go                       Git commit + git blame for changelog dates
-augment.yml                    Type/field augmentation config
-filemap.yml                    Type -> output file mapping
 ```
 
 ## Code generation
@@ -45,8 +46,8 @@ filemap.yml                    Type -> output file mapping
 ```sh
 go run ./cmd/generate/ \
   -schema-dir ../package-spec-schema/3.5.7/jsonschema \
-  -augment augment.yml \
-  -filemap filemap.yml \
+  -augment cmd/generate/augment.yml \
+  -filemap cmd/generate/filemap.yml \
   -output pkgspec \
   -package pkgspec
 ```
