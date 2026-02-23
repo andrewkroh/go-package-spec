@@ -6,16 +6,61 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/andrewkroh/go-package-spec/pkgspec"
 )
 
+var (
+	headCache     sync.Map // repo root path → commit ID
+	toplevelCache sync.Map // dir path → repo root path
+)
+
 // gitRevParseHEAD returns the current HEAD commit ID for the given directory.
+// Results are cached per repository root so that repeated calls from different
+// subdirectories of the same repo avoid spawning redundant git processes.
 func gitRevParseHEAD(dir string) (string, error) {
+	root, err := gitToplevel(dir)
+	if err != nil {
+		// Fallback: run rev-parse without caching.
+		return gitRevParseHEADUncached(dir)
+	}
+
+	if v, ok := headCache.Load(root); ok {
+		return v.(string), nil
+	}
+
+	commit, err := gitRevParseHEADUncached(root)
+	if err != nil {
+		return "", err
+	}
+	headCache.Store(root, commit)
+	return commit, nil
+}
+
+// gitToplevel returns the absolute path of the repository root.
+// Results are cached because the repo root is the same for all
+// subdirectories within a repository.
+func gitToplevel(dir string) (string, error) {
+	if v, ok := toplevelCache.Load(dir); ok {
+		return v.(string), nil
+	}
+
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("git rev-parse --show-toplevel: %w", err)
+	}
+	root := strings.TrimSpace(string(out))
+	toplevelCache.Store(dir, root)
+	return root, nil
+}
+
+func gitRevParseHEADUncached(dir string) (string, error) {
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = dir
-
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("git rev-parse HEAD: %w", err)
@@ -30,17 +75,21 @@ type blameEntry struct {
 }
 
 // gitBlameTimestamps returns the author time for each line of the given file.
+// It streams output from git blame to avoid buffering the entire output.
 func gitBlameTimestamps(dir, filePath string) (map[int]time.Time, error) {
 	cmd := exec.Command("git", "blame", "--porcelain", filePath)
 	cmd.Dir = dir
 
-	out, err := cmd.Output()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
+		return nil, fmt.Errorf("git blame %s: %w", filePath, err)
+	}
+	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("git blame %s: %w", filePath, err)
 	}
 
 	result := make(map[int]time.Time)
-	scanner := bufio.NewScanner(strings.NewReader(string(out)))
+	scanner := bufio.NewScanner(stdout)
 
 	var currentLine int
 	for scanner.Scan() {
@@ -67,7 +116,14 @@ func gitBlameTimestamps(dir, filePath string) (map[int]time.Time, error) {
 		}
 	}
 
-	return result, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	if err := cmd.Wait(); err != nil {
+		return nil, fmt.Errorf("git blame %s: %w", filePath, err)
+	}
+
+	return result, nil
 }
 
 // annotateChangelogDates uses git blame to populate the Date field on
