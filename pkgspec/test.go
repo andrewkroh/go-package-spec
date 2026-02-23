@@ -57,19 +57,9 @@ func (v *InputTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 // PipelineTestCommonConfig holds shared configuration for all pipeline tests in a data stream
 // (test-common-config.yml).
 type PipelineTestCommonConfig struct {
-	FileMetadata `json:"-" yaml:"-"`
-	// Dynamic fields with regular expressions defining their variable values.
-	DynamicFields map[string]any `json:"dynamic_fields,omitempty" yaml:"dynamic_fields,omitempty"`
-	// Field definitions
-	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
+	PipelineTestConfig
 	// Multi-line configuration
 	Multiline map[string]any `json:"multiline,omitempty" yaml:"multiline,omitempty"`
-	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
-	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
-	Skip                 TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
-	// StringNumberFields lists numeric type fields allowed to have a string value if parseable as a
-	// number.
-	StringNumberFields []string `json:"string_number_fields,omitempty" yaml:"string_number_fields,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for PipelineTestCommonConfig.
@@ -80,9 +70,27 @@ func (v *PipelineTestCommonConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	if err := node.Decode(x); err != nil {
 		return err
 	}
+	if err := node.Decode(&v.PipelineTestConfig); err != nil {
+		return err
+	}
 	v.FileMetadata.line = node.Line
 	v.FileMetadata.column = node.Column
 	return nil
+}
+
+// PipelineTestConfig contains the common fields shared by all pipeline test configuration types.
+type PipelineTestConfig struct {
+	FileMetadata `json:"-" yaml:"-"`
+	// Dynamic fields with regular expressions defining their variable values.
+	DynamicFields map[string]any `json:"dynamic_fields,omitempty" yaml:"dynamic_fields,omitempty"`
+	// Field definitions
+	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
+	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
+	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
+	Skip                 TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	// StringNumberFields lists numeric type fields allowed to have a string value if parseable as a
+	// number.
+	StringNumberFields []string `json:"string_number_fields,omitempty" yaml:"string_number_fields,omitempty"`
 }
 
 // PipelineTestEvent holds the input events for a JSON pipeline test (test-*.json).
@@ -128,17 +136,7 @@ func (v *PipelineTestExpected) UnmarshalYAML(node *yamlv3.Node) error {
 // PipelineTestJSONConfig holds per-case configuration for a JSON pipeline test
 // (test-*.json-config.yml).
 type PipelineTestJSONConfig struct {
-	FileMetadata `json:"-" yaml:"-"`
-	// Dynamic fields with regular expressions defining their variable values.
-	DynamicFields map[string]any `json:"dynamic_fields,omitempty" yaml:"dynamic_fields,omitempty"`
-	// Field definitions
-	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
-	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
-	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
-	Skip                 TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
-	// StringNumberFields lists numeric type fields allowed to have a string value if parseable as a
-	// number.
-	StringNumberFields []string `json:"string_number_fields,omitempty" yaml:"string_number_fields,omitempty"`
+	PipelineTestConfig
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for PipelineTestJSONConfig.
@@ -149,6 +147,9 @@ func (v *PipelineTestJSONConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	if err := node.Decode(x); err != nil {
 		return err
 	}
+	if err := node.Decode(&v.PipelineTestConfig); err != nil {
+		return err
+	}
 	v.FileMetadata.line = node.Line
 	v.FileMetadata.column = node.Column
 	return nil
@@ -157,19 +158,9 @@ func (v *PipelineTestJSONConfig) UnmarshalYAML(node *yamlv3.Node) error {
 // PipelineTestRawConfig holds per-case configuration for a raw/log pipeline test
 // (test-*.log-config.yml).
 type PipelineTestRawConfig struct {
-	FileMetadata `json:"-" yaml:"-"`
-	// Dynamic fields with regular expressions defining their variable values.
-	DynamicFields map[string]any `json:"dynamic_fields,omitempty" yaml:"dynamic_fields,omitempty"`
-	// Field definitions
-	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
+	PipelineTestConfig
 	// Multi-line configuration
 	Multiline map[string]any `json:"multiline,omitempty" yaml:"multiline,omitempty"`
-	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
-	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
-	Skip                 TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
-	// StringNumberFields lists numeric type fields allowed to have a string value if parseable as a
-	// number.
-	StringNumberFields []string `json:"string_number_fields,omitempty" yaml:"string_number_fields,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for PipelineTestRawConfig.
@@ -178,6 +169,9 @@ func (v *PipelineTestRawConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	type plainPipelineTestRawConfig PipelineTestRawConfig
 	x := (*plainPipelineTestRawConfig)(v)
 	if err := node.Decode(x); err != nil {
+		return err
+	}
+	if err := node.Decode(&v.PipelineTestConfig); err != nil {
 		return err
 	}
 	v.FileMetadata.line = node.Line

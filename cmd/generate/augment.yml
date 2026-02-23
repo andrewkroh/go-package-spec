@@ -399,3 +399,18 @@ base_types:
       - title
       - type
       - version
+
+  PipelineTestConfig:
+    doc: "PipelineTestConfig contains the common fields shared by all pipeline test configuration types."
+    embed_meta: true
+    output_file: test.go
+    sources:
+      - PipelineTestCommonConfig
+      - PipelineTestJSONConfig
+      - PipelineTestRawConfig
+    fields:
+      - dynamic_fields
+      - fields
+      - numeric_keyword_fields
+      - skip
+      - string_number_fields

@@ -87,12 +87,12 @@ INSERT INTO fields (
 
 -- name: InsertPackages :one
 INSERT INTO packages (
+  dir_name,
   conditions_kibana_version,
   conditions_elastic_subscription,
   agent_privileges_root,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
-  dir_name,
   file_path,
   file_line,
   file_column,
@@ -216,8 +216,8 @@ INSERT INTO data_streams (
 
 -- name: InsertDataStreamFields :one
 INSERT INTO data_stream_fields (
-  field_id,
-  data_stream_id
+  data_stream_id,
+  field_id
 ) VALUES (
   ?,
   ?
@@ -234,12 +234,12 @@ INSERT INTO discovery_fields (
 
 -- name: InsertImages :one
 INSERT INTO images (
-  width,
   height,
   byte_size,
   sha256,
   packages_id,
-  src
+  src,
+  width
 ) VALUES (
   ?,
   ?,
@@ -324,6 +324,37 @@ INSERT INTO package_screenshots (
   title,
   type
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertPipelineTests :one
+INSERT INTO pipeline_tests (
+  skip_link,
+  skip_reason,
+  numeric_keyword_fields,
+  multiline,
+  name,
+  expected_path,
+  config_path,
+  dynamic_fields,
+  fields,
+  string_number_fields,
+  data_streams_id,
+  format,
+  event_path
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -432,6 +463,33 @@ INSERT INTO policy_template_screenshots (
   ?
 ) RETURNING id;
 
+-- name: InsertPolicyTests :one
+INSERT INTO policy_tests (
+  data_streams_id,
+  packages_id,
+  case_name,
+  file_path,
+  file_line,
+  file_column,
+  data_stream,
+  input,
+  skip_link,
+  skip_reason,
+  vars
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertRoutingRules :one
 INSERT INTO routing_rules (
   data_streams_id,
@@ -454,6 +512,25 @@ INSERT INTO sample_events (
   ?
 ) RETURNING id;
 
+-- name: InsertStaticTests :one
+INSERT INTO static_tests (
+  data_streams_id,
+  case_name,
+  file_path,
+  file_line,
+  file_column,
+  skip_link,
+  skip_reason
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertStreams :one
 INSERT INTO streams (
   data_streams_id,
@@ -463,6 +540,55 @@ INSERT INTO streams (
   template_path,
   title
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSystemTests :one
+INSERT INTO system_tests (
+  data_streams_id,
+  packages_id,
+  case_name,
+  file_path,
+  file_line,
+  file_column,
+  agent_base_image,
+  agent_linux_capabilities,
+  agent_pid_mode,
+  agent_ports,
+  agent_pre_start_script_contents,
+  agent_pre_start_script_language,
+  agent_provisioning_script_contents,
+  agent_provisioning_script_language,
+  agent_runtime,
+  agent_user,
+  data_stream,
+  skip_link,
+  skip_reason,
+  skip_ignored_fields,
+  vars,
+  wait_for_data_timeout
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -573,18 +699,18 @@ INSERT INTO vars (
 
 -- name: InsertDeprecations :one
 INSERT INTO deprecations (
-  policy_templates_id,
+  packages_id,
   policy_template_inputs_id,
   data_streams_id,
+  description,
+  replaced_by_variable,
+  policy_templates_id,
+  vars_id,
+  since,
+  replaced_by_data_stream,
   replaced_by_input,
   replaced_by_package,
-  replaced_by_policy_template,
-  replaced_by_variable,
-  packages_id,
-  vars_id,
-  description,
-  since,
-  replaced_by_data_stream
+  replaced_by_policy_template
 ) VALUES (
   ?,
   ?,

@@ -60,24 +60,24 @@ type DataStream struct {
 
 type DataStreamField struct {
 	ID           int64
-	FieldID      int64
 	DataStreamID int64
+	FieldID      int64
 }
 
 type Deprecation struct {
 	ID                       int64
-	PolicyTemplatesID        sql.NullInt64
+	PackagesID               sql.NullInt64
 	PolicyTemplateInputsID   sql.NullInt64
 	DataStreamsID            sql.NullInt64
+	Description              string
+	ReplacedByVariable       sql.NullString
+	PolicyTemplatesID        sql.NullInt64
+	VarsID                   sql.NullInt64
+	Since                    string
+	ReplacedByDataStream     sql.NullString
 	ReplacedByInput          sql.NullString
 	ReplacedByPackage        sql.NullString
 	ReplacedByPolicyTemplate sql.NullString
-	ReplacedByVariable       sql.NullString
-	PackagesID               sql.NullInt64
-	VarsID                   sql.NullInt64
-	Description              string
-	Since                    string
-	ReplacedByDataStream     sql.NullString
 }
 
 type DiscoveryField struct {
@@ -133,12 +133,12 @@ type Field struct {
 
 type Image struct {
 	ID         int64
-	Width      sql.NullInt64
 	Height     sql.NullInt64
 	ByteSize   int64
 	Sha256     string
 	PackagesID int64
 	Src        string
+	Width      sql.NullInt64
 }
 
 type IngestPipeline struct {
@@ -162,12 +162,12 @@ type IngestProcessor struct {
 
 type Package struct {
 	ID                             int64
+	DirName                        string
 	ConditionsKibanaVersion        sql.NullString
 	ConditionsElasticSubscription  sql.NullString
 	AgentPrivilegesRoot            sql.NullBool
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
-	DirName                        string
 	FilePath                       sql.NullString
 	FileLine                       sql.NullInt64
 	FileColumn                     sql.NullInt64
@@ -217,6 +217,23 @@ type PackageVar struct {
 	ID        int64
 	PackageID int64
 	VarID     int64
+}
+
+type PipelineTest struct {
+	ID                   int64
+	SkipLink             sql.NullString
+	SkipReason           sql.NullString
+	NumericKeywordFields interface{}
+	Multiline            interface{}
+	Name                 string
+	ExpectedPath         sql.NullString
+	ConfigPath           sql.NullString
+	DynamicFields        interface{}
+	Fields               interface{}
+	StringNumberFields   interface{}
+	DataStreamsID        int64
+	Format               string
+	EventPath            string
 }
 
 type PolicyTemplate struct {
@@ -289,6 +306,21 @@ type PolicyTemplateVar struct {
 	VarID            int64
 }
 
+type PolicyTest struct {
+	ID            int64
+	DataStreamsID sql.NullInt64
+	PackagesID    sql.NullInt64
+	CaseName      string
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
+	DataStream    interface{}
+	Input         sql.NullString
+	SkipLink      string
+	SkipReason    string
+	Vars          interface{}
+}
+
 type RoutingRule struct {
 	ID            int64
 	DataStreamsID int64
@@ -301,6 +333,17 @@ type SampleEvent struct {
 	ID            int64
 	DataStreamsID int64
 	Event         interface{}
+}
+
+type StaticTest struct {
+	ID            int64
+	DataStreamsID int64
+	CaseName      string
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
+	SkipLink      string
+	SkipReason    string
 }
 
 type Stream struct {
@@ -317,6 +360,32 @@ type StreamVar struct {
 	ID       int64
 	StreamID int64
 	VarID    int64
+}
+
+type SystemTest struct {
+	ID                              int64
+	DataStreamsID                   sql.NullInt64
+	PackagesID                      sql.NullInt64
+	CaseName                        string
+	FilePath                        sql.NullString
+	FileLine                        sql.NullInt64
+	FileColumn                      sql.NullInt64
+	AgentBaseImage                  sql.NullString
+	AgentLinuxCapabilities          interface{}
+	AgentPidMode                    sql.NullString
+	AgentPorts                      interface{}
+	AgentPreStartScriptContents     string
+	AgentPreStartScriptLanguage     sql.NullString
+	AgentProvisioningScriptContents string
+	AgentProvisioningScriptLanguage sql.NullString
+	AgentRuntime                    sql.NullString
+	AgentUser                       sql.NullString
+	DataStream                      interface{}
+	SkipLink                        string
+	SkipReason                      string
+	SkipIgnoredFields               interface{}
+	Vars                            interface{}
+	WaitForDataTimeout              sql.NullString
 }
 
 type Tag struct {

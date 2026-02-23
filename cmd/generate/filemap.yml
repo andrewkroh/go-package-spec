@@ -152,6 +152,7 @@ files:
     - TestCategoryConfig
     - TestSkip
     - TestVars
+    - PipelineTestConfig
     - PipelineTestCommonConfig
     - PipelineTestJSONConfig
     - PipelineTestRawConfig

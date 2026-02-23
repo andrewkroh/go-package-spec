@@ -417,6 +417,120 @@ tables:
       - Dependencies
       - Dependencies.ECS
 
+  pipeline_tests:
+    comment: "Pipeline test cases for data streams. Each row is one test event file with optional per-case config."
+    extra_columns:
+      data_streams_id:
+        type: INTEGER
+        not_null: true
+        fk: data_streams
+        comment: "foreign key to data_streams"
+      name:
+        type: TEXT
+        not_null: true
+        comment: "test case stem name (e.g. test-example)"
+      format:
+        type: TEXT
+        not_null: true
+        comment: "event file format (json or raw)"
+      event_path:
+        type: TEXT
+        not_null: true
+        comment: "path to event file"
+      expected_path:
+        type: TEXT
+        comment: "path to expected output file"
+      config_path:
+        type: TEXT
+        comment: "path to per-case config file"
+      skip_link:
+        type: TEXT
+        comment: "link to issue for skipped test (from per-case config)"
+      skip_reason:
+        type: TEXT
+        comment: "reason test is skipped (from per-case config)"
+      dynamic_fields:
+        type: JSON
+        comment: "dynamic fields with regex patterns (from per-case config)"
+      fields:
+        type: JSON
+        comment: "field definitions (from per-case config)"
+      numeric_keyword_fields:
+        type: JSON
+        comment: "keyword fields allowed numeric values (from per-case config)"
+      string_number_fields:
+        type: JSON
+        comment: "numeric fields allowed string values (from per-case config)"
+      multiline:
+        type: JSON
+        comment: "multi-line configuration (from per-case raw config)"
+
+  system_tests:
+    type: SystemTestConfig
+    comment: "System test cases for data streams and input packages."
+    extra_columns:
+      data_streams_id:
+        type: INTEGER
+        fk: data_streams
+        comment: "foreign key to data_streams (set for integration packages)"
+      packages_id:
+        type: INTEGER
+        fk: packages
+        comment: "foreign key to packages (set for input packages)"
+      case_name:
+        type: TEXT
+        not_null: true
+        comment: "test case name extracted from filename"
+    inline:
+      - Skip
+      - Agent
+      - Agent.PreStartScript
+      - Agent.ProvisioningScript
+    json_columns:
+      - Agent.LinuxCapabilities
+      - Agent.Ports
+      - DataStream
+      - Vars
+      - SkipIgnoredFields
+
+  static_tests:
+    type: StaticTestConfig
+    comment: "Static test cases for data streams."
+    extra_columns:
+      data_streams_id:
+        type: INTEGER
+        not_null: true
+        fk: data_streams
+        comment: "foreign key to data_streams"
+      case_name:
+        type: TEXT
+        not_null: true
+        comment: "test case name extracted from filename"
+    inline:
+      - Skip
+
+  policy_tests:
+    type: PolicyTestConfig
+    comment: "Policy test cases for data streams and input packages."
+    extra_columns:
+      data_streams_id:
+        type: INTEGER
+        fk: data_streams
+        comment: "foreign key to data_streams (set for integration packages)"
+      packages_id:
+        type: INTEGER
+        fk: packages
+        comment: "foreign key to packages (set for input packages)"
+      case_name:
+        type: TEXT
+        not_null: true
+        comment: "test case name extracted from filename"
+    inline:
+      - Skip
+    json_columns:
+      - DataStream
+      - Vars
+
   deprecations:
     comment: "Deprecation notices for packages, policy templates, inputs, data streams, and vars. Each row links to exactly one parent entity via a nullable FK."
     extra_columns:

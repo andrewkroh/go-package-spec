@@ -56,6 +56,12 @@ var typeRegistry = map[string]reflect.Type{
 	"RoutingRuleSet": reflect.TypeOf(pkgspec.RoutingRuleSet{}),
 	"RoutingRule":    reflect.TypeOf(pkgspec.RoutingRule{}),
 
+	// Tests.
+	"SystemTestConfig":   reflect.TypeOf(pkgspec.SystemTestConfig{}),
+	"StaticTestConfig":   reflect.TypeOf(pkgspec.StaticTestConfig{}),
+	"PolicyTestConfig":   reflect.TypeOf(pkgspec.PolicyTestConfig{}),
+	"PipelineTestConfig": reflect.TypeOf(pkgspec.PipelineTestConfig{}),
+
 	// Tags.
 	"Tag": reflect.TypeOf(pkgspec.Tag{}),
 

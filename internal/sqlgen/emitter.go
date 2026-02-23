@@ -206,7 +206,13 @@ func emitInsertFunc(f *File, td *TableDef) {
 
 		if col.IsExtra {
 			if col.FK != "" {
-				dict[Id(fieldName)] = Id("parentID")
+				if td.Parent != "" {
+					// Single parent FK: filled from parentID parameter.
+					dict[Id(fieldName)] = Id("parentID")
+				}
+				// Multi-FK tables (no parent): FK columns are
+				// excluded from the mapping function so the caller
+				// sets them after calling the mapper.
 			} else {
 				dict[Id(fieldName)] = Id(toGoParamName(col.Name))
 			}

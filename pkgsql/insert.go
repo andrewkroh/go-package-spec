@@ -131,7 +131,7 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 }
 
 // mapPackagesParams converts a Manifest to InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string) InsertPackagesParams {
+func mapPackagesParams(v *pkgspec.Manifest, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString) InsertPackagesParams {
 	return InsertPackagesParams{
 		AgentPrivilegesRoot:            agentPrivilegesRoot,
 		ConditionsElasticSubscription:  conditionsElasticSubscription,
@@ -307,6 +307,21 @@ func mapPolicyTemplateScreenshotsParams(v *pkgspec.Screenshot, parentID int64) I
 	}
 }
 
+// mapPolicyTestsParams converts a PolicyTestConfig to InsertPolicyTestsParams.
+func mapPolicyTestsParams(v *pkgspec.PolicyTestConfig, caseName string) InsertPolicyTestsParams {
+	return InsertPolicyTestsParams{
+		CaseName:   caseName,
+		DataStream: jsonNullString(v.DataStream),
+		FileColumn: toNullInt64(v.Column()),
+		FileLine:   toNullInt64(v.Line()),
+		FilePath:   toNullString(v.FilePath()),
+		Input:      toNullString(v.Input),
+		SkipLink:   v.Skip.Link,
+		SkipReason: v.Skip.Reason,
+		Vars:       jsonNullString(v.Vars),
+	}
+}
+
 // mapRoutingRulesParams converts a RoutingRule to InsertRoutingRulesParams.
 func mapRoutingRulesParams(v *pkgspec.RoutingRule, parentID int64) InsertRoutingRulesParams {
 	return InsertRoutingRulesParams{
@@ -314,6 +329,18 @@ func mapRoutingRulesParams(v *pkgspec.RoutingRule, parentID int64) InsertRouting
 		If:            v.If,
 		Namespace:     jsonNullString(v.Namespace),
 		TargetDataset: jsonNullString(v.TargetDataset),
+	}
+}
+
+// mapStaticTestsParams converts a StaticTestConfig to InsertStaticTestsParams.
+func mapStaticTestsParams(v *pkgspec.StaticTestConfig, caseName string) InsertStaticTestsParams {
+	return InsertStaticTestsParams{
+		CaseName:   caseName,
+		FileColumn: toNullInt64(v.Column()),
+		FileLine:   toNullInt64(v.Line()),
+		FilePath:   toNullString(v.FilePath()),
+		SkipLink:   v.Skip.Link,
+		SkipReason: v.Skip.Reason,
 	}
 }
 
@@ -326,6 +353,32 @@ func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) InsertStreams
 		Input:         v.Input,
 		TemplatePath:  toNullString(v.TemplatePath),
 		Title:         v.Title,
+	}
+}
+
+// mapSystemTestsParams converts a SystemTestConfig to InsertSystemTestsParams.
+func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) InsertSystemTestsParams {
+	return InsertSystemTestsParams{
+		AgentBaseImage:                  toNullString(string(v.Agent.BaseImage)),
+		AgentLinuxCapabilities:          jsonNullString(v.Agent.LinuxCapabilities),
+		AgentPidMode:                    toNullString(string(v.Agent.PidMode)),
+		AgentPorts:                      jsonNullString(v.Agent.Ports),
+		AgentPreStartScriptContents:     v.Agent.PreStartScript.Contents,
+		AgentPreStartScriptLanguage:     toNullString(string(v.Agent.PreStartScript.Language)),
+		AgentProvisioningScriptContents: v.Agent.ProvisioningScript.Contents,
+		AgentProvisioningScriptLanguage: toNullString(v.Agent.ProvisioningScript.Language),
+		AgentRuntime:                    toNullString(string(v.Agent.Runtime)),
+		AgentUser:                       toNullString(v.Agent.User),
+		CaseName:                        caseName,
+		DataStream:                      jsonNullString(v.DataStream),
+		FileColumn:                      toNullInt64(v.Column()),
+		FileLine:                        toNullInt64(v.Line()),
+		FilePath:                        toNullString(v.FilePath()),
+		SkipIgnoredFields:               jsonNullString(v.SkipIgnoredFields),
+		SkipLink:                        v.Skip.Link,
+		SkipReason:                      v.Skip.Reason,
+		Vars:                            jsonNullString(v.Vars),
+		WaitForDataTimeout:              toNullString(v.WaitForDataTimeout),
 	}
 }
 

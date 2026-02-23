@@ -120,12 +120,12 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 	// Insert package.
 	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(
 		m,
+		dirName,
 		conditionsKibanaVersion,
 		conditionsElasticSubscription,
 		agentPrivilegesRoot,
 		elasticsearchPrivilegesCluster,
 		policyTemplatesBehavior,
-		dirName,
 	))
 	if err != nil {
 		return fmt.Errorf("inserting package: %w", err)
@@ -387,6 +387,13 @@ func writeInput(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID i
 		return fmt.Errorf("inserting input fields: %w", err)
 	}
 
+	// Insert input test configs.
+	if pkg.InputTests != nil {
+		if err := writeInputTests(ctx, q, pkg.InputTests, pkgID); err != nil {
+			return fmt.Errorf("inserting input tests: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -490,6 +497,13 @@ func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgread
 			if err != nil {
 				return fmt.Errorf("inserting routing rule: %w", err)
 			}
+		}
+	}
+
+	// Insert test configs.
+	if ds.Tests != nil {
+		if err := writeDataStreamTests(ctx, q, ds.Tests, dsID); err != nil {
+			return fmt.Errorf("inserting tests: %w", err)
 		}
 	}
 
@@ -624,6 +638,99 @@ func deprecationParams(d pkgspec.Deprecated) InsertDeprecationsParams {
 		ReplacedByPolicyTemplate: toNullString(d.ReplacedBy.PolicyTemplate),
 		ReplacedByVariable:       toNullString(d.ReplacedBy.Variable),
 	}
+}
+
+func writeDataStreamTests(ctx context.Context, q *Queries, tests *pkgreader.DataStreamTests, dsID int64) error {
+	// Insert pipeline tests.
+	for _, tc := range tests.Pipeline {
+		if err := writePipelineTest(ctx, q, tc, dsID); err != nil {
+			return fmt.Errorf("pipeline test %s: %w", tc.Name, err)
+		}
+	}
+
+	// Insert system tests.
+	for caseName, cfg := range tests.System {
+		p := mapSystemTestsParams(cfg, caseName)
+		p.DataStreamsID = sql.NullInt64{Int64: dsID, Valid: true}
+		if _, err := q.InsertSystemTests(ctx, p); err != nil {
+			return fmt.Errorf("system test %s: %w", caseName, err)
+		}
+	}
+
+	// Insert static tests.
+	for caseName, cfg := range tests.Static {
+		p := mapStaticTestsParams(cfg, caseName)
+		p.DataStreamsID = dsID
+		if _, err := q.InsertStaticTests(ctx, p); err != nil {
+			return fmt.Errorf("static test %s: %w", caseName, err)
+		}
+	}
+
+	// Insert policy tests.
+	for caseName, cfg := range tests.Policy {
+		p := mapPolicyTestsParams(cfg, caseName)
+		p.DataStreamsID = sql.NullInt64{Int64: dsID, Valid: true}
+		if _, err := q.InsertPolicyTests(ctx, p); err != nil {
+			return fmt.Errorf("policy test %s: %w", caseName, err)
+		}
+	}
+
+	return nil
+}
+
+func writePipelineTest(ctx context.Context, q *Queries, tc *pkgreader.PipelineTestCase, dsID int64) error {
+	p := InsertPipelineTestsParams{
+		DataStreamsID: dsID,
+		Name:          tc.Name,
+		Format:        tc.Format,
+		EventPath:     tc.EventPath,
+		ExpectedPath:  toNullString(tc.ExpectedPath),
+		ConfigPath:    toNullString(tc.ConfigPath),
+	}
+
+	// Extract fields from the per-case config if present.
+	switch cfg := tc.Config.(type) {
+	case *pkgspec.PipelineTestJSONConfig:
+		p.SkipLink = toNullString(cfg.Skip.Link)
+		p.SkipReason = toNullString(cfg.Skip.Reason)
+		p.DynamicFields = jsonNullString(cfg.DynamicFields)
+		p.Fields = jsonNullString(cfg.Fields)
+		p.NumericKeywordFields = jsonNullString(cfg.NumericKeywordFields)
+		p.StringNumberFields = jsonNullString(cfg.StringNumberFields)
+	case *pkgspec.PipelineTestRawConfig:
+		p.SkipLink = toNullString(cfg.Skip.Link)
+		p.SkipReason = toNullString(cfg.Skip.Reason)
+		p.DynamicFields = jsonNullString(cfg.DynamicFields)
+		p.Fields = jsonNullString(cfg.Fields)
+		p.NumericKeywordFields = jsonNullString(cfg.NumericKeywordFields)
+		p.StringNumberFields = jsonNullString(cfg.StringNumberFields)
+		p.Multiline = jsonNullString(cfg.Multiline)
+	}
+
+	_, err := q.InsertPipelineTests(ctx, p)
+	return err
+}
+
+func writeInputTests(ctx context.Context, q *Queries, tests *pkgreader.InputPackageTests, pkgID int64) error {
+	// Insert system tests.
+	for caseName, cfg := range tests.System {
+		p := mapSystemTestsParams(cfg, caseName)
+		p.PackagesID = sql.NullInt64{Int64: pkgID, Valid: true}
+		if _, err := q.InsertSystemTests(ctx, p); err != nil {
+			return fmt.Errorf("system test %s: %w", caseName, err)
+		}
+	}
+
+	// Insert policy tests.
+	for caseName, cfg := range tests.Policy {
+		p := mapPolicyTestsParams(cfg, caseName)
+		p.PackagesID = sql.NullInt64{Int64: pkgID, Valid: true}
+		if _, err := q.InsertPolicyTests(ctx, p); err != nil {
+			return fmt.Errorf("policy test %s: %w", caseName, err)
+		}
+	}
+
+	return nil
 }
 
 // transformManifestStart extracts the Start field from a TransformManifest.

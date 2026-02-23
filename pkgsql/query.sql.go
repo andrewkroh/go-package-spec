@@ -127,8 +127,8 @@ func (q *Queries) InsertChangelogs(ctx context.Context, arg InsertChangelogsPara
 
 const insertDataStreamFields = `-- name: InsertDataStreamFields :one
 INSERT INTO data_stream_fields (
-  field_id,
-  data_stream_id
+  data_stream_id,
+  field_id
 ) VALUES (
   ?,
   ?
@@ -136,12 +136,12 @@ INSERT INTO data_stream_fields (
 `
 
 type InsertDataStreamFieldsParams struct {
-	FieldID      int64
 	DataStreamID int64
+	FieldID      int64
 }
 
 func (q *Queries) InsertDataStreamFields(ctx context.Context, arg InsertDataStreamFieldsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertDataStreamFields, arg.FieldID, arg.DataStreamID)
+	row := q.db.QueryRowContext(ctx, insertDataStreamFields, arg.DataStreamID, arg.FieldID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -238,18 +238,18 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 
 const insertDeprecations = `-- name: InsertDeprecations :one
 INSERT INTO deprecations (
-  policy_templates_id,
+  packages_id,
   policy_template_inputs_id,
   data_streams_id,
+  description,
+  replaced_by_variable,
+  policy_templates_id,
+  vars_id,
+  since,
+  replaced_by_data_stream,
   replaced_by_input,
   replaced_by_package,
-  replaced_by_policy_template,
-  replaced_by_variable,
-  packages_id,
-  vars_id,
-  description,
-  since,
-  replaced_by_data_stream
+  replaced_by_policy_template
 ) VALUES (
   ?,
   ?,
@@ -267,34 +267,34 @@ INSERT INTO deprecations (
 `
 
 type InsertDeprecationsParams struct {
-	PolicyTemplatesID        sql.NullInt64
+	PackagesID               sql.NullInt64
 	PolicyTemplateInputsID   sql.NullInt64
 	DataStreamsID            sql.NullInt64
+	Description              string
+	ReplacedByVariable       sql.NullString
+	PolicyTemplatesID        sql.NullInt64
+	VarsID                   sql.NullInt64
+	Since                    string
+	ReplacedByDataStream     sql.NullString
 	ReplacedByInput          sql.NullString
 	ReplacedByPackage        sql.NullString
 	ReplacedByPolicyTemplate sql.NullString
-	ReplacedByVariable       sql.NullString
-	PackagesID               sql.NullInt64
-	VarsID                   sql.NullInt64
-	Description              string
-	Since                    string
-	ReplacedByDataStream     sql.NullString
 }
 
 func (q *Queries) InsertDeprecations(ctx context.Context, arg InsertDeprecationsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertDeprecations,
-		arg.PolicyTemplatesID,
+		arg.PackagesID,
 		arg.PolicyTemplateInputsID,
 		arg.DataStreamsID,
+		arg.Description,
+		arg.ReplacedByVariable,
+		arg.PolicyTemplatesID,
+		arg.VarsID,
+		arg.Since,
+		arg.ReplacedByDataStream,
 		arg.ReplacedByInput,
 		arg.ReplacedByPackage,
 		arg.ReplacedByPolicyTemplate,
-		arg.ReplacedByVariable,
-		arg.PackagesID,
-		arg.VarsID,
-		arg.Description,
-		arg.Since,
-		arg.ReplacedByDataStream,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -506,12 +506,12 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 
 const insertImages = `-- name: InsertImages :one
 INSERT INTO images (
-  width,
   height,
   byte_size,
   sha256,
   packages_id,
-  src
+  src,
+  width
 ) VALUES (
   ?,
   ?,
@@ -523,22 +523,22 @@ INSERT INTO images (
 `
 
 type InsertImagesParams struct {
-	Width      sql.NullInt64
 	Height     sql.NullInt64
 	ByteSize   int64
 	Sha256     string
 	PackagesID int64
 	Src        string
+	Width      sql.NullInt64
 }
 
 func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertImages,
-		arg.Width,
 		arg.Height,
 		arg.ByteSize,
 		arg.Sha256,
 		arg.PackagesID,
 		arg.Src,
+		arg.Width,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -769,12 +769,12 @@ func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsPa
 
 const insertPackages = `-- name: InsertPackages :one
 INSERT INTO packages (
+  dir_name,
   conditions_kibana_version,
   conditions_elastic_subscription,
   agent_privileges_root,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
-  dir_name,
   file_path,
   file_line,
   file_column,
@@ -810,12 +810,12 @@ INSERT INTO packages (
 `
 
 type InsertPackagesParams struct {
+	DirName                        string
 	ConditionsKibanaVersion        sql.NullString
 	ConditionsElasticSubscription  sql.NullString
 	AgentPrivilegesRoot            sql.NullBool
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
-	DirName                        string
 	FilePath                       sql.NullString
 	FileLine                       sql.NullInt64
 	FileColumn                     sql.NullInt64
@@ -832,12 +832,12 @@ type InsertPackagesParams struct {
 
 func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPackages,
+		arg.DirName,
 		arg.ConditionsKibanaVersion,
 		arg.ConditionsElasticSubscription,
 		arg.AgentPrivilegesRoot,
 		arg.ElasticsearchPrivilegesCluster,
 		arg.PolicyTemplatesBehavior,
-		arg.DirName,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,
@@ -850,6 +850,75 @@ func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) 
 		arg.Title,
 		arg.Type,
 		arg.Version,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertPipelineTests = `-- name: InsertPipelineTests :one
+INSERT INTO pipeline_tests (
+  skip_link,
+  skip_reason,
+  numeric_keyword_fields,
+  multiline,
+  name,
+  expected_path,
+  config_path,
+  dynamic_fields,
+  fields,
+  string_number_fields,
+  data_streams_id,
+  format,
+  event_path
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertPipelineTestsParams struct {
+	SkipLink             sql.NullString
+	SkipReason           sql.NullString
+	NumericKeywordFields interface{}
+	Multiline            interface{}
+	Name                 string
+	ExpectedPath         sql.NullString
+	ConfigPath           sql.NullString
+	DynamicFields        interface{}
+	Fields               interface{}
+	StringNumberFields   interface{}
+	DataStreamsID        int64
+	Format               string
+	EventPath            string
+}
+
+func (q *Queries) InsertPipelineTests(ctx context.Context, arg InsertPipelineTestsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertPipelineTests,
+		arg.SkipLink,
+		arg.SkipReason,
+		arg.NumericKeywordFields,
+		arg.Multiline,
+		arg.Name,
+		arg.ExpectedPath,
+		arg.ConfigPath,
+		arg.DynamicFields,
+		arg.Fields,
+		arg.StringNumberFields,
+		arg.DataStreamsID,
+		arg.Format,
+		arg.EventPath,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -1134,6 +1203,67 @@ func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTem
 	return id, err
 }
 
+const insertPolicyTests = `-- name: InsertPolicyTests :one
+INSERT INTO policy_tests (
+  data_streams_id,
+  packages_id,
+  case_name,
+  file_path,
+  file_line,
+  file_column,
+  data_stream,
+  input,
+  skip_link,
+  skip_reason,
+  vars
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertPolicyTestsParams struct {
+	DataStreamsID sql.NullInt64
+	PackagesID    sql.NullInt64
+	CaseName      string
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
+	DataStream    interface{}
+	Input         sql.NullString
+	SkipLink      string
+	SkipReason    string
+	Vars          interface{}
+}
+
+func (q *Queries) InsertPolicyTests(ctx context.Context, arg InsertPolicyTestsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertPolicyTests,
+		arg.DataStreamsID,
+		arg.PackagesID,
+		arg.CaseName,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
+		arg.DataStream,
+		arg.Input,
+		arg.SkipLink,
+		arg.SkipReason,
+		arg.Vars,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertRoutingRules = `-- name: InsertRoutingRules :one
 INSERT INTO routing_rules (
   data_streams_id,
@@ -1184,6 +1314,51 @@ type InsertSampleEventsParams struct {
 
 func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEventsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertStaticTests = `-- name: InsertStaticTests :one
+INSERT INTO static_tests (
+  data_streams_id,
+  case_name,
+  file_path,
+  file_line,
+  file_column,
+  skip_link,
+  skip_reason
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertStaticTestsParams struct {
+	DataStreamsID int64
+	CaseName      string
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
+	SkipLink      string
+	SkipReason    string
+}
+
+func (q *Queries) InsertStaticTests(ctx context.Context, arg InsertStaticTestsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertStaticTests,
+		arg.DataStreamsID,
+		arg.CaseName,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
+		arg.SkipLink,
+		arg.SkipReason,
+	)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -1246,6 +1421,111 @@ func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (i
 		arg.Input,
 		arg.TemplatePath,
 		arg.Title,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSystemTests = `-- name: InsertSystemTests :one
+INSERT INTO system_tests (
+  data_streams_id,
+  packages_id,
+  case_name,
+  file_path,
+  file_line,
+  file_column,
+  agent_base_image,
+  agent_linux_capabilities,
+  agent_pid_mode,
+  agent_ports,
+  agent_pre_start_script_contents,
+  agent_pre_start_script_language,
+  agent_provisioning_script_contents,
+  agent_provisioning_script_language,
+  agent_runtime,
+  agent_user,
+  data_stream,
+  skip_link,
+  skip_reason,
+  skip_ignored_fields,
+  vars,
+  wait_for_data_timeout
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSystemTestsParams struct {
+	DataStreamsID                   sql.NullInt64
+	PackagesID                      sql.NullInt64
+	CaseName                        string
+	FilePath                        sql.NullString
+	FileLine                        sql.NullInt64
+	FileColumn                      sql.NullInt64
+	AgentBaseImage                  sql.NullString
+	AgentLinuxCapabilities          interface{}
+	AgentPidMode                    sql.NullString
+	AgentPorts                      interface{}
+	AgentPreStartScriptContents     string
+	AgentPreStartScriptLanguage     sql.NullString
+	AgentProvisioningScriptContents string
+	AgentProvisioningScriptLanguage sql.NullString
+	AgentRuntime                    sql.NullString
+	AgentUser                       sql.NullString
+	DataStream                      interface{}
+	SkipLink                        string
+	SkipReason                      string
+	SkipIgnoredFields               interface{}
+	Vars                            interface{}
+	WaitForDataTimeout              sql.NullString
+}
+
+func (q *Queries) InsertSystemTests(ctx context.Context, arg InsertSystemTestsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSystemTests,
+		arg.DataStreamsID,
+		arg.PackagesID,
+		arg.CaseName,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
+		arg.AgentBaseImage,
+		arg.AgentLinuxCapabilities,
+		arg.AgentPidMode,
+		arg.AgentPorts,
+		arg.AgentPreStartScriptContents,
+		arg.AgentPreStartScriptLanguage,
+		arg.AgentProvisioningScriptContents,
+		arg.AgentProvisioningScriptLanguage,
+		arg.AgentRuntime,
+		arg.AgentUser,
+		arg.DataStream,
+		arg.SkipLink,
+		arg.SkipReason,
+		arg.SkipIgnoredFields,
+		arg.Vars,
+		arg.WaitForDataTimeout,
 	)
 	var id int64
 	err := row.Scan(&id)

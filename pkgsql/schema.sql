@@ -47,12 +47,12 @@ CREATE TABLE IF NOT EXISTS fields (
 CREATE TABLE IF NOT EXISTS packages (
   -- Fleet packages (integration, input, or content). Each row is one package version.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  dir_name TEXT NOT NULL UNIQUE, -- directory name of the package
   conditions_kibana_version TEXT, -- required Kibana version range
   conditions_elastic_subscription TEXT, -- required Elastic subscription level
   agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
   elasticsearch_privileges_cluster JSON, -- Elasticsearch cluster privilege requirements (JSON array)
   policy_templates_behavior TEXT, -- behavior when multiple policy templates are defined (all, combined_policy, individual_policies)
-  dir_name TEXT NOT NULL UNIQUE, -- directory name of the package
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
@@ -124,8 +124,8 @@ CREATE TABLE IF NOT EXISTS data_streams (
 CREATE TABLE IF NOT EXISTS data_stream_fields (
   -- Join table linking fields to data streams.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  field_id INTEGER NOT NULL REFERENCES fields(id), -- foreign key to fields
-  data_stream_id INTEGER NOT NULL REFERENCES data_streams(id) -- foreign key to data_streams
+  data_stream_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
+  field_id INTEGER NOT NULL REFERENCES fields(id) -- foreign key to fields
 );
 
 CREATE TABLE IF NOT EXISTS discovery_fields (
@@ -138,12 +138,12 @@ CREATE TABLE IF NOT EXISTS discovery_fields (
 CREATE TABLE IF NOT EXISTS images (
   -- Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  width INTEGER, -- image width in pixels (NULL for SVG)
   height INTEGER, -- image height in pixels (NULL for SVG)
   byte_size INTEGER NOT NULL, -- file size in bytes
   sha256 TEXT NOT NULL, -- hex-encoded SHA-256 hash of file contents
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
-  src TEXT NOT NULL -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
+  src TEXT NOT NULL, -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
+  width INTEGER -- image width in pixels (NULL for SVG)
 );
 
 CREATE TABLE IF NOT EXISTS ingest_pipelines (
@@ -200,6 +200,24 @@ CREATE TABLE IF NOT EXISTS package_screenshots (
   src TEXT NOT NULL, -- Relative path to the screenshot's image file.
   title TEXT NOT NULL, -- Title of screenshot.
   type TEXT -- MIME type of the screenshot image file.
+);
+
+CREATE TABLE IF NOT EXISTS pipeline_tests (
+  -- Pipeline test cases for data streams. Each row is one test event file with optional per-case config.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  skip_link TEXT, -- link to issue for skipped test (from per-case config)
+  skip_reason TEXT, -- reason test is skipped (from per-case config)
+  numeric_keyword_fields JSON, -- keyword fields allowed numeric values (from per-case config)
+  multiline JSON, -- multi-line configuration (from per-case raw config)
+  name TEXT NOT NULL, -- test case stem name (e.g. test-example)
+  expected_path TEXT, -- path to expected output file
+  config_path TEXT, -- path to per-case config file
+  dynamic_fields JSON, -- dynamic fields with regex patterns (from per-case config)
+  fields JSON, -- field definitions (from per-case config)
+  string_number_fields JSON, -- numeric fields allowed string values (from per-case config)
+  data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
+  format TEXT NOT NULL, -- event file format (json or raw)
+  event_path TEXT NOT NULL -- path to event file
 );
 
 CREATE TABLE IF NOT EXISTS policy_templates (
@@ -265,6 +283,22 @@ CREATE TABLE IF NOT EXISTS policy_template_screenshots (
   type TEXT -- MIME type of the screenshot image file.
 );
 
+CREATE TABLE IF NOT EXISTS policy_tests (
+  -- Policy test cases for data streams and input packages.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set for integration packages)
+  packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set for input packages)
+  case_name TEXT NOT NULL, -- test case name extracted from filename
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
+  data_stream JSON, -- Configuration for the data stream.
+  input TEXT, -- The input of the package to test.
+  skip_link TEXT NOT NULL, -- Link to issue with more details about skipped test or to track re-enabling skipped test.
+  skip_reason TEXT NOT NULL, -- Short explanation for why test has been skipped.
+  vars JSON -- Variables used to configure settings defined in the package manifest.
+);
+
 CREATE TABLE IF NOT EXISTS routing_rules (
   -- Routing rules for rerouting documents from a source dataset (technical preview).
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
@@ -281,6 +315,18 @@ CREATE TABLE IF NOT EXISTS sample_events (
   event JSON NOT NULL -- sample event data (JSON)
 );
 
+CREATE TABLE IF NOT EXISTS static_tests (
+  -- Static test cases for data streams.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
+  case_name TEXT NOT NULL, -- test case name extracted from filename
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
+  skip_link TEXT NOT NULL, -- Link to issue with more details about skipped test or to track re-enabling skipped test.
+  skip_reason TEXT NOT NULL -- Short explanation for why test has been skipped.
+);
+
 CREATE TABLE IF NOT EXISTS streams (
   -- Streams offered by a data stream.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
@@ -290,6 +336,33 @@ CREATE TABLE IF NOT EXISTS streams (
   input TEXT NOT NULL, -- Input
   template_path TEXT, -- Path to Elasticsearch index template for stream.
   title TEXT NOT NULL -- Title of the stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
+);
+
+CREATE TABLE IF NOT EXISTS system_tests (
+  -- System test cases for data streams and input packages.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set for integration packages)
+  packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set for input packages)
+  case_name TEXT NOT NULL, -- test case name extracted from filename
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
+  agent_base_image TEXT, -- Elastic Agent image to be used for testing. Setting `default` will be used the same Elastic Agent image as the stack. Setting `systemd` will use the image containing all the binaries for running Be...
+  agent_linux_capabilities JSON, -- Linux Capabilities that must been enabled in the system to run the Elastic Agent process
+  agent_pid_mode TEXT, -- Control access to PID namespaces. When set to `host`, the Elastic Agent will have access to the PID namespace of the host.
+  agent_ports JSON, -- List of ports to be exposed to access to the Elastic Agent
+  agent_pre_start_script_contents TEXT NOT NULL, -- Code to run before starting the Elastic Agent.
+  agent_pre_start_script_language TEXT, -- Programming language of the pre-start script. Currently, only "sh" is supported.
+  agent_provisioning_script_contents TEXT NOT NULL, -- Code to run as a provisioning script.
+  agent_provisioning_script_language TEXT, -- Programming language of the provisioning script.
+  agent_runtime TEXT, -- Runtime to run the Elastic Agent process
+  agent_user TEXT, -- User that runs the Elastic Agent process
+  data_stream JSON, -- JSON-encoded DataStream
+  skip_link TEXT NOT NULL, -- Link to issue with more details about skipped test or to track re-enabling skipped test.
+  skip_reason TEXT NOT NULL, -- Short explanation for why test has been skipped.
+  skip_ignored_fields JSON, -- If listed here, elastic-package system tests will not fail if values for the specified field names can't be indexed for any incoming documents. This should only be used if the failure is related to...
+  vars JSON, -- Variables used to configure settings defined in the package manifest.
+  wait_for_data_timeout TEXT -- Timeout for waiting for metrics data during a system test.
 );
 
 CREATE TABLE IF NOT EXISTS tags (
@@ -355,18 +428,18 @@ CREATE TABLE IF NOT EXISTS vars (
 CREATE TABLE IF NOT EXISTS deprecations (
   -- Deprecation notices for packages, policy templates, inputs, data streams, and vars. Each row links to exactly one parent entity via a nullable FK.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  policy_templates_id INTEGER REFERENCES policy_templates(id), -- foreign key to policy_templates (set when a policy template is deprecated)
+  packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set when a package is deprecated)
   policy_template_inputs_id INTEGER REFERENCES policy_template_inputs(id), -- foreign key to policy_template_inputs (set when an input is deprecated)
   data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set when a data stream is deprecated)
+  description TEXT NOT NULL, -- reason for deprecation
+  replaced_by_variable TEXT, -- name of the variable that replaces the deprecated one
+  policy_templates_id INTEGER REFERENCES policy_templates(id), -- foreign key to policy_templates (set when a policy template is deprecated)
+  vars_id INTEGER REFERENCES vars(id), -- foreign key to vars (set when a var is deprecated)
+  since TEXT NOT NULL, -- version since when deprecated
+  replaced_by_data_stream TEXT, -- name of the data stream that replaces the deprecated one
   replaced_by_input TEXT, -- name of the input that replaces the deprecated one
   replaced_by_package TEXT, -- name of the package that replaces the deprecated one
-  replaced_by_policy_template TEXT, -- name of the policy template that replaces the deprecated one
-  replaced_by_variable TEXT, -- name of the variable that replaces the deprecated one
-  packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set when a package is deprecated)
-  vars_id INTEGER REFERENCES vars(id), -- foreign key to vars (set when a var is deprecated)
-  description TEXT NOT NULL, -- reason for deprecation
-  since TEXT NOT NULL, -- version since when deprecated
-  replaced_by_data_stream TEXT -- name of the data stream that replaces the deprecated one
+  replaced_by_policy_template TEXT -- name of the policy template that replaces the deprecated one
 );
 
 CREATE TABLE IF NOT EXISTS package_vars (
