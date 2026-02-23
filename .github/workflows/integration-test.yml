@@ -18,10 +18,13 @@ jobs:
         with:
           go-version: stable
 
-      - name: Clone elastic/integrations
-        run: git clone --depth 1 https://github.com/elastic/integrations "$RUNNER_TEMP/integrations"
+      - uses: actions/checkout@v6
+        with:
+          repository: elastic/integrations
+          path: integrations
+          fetch-depth: 1
 
       - name: Run integration tests
         run: go test ./pkgreader/ -run TestReadAllPackages -v -count=1
         env:
-          INTEGRATIONS_DIR: ${{ runner.temp }}/integrations
+          INTEGRATIONS_DIR: ${{ github.workspace }}/integrations
