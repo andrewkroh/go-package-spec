@@ -1,5 +1,8 @@
 -- name: InsertFields :one
 INSERT INTO fields (
+  file_path,
+  file_line,
+  file_column,
   analyzer,
   copy_to,
   date_format,
@@ -76,17 +79,23 @@ INSERT INTO fields (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id;
 
 -- name: InsertPackages :one
 INSERT INTO packages (
-  agent_privileges_root,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
   dir_name,
   conditions_kibana_version,
   conditions_elastic_subscription,
+  agent_privileges_root,
+  file_path,
+  file_line,
+  file_column,
   deprecated,
   description,
   format_version,
@@ -113,15 +122,24 @@ INSERT INTO packages (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id;
 
 -- name: InsertBuildManifests :one
 INSERT INTO build_manifests (
   packages_id,
+  file_path,
+  file_line,
+  file_column,
   dependencies_ecs_import_mappings,
   dependencies_ecs_reference
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?
@@ -130,9 +148,15 @@ INSERT INTO build_manifests (
 -- name: InsertChangelogs :one
 INSERT INTO changelogs (
   packages_id,
+  file_path,
+  file_line,
+  file_column,
   version,
   date
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?
@@ -155,6 +179,9 @@ INSERT INTO changelog_entries (
 INSERT INTO data_streams (
   packages_id,
   dir_name,
+  file_path,
+  file_line,
+  file_column,
   dataset,
   dataset_is_prefix,
   deprecated,
@@ -185,13 +212,16 @@ INSERT INTO data_streams (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id;
 
 -- name: InsertDataStreamFields :one
 INSERT INTO data_stream_fields (
-  data_stream_id,
-  field_id
+  field_id,
+  data_stream_id
 ) VALUES (
   ?,
   ?
@@ -208,12 +238,12 @@ INSERT INTO discovery_fields (
 
 -- name: InsertImages :one
 INSERT INTO images (
-  height,
   byte_size,
   sha256,
   packages_id,
   src,
-  width
+  width,
+  height
 ) VALUES (
   ?,
   ?,
@@ -227,8 +257,14 @@ INSERT INTO images (
 INSERT INTO ingest_pipelines (
   data_streams_id,
   file_name,
+  file_path,
+  file_line,
+  file_column,
   description
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?
@@ -237,10 +273,10 @@ INSERT INTO ingest_pipelines (
 -- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
+  ordinal,
   type,
   attributes,
-  json_pointer,
-  ordinal
+  json_pointer
 ) VALUES (
   ?,
   ?,
@@ -432,10 +468,16 @@ INSERT INTO streams (
 -- name: InsertTags :one
 INSERT INTO tags (
   packages_id,
+  file_path,
+  file_line,
+  file_column,
   asset_ids,
   asset_types,
   text
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -448,6 +490,9 @@ INSERT INTO transforms (
   dir_name,
   manifest_start,
   manifest_destination_index_template,
+  file_path,
+  file_line,
+  file_column,
   meta,
   description,
   dest,
@@ -459,6 +504,9 @@ INSERT INTO transforms (
   source,
   sync
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -537,8 +585,8 @@ INSERT INTO policy_template_input_vars (
 
 -- name: InsertPolicyTemplateVars :one
 INSERT INTO policy_template_vars (
-  policy_template_id,
-  var_id
+  var_id,
+  policy_template_id
 ) VALUES (
   ?,
   ?

@@ -233,7 +233,6 @@ tables:
     flatten: true
     exclude:
       - Fields
-      - FileMetadata
       - ECS
     json_columns:
       - DefaultMetric

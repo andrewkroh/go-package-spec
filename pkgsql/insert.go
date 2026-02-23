@@ -98,6 +98,9 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 		Example:               jsonNullString(v.Example),
 		ExpectedValues:        jsonNullString(v.ExpectedValues),
 		External:              toNullString(string(v.External)),
+		FileColumn:            toNullInt64(v.Column()),
+		FileLine:              toNullInt64(v.Line()),
+		FilePath:              toNullString(v.FilePath()),
 		IgnoreAbove:           toNullInt64(v.IgnoreAbove),
 		IgnoreMalformed:       toNullBool(v.IgnoreMalformed),
 		IncludeInParent:       toNullBool(v.IncludeInParent),
@@ -128,7 +131,7 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 }
 
 // mapPackagesParams converts a Manifest to InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString) InsertPackagesParams {
+func mapPackagesParams(v *pkgspec.Manifest, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool) InsertPackagesParams {
 	return InsertPackagesParams{
 		AgentPrivilegesRoot:            agentPrivilegesRoot,
 		ConditionsElasticSubscription:  conditionsElasticSubscription,
@@ -137,6 +140,9 @@ func mapPackagesParams(v *pkgspec.Manifest, agentPrivilegesRoot sql.NullBool, el
 		Description:                    v.Description,
 		DirName:                        dirName,
 		ElasticsearchPrivilegesCluster: elasticsearchPrivilegesCluster,
+		FileColumn:                     toNullInt64(v.Column()),
+		FileLine:                       toNullInt64(v.Line()),
+		FilePath:                       toNullString(v.FilePath()),
 		FormatVersion:                  v.FormatVersion,
 		Name:                           v.Name,
 		OwnerGithub:                    v.Owner.Github,
@@ -154,6 +160,9 @@ func mapBuildManifestsParams(v *pkgspec.BuildManifest, parentID int64) InsertBui
 	return InsertBuildManifestsParams{
 		DependenciesEcsImportMappings: toNullBool(v.Dependencies.ECS.ImportMappings),
 		DependenciesEcsReference:      v.Dependencies.ECS.Reference,
+		FileColumn:                    toNullInt64(v.Column()),
+		FileLine:                      toNullInt64(v.Line()),
+		FilePath:                      toNullString(v.FilePath()),
 		PackagesID:                    parentID,
 	}
 }
@@ -162,6 +171,9 @@ func mapBuildManifestsParams(v *pkgspec.BuildManifest, parentID int64) InsertBui
 func mapChangelogsParams(v *pkgspec.Changelog, parentID int64) InsertChangelogsParams {
 	return InsertChangelogsParams{
 		Date:       timeNullString(v.Date),
+		FileColumn: toNullInt64(v.Column()),
+		FileLine:   toNullInt64(v.Line()),
+		FilePath:   toNullString(v.FilePath()),
 		PackagesID: parentID,
 		Version:    v.Version,
 	}
@@ -190,6 +202,9 @@ func mapDataStreamsParams(v *pkgspec.DataStreamManifest, parentID int64, dirName
 		ElasticsearchIndexTemplate:    jsonNullString(v.Elasticsearch.IndexTemplate),
 		ElasticsearchPrivileges:       jsonNullString(v.Elasticsearch.Privileges),
 		ElasticsearchSourceMode:       toNullString(string(v.Elasticsearch.SourceMode)),
+		FileColumn:                    toNullInt64(v.Column()),
+		FileLine:                      toNullInt64(v.Line()),
+		FilePath:                      toNullString(v.FilePath()),
 		Hidden:                        toNullBool(v.Hidden),
 		IlmPolicy:                     toNullString(v.ILMPolicy),
 		PackagesID:                    parentID,
@@ -204,7 +219,10 @@ func mapIngestPipelinesParams(v *pkgspec.IngestPipeline, parentID int64, fileNam
 	return InsertIngestPipelinesParams{
 		DataStreamsID: parentID,
 		Description:   toNullString(v.Description),
+		FileColumn:    toNullInt64(v.Column()),
+		FileLine:      toNullInt64(v.Line()),
 		FileName:      fileName,
+		FilePath:      toNullString(v.FilePath()),
 	}
 }
 
@@ -313,6 +331,9 @@ func mapTagsParams(v *pkgspec.Tag, parentID int64) InsertTagsParams {
 	return InsertTagsParams{
 		AssetIds:   jsonNullString(v.AssetIDs),
 		AssetTypes: jsonNullString(v.AssetTypes),
+		FileColumn: toNullInt64(v.Column()),
+		FileLine:   toNullInt64(v.Line()),
+		FilePath:   toNullString(v.FilePath()),
 		PackagesID: parentID,
 		Text:       toNullString(v.Text),
 	}
@@ -324,6 +345,9 @@ func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, m
 		Description:                      toNullString(v.Description),
 		Dest:                             jsonNullString(v.Dest),
 		DirName:                          dirName,
+		FileColumn:                       toNullInt64(v.Column()),
+		FileLine:                         toNullInt64(v.Line()),
+		FilePath:                         toNullString(v.FilePath()),
 		Frequency:                        toNullString(v.Frequency),
 		Latest:                           jsonNullString(v.Latest),
 		ManifestDestinationIndexTemplate: manifestDestinationIndexTemplate,

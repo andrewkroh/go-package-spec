@@ -226,6 +226,19 @@ func emitInsertFunc(f *File, td *TableDef) {
 // buildFieldAssignment generates the RHS expression for a field assignment
 // in the insert mapping function.
 func buildFieldAssignment(col ColumnDef) *Statement {
+	// Method-based columns (e.g. FileMetadata getters).
+	if col.IsMethod {
+		call := Id("v").Dot(col.GoField).Call()
+		switch col.SQLType {
+		case "TEXT":
+			return Id("toNullString").Call(call)
+		case "INTEGER":
+			return Id("toNullInt64").Call(call)
+		default:
+			return call
+		}
+	}
+
 	goPath := "v." + col.GoField
 
 	// Split the field path for nested access.

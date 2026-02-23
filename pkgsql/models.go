@@ -11,6 +11,9 @@ import (
 type BuildManifest struct {
 	ID                            int64
 	PackagesID                    int64
+	FilePath                      sql.NullString
+	FileLine                      sql.NullInt64
+	FileColumn                    sql.NullInt64
 	DependenciesEcsImportMappings sql.NullBool
 	DependenciesEcsReference      string
 }
@@ -18,6 +21,9 @@ type BuildManifest struct {
 type Changelog struct {
 	ID         int64
 	PackagesID int64
+	FilePath   sql.NullString
+	FileLine   sql.NullInt64
+	FileColumn sql.NullInt64
 	Version    string
 	Date       sql.NullString
 }
@@ -34,6 +40,9 @@ type DataStream struct {
 	ID                            int64
 	PackagesID                    int64
 	DirName                       string
+	FilePath                      sql.NullString
+	FileLine                      sql.NullInt64
+	FileColumn                    sql.NullInt64
 	Dataset                       sql.NullString
 	DatasetIsPrefix               sql.NullBool
 	Deprecated                    interface{}
@@ -52,8 +61,8 @@ type DataStream struct {
 
 type DataStreamField struct {
 	ID           int64
-	DataStreamID int64
 	FieldID      int64
+	DataStreamID int64
 }
 
 type DiscoveryField struct {
@@ -64,6 +73,9 @@ type DiscoveryField struct {
 
 type Field struct {
 	ID                    int64
+	FilePath              sql.NullString
+	FileLine              sql.NullInt64
+	FileColumn            sql.NullInt64
 	Analyzer              sql.NullString
 	CopyTo                sql.NullString
 	DateFormat            sql.NullString
@@ -106,38 +118,44 @@ type Field struct {
 
 type Image struct {
 	ID         int64
-	Height     sql.NullInt64
 	ByteSize   int64
 	Sha256     string
 	PackagesID int64
 	Src        string
 	Width      sql.NullInt64
+	Height     sql.NullInt64
 }
 
 type IngestPipeline struct {
 	ID            int64
 	DataStreamsID int64
 	FileName      string
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
 	Description   sql.NullString
 }
 
 type IngestProcessor struct {
 	ID                int64
 	IngestPipelinesID int64
+	Ordinal           int64
 	Type              string
 	Attributes        interface{}
 	JsonPointer       string
-	Ordinal           int64
 }
 
 type Package struct {
 	ID                             int64
-	AgentPrivilegesRoot            sql.NullBool
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
 	DirName                        string
 	ConditionsKibanaVersion        sql.NullString
 	ConditionsElasticSubscription  sql.NullString
+	AgentPrivilegesRoot            sql.NullBool
+	FilePath                       sql.NullString
+	FileLine                       sql.NullInt64
+	FileColumn                     sql.NullInt64
 	Deprecated                     interface{}
 	Description                    string
 	FormatVersion                  string
@@ -248,8 +266,8 @@ type PolicyTemplateScreenshot struct {
 
 type PolicyTemplateVar struct {
 	ID               int64
-	PolicyTemplateID int64
 	VarID            int64
+	PolicyTemplateID int64
 }
 
 type RoutingRule struct {
@@ -285,6 +303,9 @@ type StreamVar struct {
 type Tag struct {
 	ID         int64
 	PackagesID int64
+	FilePath   sql.NullString
+	FileLine   sql.NullInt64
+	FileColumn sql.NullInt64
 	AssetIds   interface{}
 	AssetTypes interface{}
 	Text       sql.NullString
@@ -296,6 +317,9 @@ type Transform struct {
 	DirName                          string
 	ManifestStart                    sql.NullBool
 	ManifestDestinationIndexTemplate interface{}
+	FilePath                         sql.NullString
+	FileLine                         sql.NullInt64
+	FileColumn                       sql.NullInt64
 	Meta                             interface{}
 	Description                      sql.NullString
 	Dest                             interface{}

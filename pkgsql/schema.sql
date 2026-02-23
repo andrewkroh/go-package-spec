@@ -1,6 +1,9 @@
 CREATE TABLE IF NOT EXISTS fields (
   -- Elasticsearch field definitions, flattened from nested YAML into dotted-path names.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   analyzer TEXT, -- Name of the analyzer to use for indexing. Unless search_analyzer is specified this analyzer is used for both indexing and searching. Only valid for 'type: text'.
   copy_to TEXT, -- The copy_to parameter allows you to copy the values of multiple fields into a group field, which can then be queried as a single field.
   date_format TEXT, -- The date format(s) that can be parsed. Type date format default to `strict_date_optional_time||epoch_millis`, see the [doc]. In JSON documents, dates are represented as strings. Elasticsearch uses ...
@@ -44,12 +47,15 @@ CREATE TABLE IF NOT EXISTS fields (
 CREATE TABLE IF NOT EXISTS packages (
   -- Fleet packages (integration, input, or content). Each row is one package version.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
   elasticsearch_privileges_cluster JSON, -- Elasticsearch cluster privilege requirements (JSON array)
   policy_templates_behavior TEXT, -- behavior when multiple policy templates are defined (all, combined_policy, individual_policies)
   dir_name TEXT NOT NULL UNIQUE, -- directory name of the package
   conditions_kibana_version TEXT, -- required Kibana version range
   conditions_elastic_subscription TEXT, -- required Elastic subscription level
+  agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   deprecated JSON, -- JSON-encoded Deprecated
   description TEXT NOT NULL, -- Description
   format_version TEXT NOT NULL, -- The version of the package specification format used by this package.
@@ -66,6 +72,9 @@ CREATE TABLE IF NOT EXISTS build_manifests (
   -- Build configuration for integration packages (_dev/build/build.yml).
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   dependencies_ecs_import_mappings BOOLEAN, -- Whether or not import common used dynamic templates and properties into the package
   dependencies_ecs_reference TEXT NOT NULL -- Reference is the ECS version source reference. Values begin with "git@" (e.g. "git@v8.11.0").
 );
@@ -74,6 +83,9 @@ CREATE TABLE IF NOT EXISTS changelogs (
   -- Changelog versions for a package. Each row is one version entry with its release date.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   version TEXT NOT NULL, -- Package version.
   date TEXT -- Date is the approximate release date, populated via git blame when WithGitMetadata is used.
 );
@@ -92,6 +104,9 @@ CREATE TABLE IF NOT EXISTS data_streams (
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
   dir_name TEXT NOT NULL, -- directory name of the data stream
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   dataset TEXT, -- Name of data set.
   dataset_is_prefix BOOLEAN, -- If true, the index pattern in the ES template will contain the dataset as a prefix only
   deprecated JSON, -- JSON-encoded Deprecated
@@ -111,8 +126,8 @@ CREATE TABLE IF NOT EXISTS data_streams (
 CREATE TABLE IF NOT EXISTS data_stream_fields (
   -- Join table linking fields to data streams.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  data_stream_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
-  field_id INTEGER NOT NULL REFERENCES fields(id) -- foreign key to fields
+  field_id INTEGER NOT NULL REFERENCES fields(id), -- foreign key to fields
+  data_stream_id INTEGER NOT NULL REFERENCES data_streams(id) -- foreign key to data_streams
 );
 
 CREATE TABLE IF NOT EXISTS discovery_fields (
@@ -125,12 +140,12 @@ CREATE TABLE IF NOT EXISTS discovery_fields (
 CREATE TABLE IF NOT EXISTS images (
   -- Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  height INTEGER, -- image height in pixels (NULL for SVG)
   byte_size INTEGER NOT NULL, -- file size in bytes
   sha256 TEXT NOT NULL, -- hex-encoded SHA-256 hash of file contents
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
   src TEXT NOT NULL, -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
-  width INTEGER -- image width in pixels (NULL for SVG)
+  width INTEGER, -- image width in pixels (NULL for SVG)
+  height INTEGER -- image height in pixels (NULL for SVG)
 );
 
 CREATE TABLE IF NOT EXISTS ingest_pipelines (
@@ -138,6 +153,9 @@ CREATE TABLE IF NOT EXISTS ingest_pipelines (
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
   file_name TEXT NOT NULL, -- file name of the pipeline (e.g. default.yml)
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   description TEXT -- Description of the pipeline.
 );
 
@@ -145,10 +163,10 @@ CREATE TABLE IF NOT EXISTS ingest_processors (
   -- Individual ingest processors flattened from pipelines. Nested on_failure handlers are included as separate rows.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   ingest_pipelines_id INTEGER NOT NULL REFERENCES ingest_pipelines(id), -- foreign key to ingest_pipelines
+  ordinal INTEGER NOT NULL, -- order of processor within the pipeline
   type TEXT NOT NULL, -- processor type (e.g. set, grok, rename)
   attributes JSON, -- JSON-encoded processor attributes
-  json_pointer TEXT NOT NULL, -- RFC 6901 JSON Pointer location within the pipeline
-  ordinal INTEGER NOT NULL -- order of processor within the pipeline
+  json_pointer TEXT NOT NULL -- RFC 6901 JSON Pointer location within the pipeline
 );
 
 CREATE TABLE IF NOT EXISTS package_categories (
@@ -275,6 +293,9 @@ CREATE TABLE IF NOT EXISTS tags (
   -- Kibana tags associated with integration packages.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   asset_ids JSON, -- Asset IDs where this tag is going to be added. If two or more pacakges define the same tag, there will be just one tag created in Kibana and all the assets will be using the same tag.
   asset_types JSON, -- This tag will be added to all the assets of these types included in the package. If two or more pacakges define the same tag, there will be just one tag created in Kibana and all the assets will be...
   text TEXT -- Tag name.
@@ -287,6 +308,9 @@ CREATE TABLE IF NOT EXISTS transforms (
   dir_name TEXT NOT NULL, -- directory name of the transform
   manifest_start BOOLEAN, -- whether to start the transform upon installation
   manifest_destination_index_template JSON, -- Elasticsearch index template for the transform destination (JSON)
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   meta JSON, -- Meta holds user-defined metadata about the transform.
   description TEXT, -- Description
   dest JSON, -- JSON-encoded Dest
@@ -342,8 +366,8 @@ CREATE TABLE IF NOT EXISTS policy_template_input_vars (
 CREATE TABLE IF NOT EXISTS policy_template_vars (
   -- Join table linking vars to policy templates.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id), -- foreign key to policy_templates
-  var_id INTEGER NOT NULL REFERENCES vars(id) -- foreign key to vars
+  var_id INTEGER NOT NULL REFERENCES vars(id), -- foreign key to vars
+  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id) -- foreign key to policy_templates
 );
 
 CREATE TABLE IF NOT EXISTS stream_vars (

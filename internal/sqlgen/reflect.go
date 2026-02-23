@@ -23,6 +23,7 @@ type ColumnDef struct {
 	IsEnum    bool   // Go type is a named string type (enum)
 	IsPointer bool   // Go type is a pointer (always nullable)
 	IsSlice   bool   // Go type is a slice (JSON serialized)
+	IsMethod  bool   // value accessed via method call, not field
 }
 
 // TableDef describes a SQL table.
@@ -141,8 +142,13 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 			continue
 		}
 
-		// Skip FileMetadata (always excluded).
+		// Emit source location columns for FileMetadata.
 		if sf.Type.Name() == "FileMetadata" {
+			cols = append(cols,
+				ColumnDef{Name: "file_path", SQLType: "TEXT", Comment: "source file path", GoField: "FilePath", IsMethod: true},
+				ColumnDef{Name: "file_line", SQLType: "INTEGER", Comment: "source file line number", GoField: "Line", IsMethod: true},
+				ColumnDef{Name: "file_column", SQLType: "INTEGER", Comment: "source file column number", GoField: "Column", IsMethod: true},
+			)
 			continue
 		}
 
@@ -345,7 +351,7 @@ func validateFieldCoverage(rt reflect.Type, prefix string, inline, jsonCols, exc
 			fullFieldName = prefix + fieldName
 		}
 
-		// FileMetadata is always auto-excluded.
+		// FileMetadata is auto-handled by walkStruct (not user-configured).
 		if sf.Type.Name() == "FileMetadata" {
 			continue
 		}
