@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	pkgspec "github.com/andrewkroh/go-package-spec/pkgspec"
 	db "github.com/andrewkroh/go-package-spec/pkgsql/internal/db"
+	"reflect"
 	"time"
 )
 
@@ -58,8 +59,21 @@ func jsonString(v any) string {
 }
 
 // jsonNullString marshals a value to a sql.NullString JSON column.
+// Zero-value structs and nil pointers produce NULL instead of empty JSON.
+// Non-nil pointers are preserved even if they point to a zero-value struct,
+// because a non-nil pointer indicates the YAML key was explicitly present.
 func jsonNullString(v any) sql.NullString {
 	if v == nil {
+		return sql.NullString{}
+	}
+	rv := reflect.ValueOf(v)
+	// For non-pointer types (bare structs, slices, maps), treat zero
+	// values as NULL to avoid storing empty JSON like "{}" or "[]".
+	if rv.Kind() != reflect.Ptr && rv.IsZero() {
+		return sql.NullString{}
+	}
+	// Nil pointers are NULL.
+	if rv.Kind() == reflect.Ptr && rv.IsNil() {
 		return sql.NullString{}
 	}
 	data, err := json.Marshal(v)

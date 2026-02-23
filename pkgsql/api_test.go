@@ -570,6 +570,133 @@ discovery:
 	}
 }
 
+func TestSystemTestVarsNullable(t *testing.T) {
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: test-package
+title: Test
+version: 1.0.0
+description: test
+format_version: 3.5.7
+type: integration
+owner:
+  github: elastic/integrations
+  type: elastic
+policy_templates:
+  - name: default
+    title: Default
+    description: Default policy.
+    inputs:
+      - type: logfile
+        title: Log
+        description: Collect logs.
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"data_stream/logs/manifest.yml": {Data: []byte(`
+title: Logs
+type: logs
+streams:
+  - input: logfile
+    title: Logs
+    description: Collect logs.
+`)},
+		"data_stream/logs/fields/base-fields.yml": {Data: []byte(`
+- name: "@timestamp"
+  type: date
+`)},
+		// System test with no vars and no data_stream.
+		"data_stream/logs/_dev/test/system/test-empty-config.yml": {Data: []byte(`{}
+`)},
+		// System test with extra unknown fields but no vars (the common case).
+		// Decoded without knownFields so unknown keys are silently ignored.
+		"data_stream/logs/_dev/test/system/test-typical-config.yml": {Data: []byte(`
+service: some-service
+input: http_endpoint
+data_stream:
+  vars:
+    listen_address: 0.0.0.0
+    listen_port: 8384
+`)},
+		// System test with vars set.
+		"data_stream/logs/_dev/test/system/test-withvars-config.yml": {Data: []byte(`
+vars:
+  data_stream.dataset: custom_dataset
+data_stream:
+  vars:
+    data_stream.dataset: ds_override
+`)},
+	}
+
+	// Do not use WithKnownFields because real system test configs contain
+	// extra fields (service, input, assert) that are not in SystemTestConfig.
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys), pkgreader.WithTestConfigs())
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	if err := pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg}); err != nil {
+		t.Fatalf("writing package: %v", err)
+	}
+
+	// The empty config should have NULL for vars and data_stream.
+	var vars, dataStream sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT vars, data_stream FROM system_tests WHERE case_name = 'empty'").
+		Scan(&vars, &dataStream)
+	if err != nil {
+		t.Fatalf("querying empty system test: %v", err)
+	}
+	if vars.Valid {
+		t.Errorf("expected NULL vars for empty config, got %q", vars.String)
+	}
+	if dataStream.Valid {
+		t.Errorf("expected NULL data_stream for empty config, got %q", dataStream.String)
+	}
+
+	// The typical config has extra unknown fields but no data_stream.dataset
+	// in vars. The vars column should be NULL (zero-value TestVars), while
+	// data_stream should be non-NULL (pointer was set by YAML).
+	err = db.QueryRowContext(ctx,
+		"SELECT vars, data_stream FROM system_tests WHERE case_name = 'typical'").
+		Scan(&vars, &dataStream)
+	if err != nil {
+		t.Fatalf("querying typical system test: %v", err)
+	}
+	if vars.Valid {
+		t.Errorf("expected NULL vars for typical config (no data_stream.dataset), got %q", vars.String)
+	}
+	if !dataStream.Valid {
+		t.Error("expected non-NULL data_stream for typical config (key was present in YAML)")
+	}
+
+	// The withvars config should have non-NULL values.
+	err = db.QueryRowContext(ctx,
+		"SELECT vars, data_stream FROM system_tests WHERE case_name = 'withvars'").
+		Scan(&vars, &dataStream)
+	if err != nil {
+		t.Fatalf("querying withvars system test: %v", err)
+	}
+	if !vars.Valid {
+		t.Error("expected non-NULL vars for withvars config")
+	} else if !strings.Contains(vars.String, "custom_dataset") {
+		t.Errorf("expected vars to contain custom_dataset, got %q", vars.String)
+	}
+	if !dataStream.Valid {
+		t.Error("expected non-NULL data_stream for withvars config")
+	} else if !strings.Contains(dataStream.String, "ds_override") {
+		t.Errorf("expected data_stream to contain ds_override, got %q", dataStream.String)
+	}
+}
+
 func TestBuildFleetPackagesDB(t *testing.T) {
 	dir := os.Getenv("INTEGRATIONS_DIR")
 	if dir == "" {
