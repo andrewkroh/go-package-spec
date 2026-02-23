@@ -98,6 +98,7 @@ type config struct {
 	agentTemplates bool
 	imageMetadata  bool
 	testConfigs    bool
+	pathPrefix     string // prefix prepended to all FileMetadata file paths
 	packagePath    string // original OS path, needed for git operations
 }
 
@@ -153,6 +154,16 @@ func WithTestConfigs() Option {
 func WithGitMetadata() Option {
 	return func(c *config) {
 		c.gitMetadata = true
+	}
+}
+
+// WithPathPrefix sets a prefix that is prepended to all [pkgspec.FileMetadata]
+// file paths after loading. This is useful when analyzing packages within a
+// larger repository, allowing file paths to be repo-relative (e.g.
+// "packages/nginx/manifest.yml") rather than package-relative.
+func WithPathPrefix(prefix string) Option {
+	return func(c *config) {
+		c.pathPrefix = prefix
 	}
 }
 
@@ -399,6 +410,12 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 				return nil, fmt.Errorf("annotating changelog dates: %w", err)
 			}
 		}
+	}
+
+	// Prefix all FileMetadata file paths.
+	if cfg.pathPrefix != "" {
+		pkgspec.PrefixFileMetadata(cfg.pathPrefix, pkg.manifest)
+		pkgspec.PrefixFileMetadata(cfg.pathPrefix, pkg)
 	}
 
 	return pkg, nil

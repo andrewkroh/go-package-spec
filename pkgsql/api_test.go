@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -768,7 +769,8 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 			defer wg.Done()
 			for name := range work {
 				pkgPath := filepath.Join(packagesDir, name)
-				pkg, err := pkgreader.Read(pkgPath, opts...)
+				pkgOpts := append(opts, pkgreader.WithPathPrefix(path.Join("packages", name)))
+				pkg, err := pkgreader.Read(pkgPath, pkgOpts...)
 				results <- result{pkg: pkg, name: name, err: err}
 			}
 		}()
