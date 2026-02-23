@@ -42,6 +42,8 @@ generator consumes.
 - Field flattening — expands nested group hierarchies into dot-joined names
   with optional [ECS](https://github.com/andrewkroh/go-ecs) enrichment via
   callback
+- SQLite loading — inserts packages into a SQLite database with a
+  self-documenting schema (table/column comments preserved in `sqlite_master`)
 
 ## Install
 
@@ -88,6 +90,47 @@ See the [`example/`](example/) directory:
   annotation feature.
 - **[flatten_fields](example/flatten_fields/)** — Flattens nested group fields
   into dot-joined names and prints sorted results with types and locations.
+
+## SQLite database (`pkgsql`)
+
+The `pkgsql` package loads packages into a SQLite database for SQL-based
+analysis. It normalizes the package data into relational tables — packages,
+data streams, fields, policy templates, ingest pipelines, processors, vars,
+changelogs, and more — making it easy to query across the entire
+[elastic/integrations](https://github.com/elastic/integrations) corpus.
+
+The schema is self-documenting: every table and column has a descriptive
+comment embedded inside the `CREATE TABLE` statement, so they are preserved
+in `sqlite_master` and accessible to LLMs and other consumers without
+access to the Go source.
+
+```go
+import (
+	"database/sql"
+
+	"github.com/andrewkroh/go-package-spec/pkgreader"
+	"github.com/andrewkroh/go-package-spec/pkgsql"
+	
+	_ "modernc.org/sqlite"
+)
+
+db, _ := sql.Open("sqlite", "packages.db")
+
+// Load a package from disk.
+pkg, _ := pkgreader.Read("path/to/package")
+
+// Insert into the database (creates tables + inserts within a transaction).
+pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+```
+
+The public API is intentionally small:
+
+- `WritePackages` — creates tables and inserts multiple packages
+- `WritePackage` — inserts a single package (tables must already exist)
+- `TableSchemas` — returns the `CREATE TABLE` statements
+- `WithECSLookup` — option to enrich fields with ECS definitions during insert
+
+`pkgsql` depends only on `database/sql` — bring your own SQLite driver.
 
 ## Versioning
 

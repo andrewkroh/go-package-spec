@@ -61,11 +61,15 @@ jobs:
             -output pkgspec \
             -package pkgspec
 
+      - name: Regenerate SQL schema
+        if: steps.version.outputs.updated == 'true'
+        run: go generate ./pkgsql/
+
       - name: Format and tidy
         if: steps.version.outputs.updated == 'true'
         run: |
           go install mvdan.cc/gofumpt@latest
-          gofumpt -extra -w pkgspec/
+          gofumpt -extra -w pkgspec/ pkgsql/
           go mod tidy
 
       - name: Run tests
