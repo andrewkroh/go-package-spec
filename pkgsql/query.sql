@@ -87,12 +87,12 @@ INSERT INTO fields (
 
 -- name: InsertPackages :one
 INSERT INTO packages (
+  agent_privileges_root,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
   dir_name,
   conditions_kibana_version,
   conditions_elastic_subscription,
-  agent_privileges_root,
   file_path,
   file_line,
   file_column,
@@ -220,8 +220,8 @@ INSERT INTO data_streams (
 
 -- name: InsertDataStreamFields :one
 INSERT INTO data_stream_fields (
-  field_id,
-  data_stream_id
+  data_stream_id,
+  field_id
 ) VALUES (
   ?,
   ?
@@ -238,12 +238,12 @@ INSERT INTO discovery_fields (
 
 -- name: InsertImages :one
 INSERT INTO images (
-  byte_size,
-  sha256,
   packages_id,
   src,
   width,
-  height
+  height,
+  byte_size,
+  sha256
 ) VALUES (
   ?,
   ?,
@@ -273,10 +273,10 @@ INSERT INTO ingest_pipelines (
 -- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
-  ordinal,
   type,
   attributes,
-  json_pointer
+  json_pointer,
+  ordinal
 ) VALUES (
   ?,
   ?,
@@ -340,7 +340,14 @@ INSERT INTO policy_templates (
   packages_id,
   configuration_links,
   data_streams,
-  deployment_modes,
+  deployment_modes_agentless_division,
+  deployment_modes_agentless_enabled,
+  deployment_modes_agentless_is_default,
+  deployment_modes_agentless_organization,
+  deployment_modes_agentless_resources_requests_cpu,
+  deployment_modes_agentless_resources_requests_memory,
+  deployment_modes_agentless_team,
+  deployment_modes_default_enabled,
   deprecated,
   description,
   fips_compatible,
@@ -348,6 +355,13 @@ INSERT INTO policy_templates (
   name,
   title
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -441,8 +455,8 @@ INSERT INTO routing_rules (
 
 -- name: InsertSampleEvents :one
 INSERT INTO sample_events (
-  data_streams_id,
-  event
+  event,
+  data_streams_id
 ) VALUES (
   ?,
   ?
@@ -567,8 +581,8 @@ INSERT INTO vars (
 
 -- name: InsertPackageVars :one
 INSERT INTO package_vars (
-  package_id,
-  var_id
+  var_id,
+  package_id
 ) VALUES (
   ?,
   ?
@@ -585,8 +599,8 @@ INSERT INTO policy_template_input_vars (
 
 -- name: InsertPolicyTemplateVars :one
 INSERT INTO policy_template_vars (
-  var_id,
-  policy_template_id
+  policy_template_id,
+  var_id
 ) VALUES (
   ?,
   ?

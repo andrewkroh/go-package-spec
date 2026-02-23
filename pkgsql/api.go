@@ -120,12 +120,12 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 	// Insert package.
 	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(
 		m,
+		agentPrivilegesRoot,
 		elasticsearchPrivilegesCluster,
 		policyTemplatesBehavior,
 		dirName,
 		conditionsKibanaVersion,
 		conditionsElasticSubscription,
-		agentPrivilegesRoot,
 	))
 	if err != nil {
 		return fmt.Errorf("inserting package: %w", err)

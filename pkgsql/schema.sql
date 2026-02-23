@@ -47,12 +47,12 @@ CREATE TABLE IF NOT EXISTS fields (
 CREATE TABLE IF NOT EXISTS packages (
   -- Fleet packages (integration, input, or content). Each row is one package version.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
   elasticsearch_privileges_cluster JSON, -- Elasticsearch cluster privilege requirements (JSON array)
   policy_templates_behavior TEXT, -- behavior when multiple policy templates are defined (all, combined_policy, individual_policies)
   dir_name TEXT NOT NULL UNIQUE, -- directory name of the package
   conditions_kibana_version TEXT, -- required Kibana version range
   conditions_elastic_subscription TEXT, -- required Elastic subscription level
-  agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
@@ -126,8 +126,8 @@ CREATE TABLE IF NOT EXISTS data_streams (
 CREATE TABLE IF NOT EXISTS data_stream_fields (
   -- Join table linking fields to data streams.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  field_id INTEGER NOT NULL REFERENCES fields(id), -- foreign key to fields
-  data_stream_id INTEGER NOT NULL REFERENCES data_streams(id) -- foreign key to data_streams
+  data_stream_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
+  field_id INTEGER NOT NULL REFERENCES fields(id) -- foreign key to fields
 );
 
 CREATE TABLE IF NOT EXISTS discovery_fields (
@@ -140,12 +140,12 @@ CREATE TABLE IF NOT EXISTS discovery_fields (
 CREATE TABLE IF NOT EXISTS images (
   -- Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  byte_size INTEGER NOT NULL, -- file size in bytes
-  sha256 TEXT NOT NULL, -- hex-encoded SHA-256 hash of file contents
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
   src TEXT NOT NULL, -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
   width INTEGER, -- image width in pixels (NULL for SVG)
-  height INTEGER -- image height in pixels (NULL for SVG)
+  height INTEGER, -- image height in pixels (NULL for SVG)
+  byte_size INTEGER NOT NULL, -- file size in bytes
+  sha256 TEXT NOT NULL -- hex-encoded SHA-256 hash of file contents
 );
 
 CREATE TABLE IF NOT EXISTS ingest_pipelines (
@@ -163,10 +163,10 @@ CREATE TABLE IF NOT EXISTS ingest_processors (
   -- Individual ingest processors flattened from pipelines. Nested on_failure handlers are included as separate rows.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   ingest_pipelines_id INTEGER NOT NULL REFERENCES ingest_pipelines(id), -- foreign key to ingest_pipelines
-  ordinal INTEGER NOT NULL, -- order of processor within the pipeline
   type TEXT NOT NULL, -- processor type (e.g. set, grok, rename)
   attributes JSON, -- JSON-encoded processor attributes
-  json_pointer TEXT NOT NULL -- RFC 6901 JSON Pointer location within the pipeline
+  json_pointer TEXT NOT NULL, -- RFC 6901 JSON Pointer location within the pipeline
+  ordinal INTEGER NOT NULL -- order of processor within the pipeline
 );
 
 CREATE TABLE IF NOT EXISTS package_categories (
@@ -210,7 +210,14 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
   configuration_links JSON, -- JSON-encoded ConfigurationLinks
   data_streams JSON, -- List of data streams compatible with the policy template.
-  deployment_modes JSON, -- JSON-encoded DeploymentModes
+  deployment_modes_agentless_division TEXT, -- The division responsible for the integration. This is used to tag the agentless agent deployments for monitoring.
+  deployment_modes_agentless_enabled BOOLEAN, -- Indicates if the agentless deployment mode is available for this template policy. It is disabled by default.
+  deployment_modes_agentless_is_default BOOLEAN, -- On policy templates that support multiple deployment modes, this setting can be set to true to use agentless mode by default.
+  deployment_modes_agentless_organization TEXT, -- The responsible organization of the integration. This is used to tag the agentless agent deployments for monitoring.
+  deployment_modes_agentless_resources_requests_cpu TEXT, -- The amount of CPUs that the Agentless deployment will be initially allocated.
+  deployment_modes_agentless_resources_requests_memory TEXT, -- The amount of memory that the Agentless deployment will be initially allocated.
+  deployment_modes_agentless_team TEXT, -- The team responsible for the integration. This is used to tag the agentless agent deployments for monitoring.
+  deployment_modes_default_enabled BOOLEAN, -- Indicates if the default deployment mode is available for this template policy. It is enabled by default.
   deprecated JSON, -- JSON-encoded Deprecated
   description TEXT NOT NULL, -- Longer description of policy template.
   fips_compatible BOOLEAN, -- FipsCompatible
@@ -274,8 +281,8 @@ CREATE TABLE IF NOT EXISTS routing_rules (
 CREATE TABLE IF NOT EXISTS sample_events (
   -- Sample event data for data streams.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
-  event JSON NOT NULL -- sample event data (JSON)
+  event JSON NOT NULL, -- sample event data (JSON)
+  data_streams_id INTEGER NOT NULL REFERENCES data_streams(id) -- foreign key to data_streams
 );
 
 CREATE TABLE IF NOT EXISTS streams (
@@ -352,8 +359,8 @@ CREATE TABLE IF NOT EXISTS vars (
 CREATE TABLE IF NOT EXISTS package_vars (
   -- Join table linking vars to packages.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  package_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
-  var_id INTEGER NOT NULL REFERENCES vars(id) -- foreign key to vars
+  var_id INTEGER NOT NULL REFERENCES vars(id), -- foreign key to vars
+  package_id INTEGER NOT NULL REFERENCES packages(id) -- foreign key to packages
 );
 
 CREATE TABLE IF NOT EXISTS policy_template_input_vars (
@@ -366,8 +373,8 @@ CREATE TABLE IF NOT EXISTS policy_template_input_vars (
 CREATE TABLE IF NOT EXISTS policy_template_vars (
   -- Join table linking vars to policy templates.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  var_id INTEGER NOT NULL REFERENCES vars(id), -- foreign key to vars
-  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id) -- foreign key to policy_templates
+  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id), -- foreign key to policy_templates
+  var_id INTEGER NOT NULL REFERENCES vars(id) -- foreign key to vars
 );
 
 CREATE TABLE IF NOT EXISTS stream_vars (

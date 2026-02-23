@@ -61,8 +61,8 @@ type DataStream struct {
 
 type DataStreamField struct {
 	ID           int64
-	FieldID      int64
 	DataStreamID int64
+	FieldID      int64
 }
 
 type DiscoveryField struct {
@@ -118,12 +118,12 @@ type Field struct {
 
 type Image struct {
 	ID         int64
-	ByteSize   int64
-	Sha256     string
 	PackagesID int64
 	Src        string
 	Width      sql.NullInt64
 	Height     sql.NullInt64
+	ByteSize   int64
+	Sha256     string
 }
 
 type IngestPipeline struct {
@@ -139,20 +139,20 @@ type IngestPipeline struct {
 type IngestProcessor struct {
 	ID                int64
 	IngestPipelinesID int64
-	Ordinal           int64
 	Type              string
 	Attributes        interface{}
 	JsonPointer       string
+	Ordinal           int64
 }
 
 type Package struct {
 	ID                             int64
+	AgentPrivilegesRoot            sql.NullBool
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
 	DirName                        string
 	ConditionsKibanaVersion        sql.NullString
 	ConditionsElasticSubscription  sql.NullString
-	AgentPrivilegesRoot            sql.NullBool
 	FilePath                       sql.NullString
 	FileLine                       sql.NullInt64
 	FileColumn                     sql.NullInt64
@@ -201,22 +201,29 @@ type PackageScreenshot struct {
 
 type PackageVar struct {
 	ID        int64
-	PackageID int64
 	VarID     int64
+	PackageID int64
 }
 
 type PolicyTemplate struct {
-	ID                 int64
-	PackagesID         int64
-	ConfigurationLinks interface{}
-	DataStreams        interface{}
-	DeploymentModes    interface{}
-	Deprecated         interface{}
-	Description        string
-	FipsCompatible     sql.NullBool
-	Multiple           sql.NullBool
-	Name               string
-	Title              string
+	ID                                              int64
+	PackagesID                                      int64
+	ConfigurationLinks                              interface{}
+	DataStreams                                     interface{}
+	DeploymentModesAgentlessDivision                sql.NullString
+	DeploymentModesAgentlessEnabled                 sql.NullBool
+	DeploymentModesAgentlessIsDefault               sql.NullBool
+	DeploymentModesAgentlessOrganization            sql.NullString
+	DeploymentModesAgentlessResourcesRequestsCpu    sql.NullString
+	DeploymentModesAgentlessResourcesRequestsMemory sql.NullString
+	DeploymentModesAgentlessTeam                    sql.NullString
+	DeploymentModesDefaultEnabled                   sql.NullBool
+	Deprecated                                      interface{}
+	Description                                     string
+	FipsCompatible                                  sql.NullBool
+	Multiple                                        sql.NullBool
+	Name                                            string
+	Title                                           string
 }
 
 type PolicyTemplateCategory struct {
@@ -266,8 +273,8 @@ type PolicyTemplateScreenshot struct {
 
 type PolicyTemplateVar struct {
 	ID               int64
-	VarID            int64
 	PolicyTemplateID int64
+	VarID            int64
 }
 
 type RoutingRule struct {
@@ -280,8 +287,8 @@ type RoutingRule struct {
 
 type SampleEvent struct {
 	ID            int64
-	DataStreamsID int64
 	Event         interface{}
+	DataStreamsID int64
 }
 
 type Stream struct {

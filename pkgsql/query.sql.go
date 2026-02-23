@@ -127,8 +127,8 @@ func (q *Queries) InsertChangelogs(ctx context.Context, arg InsertChangelogsPara
 
 const insertDataStreamFields = `-- name: InsertDataStreamFields :one
 INSERT INTO data_stream_fields (
-  field_id,
-  data_stream_id
+  data_stream_id,
+  field_id
 ) VALUES (
   ?,
   ?
@@ -136,12 +136,12 @@ INSERT INTO data_stream_fields (
 `
 
 type InsertDataStreamFieldsParams struct {
-	FieldID      int64
 	DataStreamID int64
+	FieldID      int64
 }
 
 func (q *Queries) InsertDataStreamFields(ctx context.Context, arg InsertDataStreamFieldsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertDataStreamFields, arg.FieldID, arg.DataStreamID)
+	row := q.db.QueryRowContext(ctx, insertDataStreamFields, arg.DataStreamID, arg.FieldID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -445,12 +445,12 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 
 const insertImages = `-- name: InsertImages :one
 INSERT INTO images (
-  byte_size,
-  sha256,
   packages_id,
   src,
   width,
-  height
+  height,
+  byte_size,
+  sha256
 ) VALUES (
   ?,
   ?,
@@ -462,22 +462,22 @@ INSERT INTO images (
 `
 
 type InsertImagesParams struct {
-	ByteSize   int64
-	Sha256     string
 	PackagesID int64
 	Src        string
 	Width      sql.NullInt64
 	Height     sql.NullInt64
+	ByteSize   int64
+	Sha256     string
 }
 
 func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertImages,
-		arg.ByteSize,
-		arg.Sha256,
 		arg.PackagesID,
 		arg.Src,
 		arg.Width,
 		arg.Height,
+		arg.ByteSize,
+		arg.Sha256,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -528,10 +528,10 @@ func (q *Queries) InsertIngestPipelines(ctx context.Context, arg InsertIngestPip
 const insertIngestProcessors = `-- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
-  ordinal,
   type,
   attributes,
-  json_pointer
+  json_pointer,
+  ordinal
 ) VALUES (
   ?,
   ?,
@@ -543,19 +543,19 @@ INSERT INTO ingest_processors (
 
 type InsertIngestProcessorsParams struct {
 	IngestPipelinesID int64
-	Ordinal           int64
 	Type              string
 	Attributes        interface{}
 	JsonPointer       string
+	Ordinal           int64
 }
 
 func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestProcessorsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertIngestProcessors,
 		arg.IngestPipelinesID,
-		arg.Ordinal,
 		arg.Type,
 		arg.Attributes,
 		arg.JsonPointer,
+		arg.Ordinal,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -686,8 +686,8 @@ func (q *Queries) InsertPackageScreenshots(ctx context.Context, arg InsertPackag
 
 const insertPackageVars = `-- name: InsertPackageVars :one
 INSERT INTO package_vars (
-  package_id,
-  var_id
+  var_id,
+  package_id
 ) VALUES (
   ?,
   ?
@@ -695,12 +695,12 @@ INSERT INTO package_vars (
 `
 
 type InsertPackageVarsParams struct {
-	PackageID int64
 	VarID     int64
+	PackageID int64
 }
 
 func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPackageVars, arg.PackageID, arg.VarID)
+	row := q.db.QueryRowContext(ctx, insertPackageVars, arg.VarID, arg.PackageID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -708,12 +708,12 @@ func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsPa
 
 const insertPackages = `-- name: InsertPackages :one
 INSERT INTO packages (
+  agent_privileges_root,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
   dir_name,
   conditions_kibana_version,
   conditions_elastic_subscription,
-  agent_privileges_root,
   file_path,
   file_line,
   file_column,
@@ -751,12 +751,12 @@ INSERT INTO packages (
 `
 
 type InsertPackagesParams struct {
+	AgentPrivilegesRoot            sql.NullBool
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
 	DirName                        string
 	ConditionsKibanaVersion        sql.NullString
 	ConditionsElasticSubscription  sql.NullString
-	AgentPrivilegesRoot            sql.NullBool
 	FilePath                       sql.NullString
 	FileLine                       sql.NullInt64
 	FileColumn                     sql.NullInt64
@@ -774,12 +774,12 @@ type InsertPackagesParams struct {
 
 func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPackages,
+		arg.AgentPrivilegesRoot,
 		arg.ElasticsearchPrivilegesCluster,
 		arg.PolicyTemplatesBehavior,
 		arg.DirName,
 		arg.ConditionsKibanaVersion,
 		arg.ConditionsElasticSubscription,
-		arg.AgentPrivilegesRoot,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,
@@ -980,8 +980,8 @@ func (q *Queries) InsertPolicyTemplateScreenshots(ctx context.Context, arg Inser
 
 const insertPolicyTemplateVars = `-- name: InsertPolicyTemplateVars :one
 INSERT INTO policy_template_vars (
-  var_id,
-  policy_template_id
+  policy_template_id,
+  var_id
 ) VALUES (
   ?,
   ?
@@ -989,12 +989,12 @@ INSERT INTO policy_template_vars (
 `
 
 type InsertPolicyTemplateVarsParams struct {
-	VarID            int64
 	PolicyTemplateID int64
+	VarID            int64
 }
 
 func (q *Queries) InsertPolicyTemplateVars(ctx context.Context, arg InsertPolicyTemplateVarsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateVars, arg.VarID, arg.PolicyTemplateID)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateVars, arg.PolicyTemplateID, arg.VarID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -1005,7 +1005,14 @@ INSERT INTO policy_templates (
   packages_id,
   configuration_links,
   data_streams,
-  deployment_modes,
+  deployment_modes_agentless_division,
+  deployment_modes_agentless_enabled,
+  deployment_modes_agentless_is_default,
+  deployment_modes_agentless_organization,
+  deployment_modes_agentless_resources_requests_cpu,
+  deployment_modes_agentless_resources_requests_memory,
+  deployment_modes_agentless_team,
+  deployment_modes_default_enabled,
   deprecated,
   description,
   fips_compatible,
@@ -1022,21 +1029,35 @@ INSERT INTO policy_templates (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id
 `
 
 type InsertPolicyTemplatesParams struct {
-	PackagesID         int64
-	ConfigurationLinks interface{}
-	DataStreams        interface{}
-	DeploymentModes    interface{}
-	Deprecated         interface{}
-	Description        string
-	FipsCompatible     sql.NullBool
-	Multiple           sql.NullBool
-	Name               string
-	Title              string
+	PackagesID                                      int64
+	ConfigurationLinks                              interface{}
+	DataStreams                                     interface{}
+	DeploymentModesAgentlessDivision                sql.NullString
+	DeploymentModesAgentlessEnabled                 sql.NullBool
+	DeploymentModesAgentlessIsDefault               sql.NullBool
+	DeploymentModesAgentlessOrganization            sql.NullString
+	DeploymentModesAgentlessResourcesRequestsCpu    sql.NullString
+	DeploymentModesAgentlessResourcesRequestsMemory sql.NullString
+	DeploymentModesAgentlessTeam                    sql.NullString
+	DeploymentModesDefaultEnabled                   sql.NullBool
+	Deprecated                                      interface{}
+	Description                                     string
+	FipsCompatible                                  sql.NullBool
+	Multiple                                        sql.NullBool
+	Name                                            string
+	Title                                           string
 }
 
 func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTemplatesParams) (int64, error) {
@@ -1044,7 +1065,14 @@ func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTem
 		arg.PackagesID,
 		arg.ConfigurationLinks,
 		arg.DataStreams,
-		arg.DeploymentModes,
+		arg.DeploymentModesAgentlessDivision,
+		arg.DeploymentModesAgentlessEnabled,
+		arg.DeploymentModesAgentlessIsDefault,
+		arg.DeploymentModesAgentlessOrganization,
+		arg.DeploymentModesAgentlessResourcesRequestsCpu,
+		arg.DeploymentModesAgentlessResourcesRequestsMemory,
+		arg.DeploymentModesAgentlessTeam,
+		arg.DeploymentModesDefaultEnabled,
 		arg.Deprecated,
 		arg.Description,
 		arg.FipsCompatible,
@@ -1092,8 +1120,8 @@ func (q *Queries) InsertRoutingRules(ctx context.Context, arg InsertRoutingRules
 
 const insertSampleEvents = `-- name: InsertSampleEvents :one
 INSERT INTO sample_events (
-  data_streams_id,
-  event
+  event,
+  data_streams_id
 ) VALUES (
   ?,
   ?
@@ -1101,12 +1129,12 @@ INSERT INTO sample_events (
 `
 
 type InsertSampleEventsParams struct {
-	DataStreamsID int64
 	Event         interface{}
+	DataStreamsID int64
 }
 
 func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEventsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event)
+	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.Event, arg.DataStreamsID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err

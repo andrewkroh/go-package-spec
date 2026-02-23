@@ -78,10 +78,15 @@ tables:
       - Screenshots
       - Inputs
       - Vars
+    inline:
+      - DeploymentModes
+      - DeploymentModes.Default
+      - DeploymentModes.Agentless
+      - DeploymentModes.Agentless.Resources
+      - DeploymentModes.Agentless.Resources.Requests
     json_columns:
       - Deprecated
       - ConfigurationLinks
-      - DeploymentModes
 
   policy_template_categories:
     comment: "Categories assigned to a policy template."

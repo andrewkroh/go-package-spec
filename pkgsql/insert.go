@@ -131,7 +131,7 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 }
 
 // mapPackagesParams converts a Manifest to InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool) InsertPackagesParams {
+func mapPackagesParams(v *pkgspec.Manifest, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString) InsertPackagesParams {
 	return InsertPackagesParams{
 		AgentPrivilegesRoot:            agentPrivilegesRoot,
 		ConditionsElasticSubscription:  conditionsElasticSubscription,
@@ -252,16 +252,23 @@ func mapPackageScreenshotsParams(v *pkgspec.Screenshot, parentID int64) InsertPa
 // mapPolicyTemplatesParams converts a PolicyTemplate to InsertPolicyTemplatesParams.
 func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) InsertPolicyTemplatesParams {
 	return InsertPolicyTemplatesParams{
-		ConfigurationLinks: jsonNullString(v.ConfigurationLinks),
-		DataStreams:        jsonNullString(v.DataStreams),
-		DeploymentModes:    jsonNullString(v.DeploymentModes),
-		Deprecated:         jsonNullString(v.Deprecated),
-		Description:        v.Description,
-		FipsCompatible:     toNullBool(v.FipsCompatible),
-		Multiple:           toNullBool(v.Multiple),
-		Name:               v.Name,
-		PackagesID:         parentID,
-		Title:              v.Title,
+		ConfigurationLinks:                              jsonNullString(v.ConfigurationLinks),
+		DataStreams:                                     jsonNullString(v.DataStreams),
+		DeploymentModesAgentlessDivision:                toNullString(v.DeploymentModes.Agentless.Division),
+		DeploymentModesAgentlessEnabled:                 toNullBool(v.DeploymentModes.Agentless.Enabled),
+		DeploymentModesAgentlessIsDefault:               toNullBool(v.DeploymentModes.Agentless.IsDefault),
+		DeploymentModesAgentlessOrganization:            toNullString(v.DeploymentModes.Agentless.Organization),
+		DeploymentModesAgentlessResourcesRequestsCpu:    toNullString(v.DeploymentModes.Agentless.Resources.Requests.CPU),
+		DeploymentModesAgentlessResourcesRequestsMemory: toNullString(v.DeploymentModes.Agentless.Resources.Requests.Memory),
+		DeploymentModesAgentlessTeam:                    toNullString(v.DeploymentModes.Agentless.Team),
+		DeploymentModesDefaultEnabled:                   toNullBool(v.DeploymentModes.Default.Enabled),
+		Deprecated:                                      jsonNullString(v.Deprecated),
+		Description:                                     v.Description,
+		FipsCompatible:                                  toNullBool(v.FipsCompatible),
+		Multiple:                                        toNullBool(v.Multiple),
+		Name:                                            v.Name,
+		PackagesID:                                      parentID,
+		Title:                                           v.Title,
 	}
 }
 
