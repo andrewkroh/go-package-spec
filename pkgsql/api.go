@@ -121,10 +121,10 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 	// Insert package.
 	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(
 		m,
-		dirName,
-		conditionsKibanaVersion,
-		conditionsElasticSubscription,
 		agentPrivilegesRoot,
+		conditionsElasticSubscription,
+		conditionsKibanaVersion,
+		dirName,
 		elasticsearchPrivilegesCluster,
 		policyTemplatesBehavior,
 	))
@@ -330,8 +330,8 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 			&td.Transform,
 			pkgID,
 			tName,
-			toNullBool(transformManifestStart(td.Manifest)),
 			jsonNullString(transformManifestDestIndexTemplate(td.Manifest)),
+			toNullBool(transformManifestStart(td.Manifest)),
 		))
 		if err != nil {
 			return fmt.Errorf("inserting transform %s: %w", tName, err)

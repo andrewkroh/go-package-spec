@@ -132,7 +132,7 @@ func mapFieldsParams(v *pkgspec.FlatField) db.InsertFieldsParams {
 }
 
 // mapPackagesParams converts a Manifest to db.InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString) db.InsertPackagesParams {
+func mapPackagesParams(v *pkgspec.Manifest, agentPrivilegesRoot sql.NullBool, conditionsElasticSubscription sql.NullString, conditionsKibanaVersion sql.NullString, dirName string, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString) db.InsertPackagesParams {
 	return db.InsertPackagesParams{
 		AgentPrivilegesRoot:            agentPrivilegesRoot,
 		ConditionsElasticSubscription:  conditionsElasticSubscription,
@@ -397,7 +397,7 @@ func mapTagsParams(v *pkgspec.Tag, parentID int64) db.InsertTagsParams {
 }
 
 // mapTransformsParams converts a Transform to db.InsertTransformsParams.
-func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, manifestStart sql.NullBool, manifestDestinationIndexTemplate any) db.InsertTransformsParams {
+func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, manifestDestinationIndexTemplate any, manifestStart sql.NullBool) db.InsertTransformsParams {
 	return db.InsertTransformsParams{
 		Description:                      toNullString(v.Description),
 		Dest:                             jsonNullString(v.Dest),

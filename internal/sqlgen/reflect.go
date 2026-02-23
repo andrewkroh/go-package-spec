@@ -3,6 +3,7 @@ package sqlgen
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -65,7 +66,14 @@ func ResolveColumns(tableName string, tc *TableConfig, docs DocMap) ([]ColumnDef
 	}
 
 	// Add extra columns from config (before struct columns).
-	for name, ec := range tc.ExtraColumns {
+	// Sort by name for deterministic output.
+	extraNames := make([]string, 0, len(tc.ExtraColumns))
+	for name := range tc.ExtraColumns {
+		extraNames = append(extraNames, name)
+	}
+	sort.Strings(extraNames)
+	for _, name := range extraNames {
+		ec := tc.ExtraColumns[name]
 		// Skip parent FK if already added above.
 		if tc.Parent != "" && name == tc.Parent+"_id" {
 			continue

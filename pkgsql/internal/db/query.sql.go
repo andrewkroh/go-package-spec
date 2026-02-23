@@ -238,18 +238,18 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 
 const insertDeprecations = `-- name: InsertDeprecations :one
 INSERT INTO deprecations (
-  policy_templates_id,
-  since,
-  replaced_by_data_stream,
-  replaced_by_package,
+  data_streams_id,
+  description,
   packages_id,
   policy_template_inputs_id,
-  data_streams_id,
-  vars_id,
-  description,
+  policy_templates_id,
+  replaced_by_data_stream,
   replaced_by_input,
+  replaced_by_package,
   replaced_by_policy_template,
-  replaced_by_variable
+  replaced_by_variable,
+  since,
+  vars_id
 ) VALUES (
   ?,
   ?,
@@ -267,34 +267,34 @@ INSERT INTO deprecations (
 `
 
 type InsertDeprecationsParams struct {
-	PolicyTemplatesID        sql.NullInt64
-	Since                    string
-	ReplacedByDataStream     sql.NullString
-	ReplacedByPackage        sql.NullString
+	DataStreamsID            sql.NullInt64
+	Description              string
 	PackagesID               sql.NullInt64
 	PolicyTemplateInputsID   sql.NullInt64
-	DataStreamsID            sql.NullInt64
-	VarsID                   sql.NullInt64
-	Description              string
+	PolicyTemplatesID        sql.NullInt64
+	ReplacedByDataStream     sql.NullString
 	ReplacedByInput          sql.NullString
+	ReplacedByPackage        sql.NullString
 	ReplacedByPolicyTemplate sql.NullString
 	ReplacedByVariable       sql.NullString
+	Since                    string
+	VarsID                   sql.NullInt64
 }
 
 func (q *Queries) InsertDeprecations(ctx context.Context, arg InsertDeprecationsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertDeprecations,
-		arg.PolicyTemplatesID,
-		arg.Since,
-		arg.ReplacedByDataStream,
-		arg.ReplacedByPackage,
+		arg.DataStreamsID,
+		arg.Description,
 		arg.PackagesID,
 		arg.PolicyTemplateInputsID,
-		arg.DataStreamsID,
-		arg.VarsID,
-		arg.Description,
+		arg.PolicyTemplatesID,
+		arg.ReplacedByDataStream,
 		arg.ReplacedByInput,
+		arg.ReplacedByPackage,
 		arg.ReplacedByPolicyTemplate,
 		arg.ReplacedByVariable,
+		arg.Since,
+		arg.VarsID,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -506,12 +506,12 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 
 const insertImages = `-- name: InsertImages :one
 INSERT INTO images (
-  sha256,
-  packages_id,
-  src,
-  width,
+  byte_size,
   height,
-  byte_size
+  packages_id,
+  sha256,
+  src,
+  width
 ) VALUES (
   ?,
   ?,
@@ -523,22 +523,22 @@ INSERT INTO images (
 `
 
 type InsertImagesParams struct {
-	Sha256     string
+	ByteSize   int64
+	Height     sql.NullInt64
 	PackagesID int64
+	Sha256     string
 	Src        string
 	Width      sql.NullInt64
-	Height     sql.NullInt64
-	ByteSize   int64
 }
 
 func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertImages,
-		arg.Sha256,
+		arg.ByteSize,
+		arg.Height,
 		arg.PackagesID,
+		arg.Sha256,
 		arg.Src,
 		arg.Width,
-		arg.Height,
-		arg.ByteSize,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -589,10 +589,10 @@ func (q *Queries) InsertIngestPipelines(ctx context.Context, arg InsertIngestPip
 const insertIngestProcessors = `-- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
+  attributes,
   json_pointer,
   ordinal,
-  type,
-  attributes
+  type
 ) VALUES (
   ?,
   ?,
@@ -604,19 +604,19 @@ INSERT INTO ingest_processors (
 
 type InsertIngestProcessorsParams struct {
 	IngestPipelinesID int64
+	Attributes        interface{}
 	JsonPointer       string
 	Ordinal           int64
 	Type              string
-	Attributes        interface{}
 }
 
 func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestProcessorsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertIngestProcessors,
 		arg.IngestPipelinesID,
+		arg.Attributes,
 		arg.JsonPointer,
 		arg.Ordinal,
 		arg.Type,
-		arg.Attributes,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -625,8 +625,8 @@ func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestPr
 
 const insertPackageCategories = `-- name: InsertPackageCategories :one
 INSERT INTO package_categories (
-  package_id,
-  category
+  category,
+  package_id
 ) VALUES (
   ?,
   ?
@@ -634,12 +634,12 @@ INSERT INTO package_categories (
 `
 
 type InsertPackageCategoriesParams struct {
-	PackageID int64
 	Category  string
+	PackageID int64
 }
 
 func (q *Queries) InsertPackageCategories(ctx context.Context, arg InsertPackageCategoriesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPackageCategories, arg.PackageID, arg.Category)
+	row := q.db.QueryRowContext(ctx, insertPackageCategories, arg.Category, arg.PackageID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -769,10 +769,10 @@ func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsPa
 
 const insertPackages = `-- name: InsertPackages :one
 INSERT INTO packages (
-  dir_name,
-  conditions_kibana_version,
-  conditions_elastic_subscription,
   agent_privileges_root,
+  conditions_elastic_subscription,
+  conditions_kibana_version,
+  dir_name,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
   file_path,
@@ -810,10 +810,10 @@ INSERT INTO packages (
 `
 
 type InsertPackagesParams struct {
-	DirName                        string
-	ConditionsKibanaVersion        sql.NullString
-	ConditionsElasticSubscription  sql.NullString
 	AgentPrivilegesRoot            sql.NullBool
+	ConditionsElasticSubscription  sql.NullString
+	ConditionsKibanaVersion        sql.NullString
+	DirName                        string
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
 	FilePath                       sql.NullString
@@ -832,10 +832,10 @@ type InsertPackagesParams struct {
 
 func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPackages,
-		arg.DirName,
-		arg.ConditionsKibanaVersion,
-		arg.ConditionsElasticSubscription,
 		arg.AgentPrivilegesRoot,
+		arg.ConditionsElasticSubscription,
+		arg.ConditionsKibanaVersion,
+		arg.DirName,
 		arg.ElasticsearchPrivilegesCluster,
 		arg.PolicyTemplatesBehavior,
 		arg.FilePath,
@@ -858,19 +858,19 @@ func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) 
 
 const insertPipelineTests = `-- name: InsertPipelineTests :one
 INSERT INTO pipeline_tests (
-  dynamic_fields,
-  numeric_keyword_fields,
-  name,
-  skip_link,
-  fields,
-  string_number_fields,
-  multiline,
+  config_path,
   data_streams_id,
-  format,
+  dynamic_fields,
   event_path,
   expected_path,
-  config_path,
-  skip_reason
+  fields,
+  format,
+  multiline,
+  name,
+  numeric_keyword_fields,
+  skip_link,
+  skip_reason,
+  string_number_fields
 ) VALUES (
   ?,
   ?,
@@ -889,36 +889,36 @@ INSERT INTO pipeline_tests (
 `
 
 type InsertPipelineTestsParams struct {
-	DynamicFields        interface{}
-	NumericKeywordFields interface{}
-	Name                 string
-	SkipLink             sql.NullString
-	Fields               interface{}
-	StringNumberFields   interface{}
-	Multiline            interface{}
+	ConfigPath           sql.NullString
 	DataStreamsID        int64
-	Format               string
+	DynamicFields        interface{}
 	EventPath            string
 	ExpectedPath         sql.NullString
-	ConfigPath           sql.NullString
+	Fields               interface{}
+	Format               string
+	Multiline            interface{}
+	Name                 string
+	NumericKeywordFields interface{}
+	SkipLink             sql.NullString
 	SkipReason           sql.NullString
+	StringNumberFields   interface{}
 }
 
 func (q *Queries) InsertPipelineTests(ctx context.Context, arg InsertPipelineTestsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPipelineTests,
-		arg.DynamicFields,
-		arg.NumericKeywordFields,
-		arg.Name,
-		arg.SkipLink,
-		arg.Fields,
-		arg.StringNumberFields,
-		arg.Multiline,
+		arg.ConfigPath,
 		arg.DataStreamsID,
-		arg.Format,
+		arg.DynamicFields,
 		arg.EventPath,
 		arg.ExpectedPath,
-		arg.ConfigPath,
+		arg.Fields,
+		arg.Format,
+		arg.Multiline,
+		arg.Name,
+		arg.NumericKeywordFields,
+		arg.SkipLink,
 		arg.SkipReason,
+		arg.StringNumberFields,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -927,8 +927,8 @@ func (q *Queries) InsertPipelineTests(ctx context.Context, arg InsertPipelineTes
 
 const insertPolicyTemplateCategories = `-- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  policy_template_id,
-  category
+  category,
+  policy_template_id
 ) VALUES (
   ?,
   ?
@@ -936,12 +936,12 @@ INSERT INTO policy_template_categories (
 `
 
 type InsertPolicyTemplateCategoriesParams struct {
-	PolicyTemplateID int64
 	Category         string
+	PolicyTemplateID int64
 }
 
 func (q *Queries) InsertPolicyTemplateCategories(ctx context.Context, arg InsertPolicyTemplateCategoriesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.PolicyTemplateID, arg.Category)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.Category, arg.PolicyTemplateID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -1321,8 +1321,8 @@ func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEvents
 
 const insertStaticTests = `-- name: InsertStaticTests :one
 INSERT INTO static_tests (
-  data_streams_id,
   case_name,
+  data_streams_id,
   file_path,
   file_line,
   file_column,
@@ -1340,8 +1340,8 @@ INSERT INTO static_tests (
 `
 
 type InsertStaticTestsParams struct {
-	DataStreamsID int64
 	CaseName      string
+	DataStreamsID int64
 	FilePath      sql.NullString
 	FileLine      sql.NullInt64
 	FileColumn    sql.NullInt64
@@ -1351,8 +1351,8 @@ type InsertStaticTestsParams struct {
 
 func (q *Queries) InsertStaticTests(ctx context.Context, arg InsertStaticTestsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertStaticTests,
-		arg.DataStreamsID,
 		arg.CaseName,
+		arg.DataStreamsID,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,
@@ -1579,8 +1579,8 @@ func (q *Queries) InsertTags(ctx context.Context, arg InsertTagsParams) (int64, 
 
 const insertTransformFields = `-- name: InsertTransformFields :one
 INSERT INTO transform_fields (
-  transform_id,
-  field_id
+  field_id,
+  transform_id
 ) VALUES (
   ?,
   ?
@@ -1588,12 +1588,12 @@ INSERT INTO transform_fields (
 `
 
 type InsertTransformFieldsParams struct {
-	TransformID int64
 	FieldID     int64
+	TransformID int64
 }
 
 func (q *Queries) InsertTransformFields(ctx context.Context, arg InsertTransformFieldsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertTransformFields, arg.TransformID, arg.FieldID)
+	row := q.db.QueryRowContext(ctx, insertTransformFields, arg.FieldID, arg.TransformID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -1603,8 +1603,8 @@ const insertTransforms = `-- name: InsertTransforms :one
 INSERT INTO transforms (
   packages_id,
   dir_name,
-  manifest_start,
   manifest_destination_index_template,
+  manifest_start,
   file_path,
   file_line,
   file_column,
@@ -1642,8 +1642,8 @@ INSERT INTO transforms (
 type InsertTransformsParams struct {
 	PackagesID                       int64
 	DirName                          string
-	ManifestStart                    sql.NullBool
 	ManifestDestinationIndexTemplate interface{}
+	ManifestStart                    sql.NullBool
 	FilePath                         sql.NullString
 	FileLine                         sql.NullInt64
 	FileColumn                       sql.NullInt64
@@ -1663,8 +1663,8 @@ func (q *Queries) InsertTransforms(ctx context.Context, arg InsertTransformsPara
 	row := q.db.QueryRowContext(ctx, insertTransforms,
 		arg.PackagesID,
 		arg.DirName,
-		arg.ManifestStart,
 		arg.ManifestDestinationIndexTemplate,
+		arg.ManifestStart,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,

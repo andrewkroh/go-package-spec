@@ -87,10 +87,10 @@ INSERT INTO fields (
 
 -- name: InsertPackages :one
 INSERT INTO packages (
-  dir_name,
-  conditions_kibana_version,
-  conditions_elastic_subscription,
   agent_privileges_root,
+  conditions_elastic_subscription,
+  conditions_kibana_version,
+  dir_name,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
   file_path,
@@ -234,12 +234,12 @@ INSERT INTO discovery_fields (
 
 -- name: InsertImages :one
 INSERT INTO images (
-  sha256,
-  packages_id,
-  src,
-  width,
+  byte_size,
   height,
-  byte_size
+  packages_id,
+  sha256,
+  src,
+  width
 ) VALUES (
   ?,
   ?,
@@ -269,10 +269,10 @@ INSERT INTO ingest_pipelines (
 -- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
+  attributes,
   json_pointer,
   ordinal,
-  type,
-  attributes
+  type
 ) VALUES (
   ?,
   ?,
@@ -283,8 +283,8 @@ INSERT INTO ingest_processors (
 
 -- name: InsertPackageCategories :one
 INSERT INTO package_categories (
-  package_id,
-  category
+  category,
+  package_id
 ) VALUES (
   ?,
   ?
@@ -333,19 +333,19 @@ INSERT INTO package_screenshots (
 
 -- name: InsertPipelineTests :one
 INSERT INTO pipeline_tests (
-  dynamic_fields,
-  numeric_keyword_fields,
-  name,
-  skip_link,
-  fields,
-  string_number_fields,
-  multiline,
+  config_path,
   data_streams_id,
-  format,
+  dynamic_fields,
   event_path,
   expected_path,
-  config_path,
-  skip_reason
+  fields,
+  format,
+  multiline,
+  name,
+  numeric_keyword_fields,
+  skip_link,
+  skip_reason,
+  string_number_fields
 ) VALUES (
   ?,
   ?,
@@ -401,8 +401,8 @@ INSERT INTO policy_templates (
 
 -- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  policy_template_id,
-  category
+  category,
+  policy_template_id
 ) VALUES (
   ?,
   ?
@@ -514,8 +514,8 @@ INSERT INTO sample_events (
 
 -- name: InsertStaticTests :one
 INSERT INTO static_tests (
-  data_streams_id,
   case_name,
+  data_streams_id,
   file_path,
   file_line,
   file_column,
@@ -620,8 +620,8 @@ INSERT INTO tags (
 INSERT INTO transforms (
   packages_id,
   dir_name,
-  manifest_start,
   manifest_destination_index_template,
+  manifest_start,
   file_path,
   file_line,
   file_column,
@@ -657,8 +657,8 @@ INSERT INTO transforms (
 
 -- name: InsertTransformFields :one
 INSERT INTO transform_fields (
-  transform_id,
-  field_id
+  field_id,
+  transform_id
 ) VALUES (
   ?,
   ?
@@ -699,18 +699,18 @@ INSERT INTO vars (
 
 -- name: InsertDeprecations :one
 INSERT INTO deprecations (
-  policy_templates_id,
-  since,
-  replaced_by_data_stream,
-  replaced_by_package,
+  data_streams_id,
+  description,
   packages_id,
   policy_template_inputs_id,
-  data_streams_id,
-  vars_id,
-  description,
+  policy_templates_id,
+  replaced_by_data_stream,
   replaced_by_input,
+  replaced_by_package,
   replaced_by_policy_template,
-  replaced_by_variable
+  replaced_by_variable,
+  since,
+  vars_id
 ) VALUES (
   ?,
   ?,

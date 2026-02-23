@@ -66,18 +66,18 @@ type DataStreamField struct {
 
 type Deprecation struct {
 	ID                       int64
-	PolicyTemplatesID        sql.NullInt64
-	Since                    string
-	ReplacedByDataStream     sql.NullString
-	ReplacedByPackage        sql.NullString
+	DataStreamsID            sql.NullInt64
+	Description              string
 	PackagesID               sql.NullInt64
 	PolicyTemplateInputsID   sql.NullInt64
-	DataStreamsID            sql.NullInt64
-	VarsID                   sql.NullInt64
-	Description              string
+	PolicyTemplatesID        sql.NullInt64
+	ReplacedByDataStream     sql.NullString
 	ReplacedByInput          sql.NullString
+	ReplacedByPackage        sql.NullString
 	ReplacedByPolicyTemplate sql.NullString
 	ReplacedByVariable       sql.NullString
+	Since                    string
+	VarsID                   sql.NullInt64
 }
 
 type DiscoveryField struct {
@@ -133,12 +133,12 @@ type Field struct {
 
 type Image struct {
 	ID         int64
-	Sha256     string
+	ByteSize   int64
+	Height     sql.NullInt64
 	PackagesID int64
+	Sha256     string
 	Src        string
 	Width      sql.NullInt64
-	Height     sql.NullInt64
-	ByteSize   int64
 }
 
 type IngestPipeline struct {
@@ -154,18 +154,18 @@ type IngestPipeline struct {
 type IngestProcessor struct {
 	ID                int64
 	IngestPipelinesID int64
+	Attributes        interface{}
 	JsonPointer       string
 	Ordinal           int64
 	Type              string
-	Attributes        interface{}
 }
 
 type Package struct {
 	ID                             int64
-	DirName                        string
-	ConditionsKibanaVersion        sql.NullString
-	ConditionsElasticSubscription  sql.NullString
 	AgentPrivilegesRoot            sql.NullBool
+	ConditionsElasticSubscription  sql.NullString
+	ConditionsKibanaVersion        sql.NullString
+	DirName                        string
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
 	FilePath                       sql.NullString
@@ -184,8 +184,8 @@ type Package struct {
 
 type PackageCategory struct {
 	ID        int64
-	PackageID int64
 	Category  string
+	PackageID int64
 }
 
 type PackageField struct {
@@ -221,19 +221,19 @@ type PackageVar struct {
 
 type PipelineTest struct {
 	ID                   int64
-	DynamicFields        interface{}
-	NumericKeywordFields interface{}
-	Name                 string
-	SkipLink             sql.NullString
-	Fields               interface{}
-	StringNumberFields   interface{}
-	Multiline            interface{}
+	ConfigPath           sql.NullString
 	DataStreamsID        int64
-	Format               string
+	DynamicFields        interface{}
 	EventPath            string
 	ExpectedPath         sql.NullString
-	ConfigPath           sql.NullString
+	Fields               interface{}
+	Format               string
+	Multiline            interface{}
+	Name                 string
+	NumericKeywordFields interface{}
+	SkipLink             sql.NullString
 	SkipReason           sql.NullString
+	StringNumberFields   interface{}
 }
 
 type PolicyTemplate struct {
@@ -258,8 +258,8 @@ type PolicyTemplate struct {
 
 type PolicyTemplateCategory struct {
 	ID               int64
-	PolicyTemplateID int64
 	Category         string
+	PolicyTemplateID int64
 }
 
 type PolicyTemplateIcon struct {
@@ -337,8 +337,8 @@ type SampleEvent struct {
 
 type StaticTest struct {
 	ID            int64
-	DataStreamsID int64
 	CaseName      string
+	DataStreamsID int64
 	FilePath      sql.NullString
 	FileLine      sql.NullInt64
 	FileColumn    sql.NullInt64
@@ -403,8 +403,8 @@ type Transform struct {
 	ID                               int64
 	PackagesID                       int64
 	DirName                          string
-	ManifestStart                    sql.NullBool
 	ManifestDestinationIndexTemplate interface{}
+	ManifestStart                    sql.NullBool
 	FilePath                         sql.NullString
 	FileLine                         sql.NullInt64
 	FileColumn                       sql.NullInt64
@@ -422,8 +422,8 @@ type Transform struct {
 
 type TransformField struct {
 	ID          int64
-	TransformID int64
 	FieldID     int64
+	TransformID int64
 }
 
 type Var struct {
