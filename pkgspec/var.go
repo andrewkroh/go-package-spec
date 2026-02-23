@@ -2,6 +2,8 @@
 
 package pkgspec
 
+import "encoding/json"
+
 // RequiredVars required conditional variables for the package.
 type RequiredVars struct{}
 
@@ -78,7 +80,31 @@ type VarGroupOption struct {
 	// Display title shown in the dropdown.
 	Title string `json:"title" yaml:"title"`
 	// Variable names to display when this option is selected.
-	Vars []string `json:"vars" yaml:"vars"`
+	Vars                 []string       `json:"vars" yaml:"vars"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for VarGroupOption.
+// It merges AdditionalProperties into the flat JSON output.
+func (v VarGroupOption) MarshalJSON() ([]byte, error) {
+	type plainVarGroupOption VarGroupOption
+	data, err := json.Marshal(plainVarGroupOption(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 type VarGroupOptionHideInDeploymentMode string

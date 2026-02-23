@@ -18,17 +18,18 @@ const (
 
 // GoType represents a Go type to be generated.
 type GoType struct {
-	Name               string
-	Doc                string
-	SchemaFile         string
-	SchemaPath         string // JSON pointer within the file
-	Kind               GoTypeKind
-	Fields             []GoField
-	EnumValues         []GoEnumVal
-	AliasOf            GoTypeRef
-	OutputFile         string
-	EmbedMeta          bool // Whether to embed FileMetadata
-	NeedsUnmarshalYAML bool // Whether to generate UnmarshalYAML (set by base type extraction)
+	Name                    string
+	Doc                     string
+	SchemaFile              string
+	SchemaPath              string // JSON pointer within the file
+	Kind                    GoTypeKind
+	Fields                  []GoField
+	EnumValues              []GoEnumVal
+	AliasOf                 GoTypeRef
+	OutputFile              string
+	EmbedMeta               bool // Whether to embed FileMetadata
+	NeedsUnmarshalYAML      bool // Whether to generate UnmarshalYAML (set by base type extraction)
+	HasAdditionalProperties bool // Whether to generate MarshalJSON for additional properties
 }
 
 // GoField represents a field in a Go struct.
@@ -308,6 +309,22 @@ func (m *TypeMapper) processRef(ref, contextFile, descOverride string) (GoTypeRe
 	return m.processSchema(resolved, targetFile, pointer, suggestedName, false)
 }
 
+// allowsAdditionalProperties returns true if the schema permits properties
+// beyond those declared in "properties". Per JSON Schema, additionalProperties
+// defaults to true when omitted.
+func allowsAdditionalProperties(schema *Schema) bool {
+	if schema.AdditionalProperties.IsFalse() {
+		return false
+	}
+	// An allOf member may restrict additional properties.
+	for _, sub := range schema.AllOf {
+		if sub != nil && sub.AdditionalProperties.IsFalse() {
+			return false
+		}
+	}
+	return true
+}
+
 // processObject creates a struct type from an object schema.
 func (m *TypeMapper) processObject(
 	schema *Schema,
@@ -400,6 +417,38 @@ func (m *TypeMapper) processObject(
 			Required: isRequired,
 		})
 	}
+
+	// If the schema allows additional properties and the struct has
+	// declared fields, append an AdditionalProperties catch-all field.
+	if len(goType.Fields) > 0 && allowsAdditionalProperties(schema) {
+		valueRef := GoTypeRef{Builtin: "any"}
+		if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
+			ref, err := m.processSchema(
+				schema.AdditionalProperties.Schema,
+				contextFile,
+				jsonPointer+"/additionalProperties",
+				name+"AdditionalPropertiesValue",
+				false,
+			)
+			if err != nil {
+				return GoTypeRef{}, fmt.Errorf("processing additionalProperties for %s: %w", name, err)
+			}
+			valueRef = ref
+		}
+		goType.Fields = append(goType.Fields, GoField{
+			Name:     "AdditionalProperties",
+			JSONName: "-",
+			Type: GoTypeRef{
+				Map:      true,
+				MapKey:   &GoTypeRef{Builtin: "string"},
+				MapValue: &valueRef,
+			},
+			JSONTag: "-",
+			YAMLTag: ",inline",
+		})
+		goType.HasAdditionalProperties = true
+	}
+
 	return GoTypeRef{Named: name}, nil
 }
 
