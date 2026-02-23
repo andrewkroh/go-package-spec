@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	pkgspec "github.com/andrewkroh/go-package-spec/pkgspec"
+	db "github.com/andrewkroh/go-package-spec/pkgsql/internal/db"
 	"time"
 )
 
@@ -83,9 +84,9 @@ func timeNullString(t *time.Time) sql.NullString {
 	}
 }
 
-// mapFieldsParams converts a FlatField to InsertFieldsParams.
-func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
-	return InsertFieldsParams{
+// mapFieldsParams converts a FlatField to db.InsertFieldsParams.
+func mapFieldsParams(v *pkgspec.FlatField) db.InsertFieldsParams {
+	return db.InsertFieldsParams{
 		Analyzer:              toNullString(v.Analyzer),
 		CopyTo:                toNullString(v.CopyTo),
 		DateFormat:            toNullString(v.DateFormat),
@@ -130,9 +131,9 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 	}
 }
 
-// mapPackagesParams converts a Manifest to InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString) InsertPackagesParams {
-	return InsertPackagesParams{
+// mapPackagesParams converts a Manifest to db.InsertPackagesParams.
+func mapPackagesParams(v *pkgspec.Manifest, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString) db.InsertPackagesParams {
+	return db.InsertPackagesParams{
 		AgentPrivilegesRoot:            agentPrivilegesRoot,
 		ConditionsElasticSubscription:  conditionsElasticSubscription,
 		ConditionsKibanaVersion:        conditionsKibanaVersion,
@@ -154,9 +155,9 @@ func mapPackagesParams(v *pkgspec.Manifest, dirName string, conditionsKibanaVers
 	}
 }
 
-// mapBuildManifestsParams converts a BuildManifest to InsertBuildManifestsParams.
-func mapBuildManifestsParams(v *pkgspec.BuildManifest, parentID int64) InsertBuildManifestsParams {
-	return InsertBuildManifestsParams{
+// mapBuildManifestsParams converts a BuildManifest to db.InsertBuildManifestsParams.
+func mapBuildManifestsParams(v *pkgspec.BuildManifest, parentID int64) db.InsertBuildManifestsParams {
+	return db.InsertBuildManifestsParams{
 		DependenciesEcsImportMappings: toNullBool(v.Dependencies.ECS.ImportMappings),
 		DependenciesEcsReference:      v.Dependencies.ECS.Reference,
 		FileColumn:                    toNullInt64(v.Column()),
@@ -166,9 +167,9 @@ func mapBuildManifestsParams(v *pkgspec.BuildManifest, parentID int64) InsertBui
 	}
 }
 
-// mapChangelogsParams converts a Changelog to InsertChangelogsParams.
-func mapChangelogsParams(v *pkgspec.Changelog, parentID int64) InsertChangelogsParams {
-	return InsertChangelogsParams{
+// mapChangelogsParams converts a Changelog to db.InsertChangelogsParams.
+func mapChangelogsParams(v *pkgspec.Changelog, parentID int64) db.InsertChangelogsParams {
+	return db.InsertChangelogsParams{
 		Date:       timeNullString(v.Date),
 		FileColumn: toNullInt64(v.Column()),
 		FileLine:   toNullInt64(v.Line()),
@@ -178,9 +179,9 @@ func mapChangelogsParams(v *pkgspec.Changelog, parentID int64) InsertChangelogsP
 	}
 }
 
-// mapChangelogEntriesParams converts a ChangelogEntry to InsertChangelogEntriesParams.
-func mapChangelogEntriesParams(v *pkgspec.ChangelogEntry, parentID int64) InsertChangelogEntriesParams {
-	return InsertChangelogEntriesParams{
+// mapChangelogEntriesParams converts a ChangelogEntry to db.InsertChangelogEntriesParams.
+func mapChangelogEntriesParams(v *pkgspec.ChangelogEntry, parentID int64) db.InsertChangelogEntriesParams {
+	return db.InsertChangelogEntriesParams{
 		ChangelogsID: parentID,
 		Description:  v.Description,
 		Link:         v.Link,
@@ -188,9 +189,9 @@ func mapChangelogEntriesParams(v *pkgspec.ChangelogEntry, parentID int64) Insert
 	}
 }
 
-// mapDataStreamsParams converts a DataStreamManifest to InsertDataStreamsParams.
-func mapDataStreamsParams(v *pkgspec.DataStreamManifest, parentID int64, dirName string) InsertDataStreamsParams {
-	return InsertDataStreamsParams{
+// mapDataStreamsParams converts a DataStreamManifest to db.InsertDataStreamsParams.
+func mapDataStreamsParams(v *pkgspec.DataStreamManifest, parentID int64, dirName string) db.InsertDataStreamsParams {
+	return db.InsertDataStreamsParams{
 		Dataset:                       toNullString(v.Dataset),
 		DatasetIsPrefix:               toNullBool(v.DatasetIsPrefix),
 		DirName:                       dirName,
@@ -212,9 +213,9 @@ func mapDataStreamsParams(v *pkgspec.DataStreamManifest, parentID int64, dirName
 	}
 }
 
-// mapIngestPipelinesParams converts a IngestPipeline to InsertIngestPipelinesParams.
-func mapIngestPipelinesParams(v *pkgspec.IngestPipeline, parentID int64, fileName string) InsertIngestPipelinesParams {
-	return InsertIngestPipelinesParams{
+// mapIngestPipelinesParams converts a IngestPipeline to db.InsertIngestPipelinesParams.
+func mapIngestPipelinesParams(v *pkgspec.IngestPipeline, parentID int64, fileName string) db.InsertIngestPipelinesParams {
+	return db.InsertIngestPipelinesParams{
 		DataStreamsID: parentID,
 		Description:   toNullString(v.Description),
 		FileColumn:    toNullInt64(v.Column()),
@@ -224,9 +225,9 @@ func mapIngestPipelinesParams(v *pkgspec.IngestPipeline, parentID int64, fileNam
 	}
 }
 
-// mapPackageIconsParams converts a Icon to InsertPackageIconsParams.
-func mapPackageIconsParams(v *pkgspec.Icon, parentID int64) InsertPackageIconsParams {
-	return InsertPackageIconsParams{
+// mapPackageIconsParams converts a Icon to db.InsertPackageIconsParams.
+func mapPackageIconsParams(v *pkgspec.Icon, parentID int64) db.InsertPackageIconsParams {
+	return db.InsertPackageIconsParams{
 		DarkMode:   toNullBool(v.DarkMode),
 		PackagesID: parentID,
 		Size:       toNullString(v.Size),
@@ -236,9 +237,9 @@ func mapPackageIconsParams(v *pkgspec.Icon, parentID int64) InsertPackageIconsPa
 	}
 }
 
-// mapPackageScreenshotsParams converts a Screenshot to InsertPackageScreenshotsParams.
-func mapPackageScreenshotsParams(v *pkgspec.Screenshot, parentID int64) InsertPackageScreenshotsParams {
-	return InsertPackageScreenshotsParams{
+// mapPackageScreenshotsParams converts a Screenshot to db.InsertPackageScreenshotsParams.
+func mapPackageScreenshotsParams(v *pkgspec.Screenshot, parentID int64) db.InsertPackageScreenshotsParams {
+	return db.InsertPackageScreenshotsParams{
 		PackagesID: parentID,
 		Size:       toNullString(v.Size),
 		Src:        v.Src,
@@ -247,9 +248,9 @@ func mapPackageScreenshotsParams(v *pkgspec.Screenshot, parentID int64) InsertPa
 	}
 }
 
-// mapPolicyTemplatesParams converts a PolicyTemplate to InsertPolicyTemplatesParams.
-func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) InsertPolicyTemplatesParams {
-	return InsertPolicyTemplatesParams{
+// mapPolicyTemplatesParams converts a PolicyTemplate to db.InsertPolicyTemplatesParams.
+func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) db.InsertPolicyTemplatesParams {
+	return db.InsertPolicyTemplatesParams{
 		ConfigurationLinks:                              jsonNullString(v.ConfigurationLinks),
 		DataStreams:                                     jsonNullString(v.DataStreams),
 		DeploymentModesAgentlessDivision:                toNullString(v.DeploymentModes.Agentless.Division),
@@ -269,9 +270,9 @@ func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) InsertP
 	}
 }
 
-// mapPolicyTemplateIconsParams converts a Icon to InsertPolicyTemplateIconsParams.
-func mapPolicyTemplateIconsParams(v *pkgspec.Icon, parentID int64) InsertPolicyTemplateIconsParams {
-	return InsertPolicyTemplateIconsParams{
+// mapPolicyTemplateIconsParams converts a Icon to db.InsertPolicyTemplateIconsParams.
+func mapPolicyTemplateIconsParams(v *pkgspec.Icon, parentID int64) db.InsertPolicyTemplateIconsParams {
+	return db.InsertPolicyTemplateIconsParams{
 		DarkMode:          toNullBool(v.DarkMode),
 		PolicyTemplatesID: parentID,
 		Size:              toNullString(v.Size),
@@ -281,9 +282,9 @@ func mapPolicyTemplateIconsParams(v *pkgspec.Icon, parentID int64) InsertPolicyT
 	}
 }
 
-// mapPolicyTemplateInputsParams converts a PolicyTemplateInput to InsertPolicyTemplateInputsParams.
-func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int64) InsertPolicyTemplateInputsParams {
-	return InsertPolicyTemplateInputsParams{
+// mapPolicyTemplateInputsParams converts a PolicyTemplateInput to db.InsertPolicyTemplateInputsParams.
+func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int64) db.InsertPolicyTemplateInputsParams {
+	return db.InsertPolicyTemplateInputsParams{
 		DeploymentModes:       jsonNullString(v.DeploymentModes),
 		Description:           v.Description,
 		HideInVarGroupOptions: jsonNullString(v.HideInVarGroupOptions),
@@ -296,9 +297,9 @@ func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int6
 	}
 }
 
-// mapPolicyTemplateScreenshotsParams converts a Screenshot to InsertPolicyTemplateScreenshotsParams.
-func mapPolicyTemplateScreenshotsParams(v *pkgspec.Screenshot, parentID int64) InsertPolicyTemplateScreenshotsParams {
-	return InsertPolicyTemplateScreenshotsParams{
+// mapPolicyTemplateScreenshotsParams converts a Screenshot to db.InsertPolicyTemplateScreenshotsParams.
+func mapPolicyTemplateScreenshotsParams(v *pkgspec.Screenshot, parentID int64) db.InsertPolicyTemplateScreenshotsParams {
+	return db.InsertPolicyTemplateScreenshotsParams{
 		PolicyTemplatesID: parentID,
 		Size:              toNullString(v.Size),
 		Src:               v.Src,
@@ -307,9 +308,9 @@ func mapPolicyTemplateScreenshotsParams(v *pkgspec.Screenshot, parentID int64) I
 	}
 }
 
-// mapPolicyTestsParams converts a PolicyTestConfig to InsertPolicyTestsParams.
-func mapPolicyTestsParams(v *pkgspec.PolicyTestConfig, caseName string) InsertPolicyTestsParams {
-	return InsertPolicyTestsParams{
+// mapPolicyTestsParams converts a PolicyTestConfig to db.InsertPolicyTestsParams.
+func mapPolicyTestsParams(v *pkgspec.PolicyTestConfig, caseName string) db.InsertPolicyTestsParams {
+	return db.InsertPolicyTestsParams{
 		CaseName:   caseName,
 		DataStream: jsonNullString(v.DataStream),
 		FileColumn: toNullInt64(v.Column()),
@@ -322,9 +323,9 @@ func mapPolicyTestsParams(v *pkgspec.PolicyTestConfig, caseName string) InsertPo
 	}
 }
 
-// mapRoutingRulesParams converts a RoutingRule to InsertRoutingRulesParams.
-func mapRoutingRulesParams(v *pkgspec.RoutingRule, parentID int64) InsertRoutingRulesParams {
-	return InsertRoutingRulesParams{
+// mapRoutingRulesParams converts a RoutingRule to db.InsertRoutingRulesParams.
+func mapRoutingRulesParams(v *pkgspec.RoutingRule, parentID int64) db.InsertRoutingRulesParams {
+	return db.InsertRoutingRulesParams{
 		DataStreamsID: parentID,
 		If:            v.If,
 		Namespace:     jsonNullString(v.Namespace),
@@ -332,9 +333,9 @@ func mapRoutingRulesParams(v *pkgspec.RoutingRule, parentID int64) InsertRouting
 	}
 }
 
-// mapStaticTestsParams converts a StaticTestConfig to InsertStaticTestsParams.
-func mapStaticTestsParams(v *pkgspec.StaticTestConfig, caseName string) InsertStaticTestsParams {
-	return InsertStaticTestsParams{
+// mapStaticTestsParams converts a StaticTestConfig to db.InsertStaticTestsParams.
+func mapStaticTestsParams(v *pkgspec.StaticTestConfig, caseName string) db.InsertStaticTestsParams {
+	return db.InsertStaticTestsParams{
 		CaseName:   caseName,
 		FileColumn: toNullInt64(v.Column()),
 		FileLine:   toNullInt64(v.Line()),
@@ -344,9 +345,9 @@ func mapStaticTestsParams(v *pkgspec.StaticTestConfig, caseName string) InsertSt
 	}
 }
 
-// mapStreamsParams converts a DataStreamStream to InsertStreamsParams.
-func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) InsertStreamsParams {
-	return InsertStreamsParams{
+// mapStreamsParams converts a DataStreamStream to db.InsertStreamsParams.
+func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) db.InsertStreamsParams {
+	return db.InsertStreamsParams{
 		DataStreamsID: parentID,
 		Description:   v.Description,
 		Enabled:       toNullBool(v.Enabled),
@@ -356,9 +357,9 @@ func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) InsertStreams
 	}
 }
 
-// mapSystemTestsParams converts a SystemTestConfig to InsertSystemTestsParams.
-func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) InsertSystemTestsParams {
-	return InsertSystemTestsParams{
+// mapSystemTestsParams converts a SystemTestConfig to db.InsertSystemTestsParams.
+func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.InsertSystemTestsParams {
+	return db.InsertSystemTestsParams{
 		AgentBaseImage:                  toNullString(string(v.Agent.BaseImage)),
 		AgentLinuxCapabilities:          jsonNullString(v.Agent.LinuxCapabilities),
 		AgentPidMode:                    toNullString(string(v.Agent.PidMode)),
@@ -382,9 +383,9 @@ func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) InsertSy
 	}
 }
 
-// mapTagsParams converts a Tag to InsertTagsParams.
-func mapTagsParams(v *pkgspec.Tag, parentID int64) InsertTagsParams {
-	return InsertTagsParams{
+// mapTagsParams converts a Tag to db.InsertTagsParams.
+func mapTagsParams(v *pkgspec.Tag, parentID int64) db.InsertTagsParams {
+	return db.InsertTagsParams{
 		AssetIds:   jsonNullString(v.AssetIDs),
 		AssetTypes: jsonNullString(v.AssetTypes),
 		FileColumn: toNullInt64(v.Column()),
@@ -395,9 +396,9 @@ func mapTagsParams(v *pkgspec.Tag, parentID int64) InsertTagsParams {
 	}
 }
 
-// mapTransformsParams converts a Transform to InsertTransformsParams.
-func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, manifestStart sql.NullBool, manifestDestinationIndexTemplate any) InsertTransformsParams {
-	return InsertTransformsParams{
+// mapTransformsParams converts a Transform to db.InsertTransformsParams.
+func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, manifestStart sql.NullBool, manifestDestinationIndexTemplate any) db.InsertTransformsParams {
+	return db.InsertTransformsParams{
 		Description:                      toNullString(v.Description),
 		Dest:                             jsonNullString(v.Dest),
 		DirName:                          dirName,
@@ -418,9 +419,9 @@ func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, m
 	}
 }
 
-// mapVarsParams converts a Var to InsertVarsParams.
-func mapVarsParams(v *pkgspec.Var) InsertVarsParams {
-	return InsertVarsParams{
+// mapVarsParams converts a Var to db.InsertVarsParams.
+func mapVarsParams(v *pkgspec.Var) db.InsertVarsParams {
+	return db.InsertVarsParams{
 		Default:               jsonNullString(v.Default),
 		Description:           toNullString(v.Description),
 		HideInDeploymentModes: jsonNullString(v.HideInDeploymentModes),

@@ -8,9 +8,10 @@ import (
 
 // Config holds all configuration for a SQL generator run.
 type Config struct {
-	TablesFile  string // Path to tables.yml
-	OutputDir   string // Output directory for generated files
-	PackageName string // Go package name
+	TablesFile   string // Path to tables.yml
+	OutputDir    string // Output directory for generated files
+	SQLOutputDir string // Output directory for schema.sql and query.sql (default: <OutputDir>/internal/db)
+	PackageName  string // Go package name
 }
 
 // Run executes the full SQL generation pipeline.
@@ -61,20 +62,27 @@ func Run(cfg Config) error {
 		}
 	}
 
-	// 5. Create output directory.
+	// 5. Create output directories.
 	if err := os.MkdirAll(cfg.OutputDir, 0o755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
+	}
+	sqlOutputDir := cfg.SQLOutputDir
+	if sqlOutputDir == "" {
+		sqlOutputDir = filepath.Join(cfg.OutputDir, "internal", "db")
+	}
+	if err := os.MkdirAll(sqlOutputDir, 0o755); err != nil {
+		return fmt.Errorf("creating SQL output directory: %w", err)
 	}
 
 	// 6. Generate schema.sql.
 	schemaSQL := GenerateSchemaSQL(sortedTables)
-	if err := os.WriteFile(filepath.Join(cfg.OutputDir, "schema.sql"), []byte(schemaSQL), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(sqlOutputDir, "schema.sql"), []byte(schemaSQL), 0o644); err != nil {
 		return fmt.Errorf("writing schema.sql: %w", err)
 	}
 
 	// 7. Generate query.sql.
 	querySQL := GenerateQuerySQL(sortedTables)
-	if err := os.WriteFile(filepath.Join(cfg.OutputDir, "query.sql"), []byte(querySQL), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(sqlOutputDir, "query.sql"), []byte(querySQL), 0o644); err != nil {
 		return fmt.Errorf("writing query.sql: %w", err)
 	}
 

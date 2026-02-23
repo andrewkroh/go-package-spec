@@ -15,6 +15,7 @@ func main() {
 
 	flag.StringVar(&cfg.TablesFile, "tables", "", "Path to tables.yml configuration file (required)")
 	flag.StringVar(&cfg.OutputDir, "output", "pkgsql", "Output directory for generated files")
+	flag.StringVar(&cfg.SQLOutputDir, "sql-output", "", "Output directory for schema.sql and query.sql (default: <output>/internal/db)")
 	flag.StringVar(&cfg.PackageName, "package", "pkgsql", "Go package name for generated files")
 	flag.Parse()
 

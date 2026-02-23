@@ -225,8 +225,8 @@ INSERT INTO data_stream_fields (
 
 -- name: InsertDiscoveryFields :one
 INSERT INTO discovery_fields (
-  packages_id,
-  name
+  name,
+  packages_id
 ) VALUES (
   ?,
   ?
@@ -234,12 +234,12 @@ INSERT INTO discovery_fields (
 
 -- name: InsertImages :one
 INSERT INTO images (
-  height,
-  byte_size,
   sha256,
   packages_id,
   src,
-  width
+  width,
+  height,
+  byte_size
 ) VALUES (
   ?,
   ?,
@@ -269,10 +269,10 @@ INSERT INTO ingest_pipelines (
 -- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
-  type,
-  attributes,
   json_pointer,
-  ordinal
+  ordinal,
+  type,
+  attributes
 ) VALUES (
   ?,
   ?,
@@ -292,8 +292,8 @@ INSERT INTO package_categories (
 
 -- name: InsertPackageFields :one
 INSERT INTO package_fields (
-  package_id,
-  field_id
+  field_id,
+  package_id
 ) VALUES (
   ?,
   ?
@@ -333,19 +333,19 @@ INSERT INTO package_screenshots (
 
 -- name: InsertPipelineTests :one
 INSERT INTO pipeline_tests (
-  skip_link,
-  skip_reason,
-  numeric_keyword_fields,
-  multiline,
-  name,
-  expected_path,
-  config_path,
   dynamic_fields,
+  numeric_keyword_fields,
+  name,
+  skip_link,
   fields,
   string_number_fields,
+  multiline,
   data_streams_id,
   format,
-  event_path
+  event_path,
+  expected_path,
+  config_path,
+  skip_reason
 ) VALUES (
   ?,
   ?,
@@ -465,9 +465,9 @@ INSERT INTO policy_template_screenshots (
 
 -- name: InsertPolicyTests :one
 INSERT INTO policy_tests (
+  case_name,
   data_streams_id,
   packages_id,
-  case_name,
   file_path,
   file_line,
   file_column,
@@ -550,9 +550,9 @@ INSERT INTO streams (
 
 -- name: InsertSystemTests :one
 INSERT INTO system_tests (
+  case_name,
   data_streams_id,
   packages_id,
-  case_name,
   file_path,
   file_line,
   file_column,
@@ -699,18 +699,18 @@ INSERT INTO vars (
 
 -- name: InsertDeprecations :one
 INSERT INTO deprecations (
+  policy_templates_id,
+  since,
+  replaced_by_data_stream,
+  replaced_by_package,
   packages_id,
   policy_template_inputs_id,
   data_streams_id,
-  description,
-  replaced_by_variable,
-  policy_templates_id,
   vars_id,
-  since,
-  replaced_by_data_stream,
+  description,
   replaced_by_input,
-  replaced_by_package,
-  replaced_by_policy_template
+  replaced_by_policy_template,
+  replaced_by_variable
 ) VALUES (
   ?,
   ?,

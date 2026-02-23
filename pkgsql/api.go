@@ -9,6 +9,7 @@ import (
 
 	"github.com/andrewkroh/go-package-spec/pkgreader"
 	"github.com/andrewkroh/go-package-spec/pkgspec"
+	dbpkg "github.com/andrewkroh/go-package-spec/pkgsql/internal/db"
 )
 
 // Option configures the behavior of WritePackages and WritePackage.
@@ -33,7 +34,7 @@ func WithECSLookup(fn func(name string) *pkgspec.ECSFieldDefinition) Option {
 // inside the body, which are preserved in sqlite_master when the tables
 // are created. This makes the database file self-documenting.
 func TableSchemas() []string {
-	return Creates
+	return creates
 }
 
 // WritePackages creates tables (if not exist) and inserts each package
@@ -41,7 +42,7 @@ func TableSchemas() []string {
 // the package name.
 func WritePackages(ctx context.Context, db *sql.DB, pkgs []*pkgreader.Package, opts ...Option) error {
 	// Create all tables.
-	for _, ddl := range Creates {
+	for _, ddl := range creates {
 		if _, err := db.ExecContext(ctx, ddl); err != nil {
 			return fmt.Errorf("creating tables: %w", err)
 		}
@@ -73,7 +74,7 @@ func WritePackage(ctx context.Context, db *sql.DB, pkg *pkgreader.Package, opts 
 	}
 	defer tx.Rollback()
 
-	q := New(tx)
+	q := dbpkg.New(tx)
 
 	if err := writePackage(ctx, q, pkg, cfg); err != nil {
 		return err
@@ -82,7 +83,7 @@ func WritePackage(ctx context.Context, db *sql.DB, pkg *pkgreader.Package, opts 
 	return tx.Commit()
 }
 
-func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *writeConfig) error {
+func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, cfg *writeConfig) error {
 	m := pkg.Manifest()
 	if m == nil {
 		return fmt.Errorf("package has no manifest")
@@ -142,7 +143,7 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 
 	// Insert categories.
 	for _, cat := range m.Categories {
-		_, err := q.InsertPackageCategories(ctx, InsertPackageCategoriesParams{
+		_, err := q.InsertPackageCategories(ctx, dbpkg.InsertPackageCategoriesParams{
 			PackageID: pkgID,
 			Category:  string(cat),
 		})
@@ -214,7 +215,7 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 	return nil
 }
 
-func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID int64, cfg *writeConfig) error {
+func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, cfg *writeConfig) error {
 	im := pkg.IntegrationManifest()
 	if im == nil {
 		return nil
@@ -222,7 +223,7 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 
 	// Insert package-level vars.
 	if err := writeVars(ctx, q, im.Vars, func(varID int64) error {
-		_, err := q.InsertPackageVars(ctx, InsertPackageVarsParams{
+		_, err := q.InsertPackageVars(ctx, dbpkg.InsertPackageVarsParams{
 			PackageID: pkgID,
 			VarID:     varID,
 		})
@@ -250,7 +251,7 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 
 		// Insert policy template categories.
 		for _, cat := range pt.Categories {
-			_, err := q.InsertPolicyTemplateCategories(ctx, InsertPolicyTemplateCategoriesParams{
+			_, err := q.InsertPolicyTemplateCategories(ctx, dbpkg.InsertPolicyTemplateCategoriesParams{
 				PolicyTemplateID: ptID,
 				Category:         string(cat),
 			})
@@ -277,7 +278,7 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 
 		// Insert policy template vars.
 		if err := writeVars(ctx, q, pt.Vars, func(varID int64) error {
-			_, err := q.InsertPolicyTemplateVars(ctx, InsertPolicyTemplateVarsParams{
+			_, err := q.InsertPolicyTemplateVars(ctx, dbpkg.InsertPolicyTemplateVarsParams{
 				PolicyTemplateID: ptID,
 				VarID:            varID,
 			})
@@ -305,7 +306,7 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 
 			// Insert input vars.
 			if err := writeVars(ctx, q, inp.Vars, func(varID int64) error {
-				_, err := q.InsertPolicyTemplateInputVars(ctx, InsertPolicyTemplateInputVarsParams{
+				_, err := q.InsertPolicyTemplateInputVars(ctx, dbpkg.InsertPolicyTemplateInputVarsParams{
 					PolicyTemplateInputID: inpID,
 					VarID:                 varID,
 				})
@@ -338,7 +339,7 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 
 		// Insert transform fields.
 		if err := writeFields(ctx, q, td.Fields, cfg, func(fieldID int64) error {
-			_, err := q.InsertTransformFields(ctx, InsertTransformFieldsParams{
+			_, err := q.InsertTransformFields(ctx, dbpkg.InsertTransformFieldsParams{
 				TransformID: tID,
 				FieldID:     fieldID,
 			})
@@ -359,7 +360,7 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 	return nil
 }
 
-func writeInput(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID int64, cfg *writeConfig) error {
+func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, cfg *writeConfig) error {
 	im := pkg.InputManifest()
 	if im == nil {
 		return nil
@@ -367,7 +368,7 @@ func writeInput(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID i
 
 	// Insert package-level vars.
 	if err := writeVars(ctx, q, im.Vars, func(varID int64) error {
-		_, err := q.InsertPackageVars(ctx, InsertPackageVarsParams{
+		_, err := q.InsertPackageVars(ctx, dbpkg.InsertPackageVarsParams{
 			PackageID: pkgID,
 			VarID:     varID,
 		})
@@ -378,7 +379,7 @@ func writeInput(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID i
 
 	// Insert fields (flattened).
 	if err := writeFields(ctx, q, pkg.Fields, cfg, func(fieldID int64) error {
-		_, err := q.InsertPackageFields(ctx, InsertPackageFieldsParams{
+		_, err := q.InsertPackageFields(ctx, dbpkg.InsertPackageFieldsParams{
 			PackageID: pkgID,
 			FieldID:   fieldID,
 		})
@@ -397,7 +398,7 @@ func writeInput(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID i
 	return nil
 }
 
-func writeContent(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID int64) error {
+func writeContent(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64) error {
 	cm := pkg.ContentManifest()
 	if cm == nil {
 		return nil
@@ -405,7 +406,7 @@ func writeContent(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID
 
 	// Insert discovery fields.
 	for _, df := range cm.Discovery.Fields {
-		_, err := q.InsertDiscoveryFields(ctx, InsertDiscoveryFieldsParams{
+		_, err := q.InsertDiscoveryFields(ctx, dbpkg.InsertDiscoveryFieldsParams{
 			PackagesID: pkgID,
 			Name:       df.Name,
 		})
@@ -417,7 +418,7 @@ func writeContent(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID
 	return nil
 }
 
-func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgreader.DataStream, pkgID int64, cfg *writeConfig) error {
+func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *pkgreader.DataStream, pkgID int64, cfg *writeConfig) error {
 	dsID, err := q.InsertDataStreams(ctx, mapDataStreamsParams(&ds.Manifest, pkgID, dsName))
 	if err != nil {
 		return fmt.Errorf("inserting data stream: %w", err)
@@ -434,7 +435,7 @@ func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgread
 
 	// Insert sample event.
 	if ds.SampleEvent != nil {
-		_, err := q.InsertSampleEvents(ctx, InsertSampleEventsParams{
+		_, err := q.InsertSampleEvents(ctx, dbpkg.InsertSampleEventsParams{
 			DataStreamsID: dsID,
 			Event:         string(ds.SampleEvent),
 		})
@@ -453,7 +454,7 @@ func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgread
 
 		// Insert stream vars.
 		if err := writeVars(ctx, q, stream.Vars, func(varID int64) error {
-			_, err := q.InsertStreamVars(ctx, InsertStreamVarsParams{
+			_, err := q.InsertStreamVars(ctx, dbpkg.InsertStreamVarsParams{
 				StreamID: streamID,
 				VarID:    varID,
 			})
@@ -465,7 +466,7 @@ func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgread
 
 	// Insert fields (flattened).
 	if err := writeFields(ctx, q, ds.Fields, cfg, func(fieldID int64) error {
-		_, err := q.InsertDataStreamFields(ctx, InsertDataStreamFieldsParams{
+		_, err := q.InsertDataStreamFields(ctx, dbpkg.InsertDataStreamFieldsParams{
 			DataStreamID: dsID,
 			FieldID:      fieldID,
 		})
@@ -510,7 +511,7 @@ func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgread
 	return nil
 }
 
-func writeFields(ctx context.Context, q *Queries, fieldsMap map[string]*pkgreader.FieldsFile, cfg *writeConfig, link func(fieldID int64) error) error {
+func writeFields(ctx context.Context, q *dbpkg.Queries, fieldsMap map[string]*pkgreader.FieldsFile, cfg *writeConfig, link func(fieldID int64) error) error {
 	if fieldsMap == nil {
 		return nil
 	}
@@ -536,7 +537,7 @@ func writeFields(ctx context.Context, q *Queries, fieldsMap map[string]*pkgreade
 	return nil
 }
 
-func writeProcessors(ctx context.Context, q *Queries, processors []*pkgspec.Processor, pipeID int64, basePath string) error {
+func writeProcessors(ctx context.Context, q *dbpkg.Queries, processors []*pkgspec.Processor, pipeID int64, basePath string) error {
 	for i, proc := range processors {
 		pointer := fmt.Sprintf("%s/%d/%s", basePath, i, proc.Type)
 
@@ -555,7 +556,7 @@ func writeProcessors(ctx context.Context, q *Queries, processors []*pkgspec.Proc
 			attrsVal = string(attrs)
 		}
 
-		_, err := q.InsertIngestProcessors(ctx, InsertIngestProcessorsParams{
+		_, err := q.InsertIngestProcessors(ctx, dbpkg.InsertIngestProcessorsParams{
 			IngestPipelinesID: pipeID,
 			Type:              proc.Type,
 			Attributes:        attrsVal,
@@ -577,13 +578,13 @@ func writeProcessors(ctx context.Context, q *Queries, processors []*pkgspec.Proc
 	return nil
 }
 
-func writeImages(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID int64) error {
+func writeImages(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64) error {
 	for _, img := range pkg.Images {
 		// Store src with leading "/" to match icon/screenshot src fields
 		// for easy joins (e.g. images.src = package_icons.src).
 		src := "/" + img.Path()
 
-		_, err := q.InsertImages(ctx, InsertImagesParams{
+		_, err := q.InsertImages(ctx, dbpkg.InsertImagesParams{
 			PackagesID: pkgID,
 			Src:        src,
 			Width:      toNullInt64(img.Width),
@@ -598,7 +599,7 @@ func writeImages(ctx context.Context, q *Queries, pkg *pkgreader.Package, pkgID 
 	return nil
 }
 
-func writeVars(ctx context.Context, q *Queries, vars []pkgspec.Var, link func(varID int64) error) error {
+func writeVars(ctx context.Context, q *dbpkg.Queries, vars []pkgspec.Var, link func(varID int64) error) error {
 	for i := range vars {
 		varID, err := q.InsertVars(ctx, mapVarsParams(&vars[i]))
 		if err != nil {
@@ -625,11 +626,11 @@ func isDeprecated(d pkgspec.Deprecated) bool {
 	return d.Since != ""
 }
 
-// deprecationParams builds the common InsertDeprecationsParams fields from a
+// deprecationParams builds the common dbpkg.InsertDeprecationsParams fields from a
 // Deprecated struct. The caller must set the appropriate FK field (PackagesID,
 // PolicyTemplatesID, etc.) before passing to InsertDeprecations.
-func deprecationParams(d pkgspec.Deprecated) InsertDeprecationsParams {
-	return InsertDeprecationsParams{
+func deprecationParams(d pkgspec.Deprecated) dbpkg.InsertDeprecationsParams {
+	return dbpkg.InsertDeprecationsParams{
 		Description:              d.Description,
 		Since:                    d.Since,
 		ReplacedByDataStream:     toNullString(d.ReplacedBy.DataStream),
@@ -640,7 +641,7 @@ func deprecationParams(d pkgspec.Deprecated) InsertDeprecationsParams {
 	}
 }
 
-func writeDataStreamTests(ctx context.Context, q *Queries, tests *pkgreader.DataStreamTests, dsID int64) error {
+func writeDataStreamTests(ctx context.Context, q *dbpkg.Queries, tests *pkgreader.DataStreamTests, dsID int64) error {
 	// Insert pipeline tests.
 	for _, tc := range tests.Pipeline {
 		if err := writePipelineTest(ctx, q, tc, dsID); err != nil {
@@ -678,8 +679,8 @@ func writeDataStreamTests(ctx context.Context, q *Queries, tests *pkgreader.Data
 	return nil
 }
 
-func writePipelineTest(ctx context.Context, q *Queries, tc *pkgreader.PipelineTestCase, dsID int64) error {
-	p := InsertPipelineTestsParams{
+func writePipelineTest(ctx context.Context, q *dbpkg.Queries, tc *pkgreader.PipelineTestCase, dsID int64) error {
+	p := dbpkg.InsertPipelineTestsParams{
 		DataStreamsID: dsID,
 		Name:          tc.Name,
 		Format:        tc.Format,
@@ -711,7 +712,7 @@ func writePipelineTest(ctx context.Context, q *Queries, tc *pkgreader.PipelineTe
 	return err
 }
 
-func writeInputTests(ctx context.Context, q *Queries, tests *pkgreader.InputPackageTests, pkgID int64) error {
+func writeInputTests(ctx context.Context, q *dbpkg.Queries, tests *pkgreader.InputPackageTests, pkgID int64) error {
 	// Insert system tests.
 	for caseName, cfg := range tests.System {
 		p := mapSystemTestsParams(cfg, caseName)

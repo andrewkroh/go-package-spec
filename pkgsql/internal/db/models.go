@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.29.0
 
-package pkgsql
+package db
 
 import (
 	"database/sql"
@@ -66,24 +66,24 @@ type DataStreamField struct {
 
 type Deprecation struct {
 	ID                       int64
+	PolicyTemplatesID        sql.NullInt64
+	Since                    string
+	ReplacedByDataStream     sql.NullString
+	ReplacedByPackage        sql.NullString
 	PackagesID               sql.NullInt64
 	PolicyTemplateInputsID   sql.NullInt64
 	DataStreamsID            sql.NullInt64
-	Description              string
-	ReplacedByVariable       sql.NullString
-	PolicyTemplatesID        sql.NullInt64
 	VarsID                   sql.NullInt64
-	Since                    string
-	ReplacedByDataStream     sql.NullString
+	Description              string
 	ReplacedByInput          sql.NullString
-	ReplacedByPackage        sql.NullString
 	ReplacedByPolicyTemplate sql.NullString
+	ReplacedByVariable       sql.NullString
 }
 
 type DiscoveryField struct {
 	ID         int64
-	PackagesID int64
 	Name       string
+	PackagesID int64
 }
 
 type Field struct {
@@ -133,12 +133,12 @@ type Field struct {
 
 type Image struct {
 	ID         int64
-	Height     sql.NullInt64
-	ByteSize   int64
 	Sha256     string
 	PackagesID int64
 	Src        string
 	Width      sql.NullInt64
+	Height     sql.NullInt64
+	ByteSize   int64
 }
 
 type IngestPipeline struct {
@@ -154,10 +154,10 @@ type IngestPipeline struct {
 type IngestProcessor struct {
 	ID                int64
 	IngestPipelinesID int64
-	Type              string
-	Attributes        interface{}
 	JsonPointer       string
 	Ordinal           int64
+	Type              string
+	Attributes        interface{}
 }
 
 type Package struct {
@@ -190,8 +190,8 @@ type PackageCategory struct {
 
 type PackageField struct {
 	ID        int64
-	PackageID int64
 	FieldID   int64
+	PackageID int64
 }
 
 type PackageIcon struct {
@@ -221,19 +221,19 @@ type PackageVar struct {
 
 type PipelineTest struct {
 	ID                   int64
-	SkipLink             sql.NullString
-	SkipReason           sql.NullString
-	NumericKeywordFields interface{}
-	Multiline            interface{}
-	Name                 string
-	ExpectedPath         sql.NullString
-	ConfigPath           sql.NullString
 	DynamicFields        interface{}
+	NumericKeywordFields interface{}
+	Name                 string
+	SkipLink             sql.NullString
 	Fields               interface{}
 	StringNumberFields   interface{}
+	Multiline            interface{}
 	DataStreamsID        int64
 	Format               string
 	EventPath            string
+	ExpectedPath         sql.NullString
+	ConfigPath           sql.NullString
+	SkipReason           sql.NullString
 }
 
 type PolicyTemplate struct {
@@ -308,9 +308,9 @@ type PolicyTemplateVar struct {
 
 type PolicyTest struct {
 	ID            int64
+	CaseName      string
 	DataStreamsID sql.NullInt64
 	PackagesID    sql.NullInt64
-	CaseName      string
 	FilePath      sql.NullString
 	FileLine      sql.NullInt64
 	FileColumn    sql.NullInt64
@@ -364,9 +364,9 @@ type StreamVar struct {
 
 type SystemTest struct {
 	ID                              int64
+	CaseName                        string
 	DataStreamsID                   sql.NullInt64
 	PackagesID                      sql.NullInt64
-	CaseName                        string
 	FilePath                        sql.NullString
 	FileLine                        sql.NullInt64
 	FileColumn                      sql.NullInt64

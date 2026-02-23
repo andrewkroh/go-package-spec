@@ -131,19 +131,19 @@ CREATE TABLE IF NOT EXISTS data_stream_fields (
 CREATE TABLE IF NOT EXISTS discovery_fields (
   -- Fields associated with package discovery capabilities.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
-  name TEXT NOT NULL -- name of the field
+  name TEXT NOT NULL, -- name of the field
+  packages_id INTEGER NOT NULL REFERENCES packages(id) -- foreign key to packages
 );
 
 CREATE TABLE IF NOT EXISTS images (
   -- Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  height INTEGER, -- image height in pixels (NULL for SVG)
-  byte_size INTEGER NOT NULL, -- file size in bytes
   sha256 TEXT NOT NULL, -- hex-encoded SHA-256 hash of file contents
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
   src TEXT NOT NULL, -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
-  width INTEGER -- image width in pixels (NULL for SVG)
+  width INTEGER, -- image width in pixels (NULL for SVG)
+  height INTEGER, -- image height in pixels (NULL for SVG)
+  byte_size INTEGER NOT NULL -- file size in bytes
 );
 
 CREATE TABLE IF NOT EXISTS ingest_pipelines (
@@ -161,10 +161,10 @@ CREATE TABLE IF NOT EXISTS ingest_processors (
   -- Individual ingest processors flattened from pipelines. Nested on_failure handlers are included as separate rows.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   ingest_pipelines_id INTEGER NOT NULL REFERENCES ingest_pipelines(id), -- foreign key to ingest_pipelines
-  type TEXT NOT NULL, -- processor type (e.g. set, grok, rename)
-  attributes JSON, -- JSON-encoded processor attributes
   json_pointer TEXT NOT NULL, -- RFC 6901 JSON Pointer location within the pipeline
-  ordinal INTEGER NOT NULL -- order of processor within the pipeline
+  ordinal INTEGER NOT NULL, -- order of processor within the pipeline
+  type TEXT NOT NULL, -- processor type (e.g. set, grok, rename)
+  attributes JSON -- JSON-encoded processor attributes
 );
 
 CREATE TABLE IF NOT EXISTS package_categories (
@@ -177,8 +177,8 @@ CREATE TABLE IF NOT EXISTS package_categories (
 CREATE TABLE IF NOT EXISTS package_fields (
   -- Join table linking fields to packages (for input packages).
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  package_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
-  field_id INTEGER NOT NULL REFERENCES fields(id) -- foreign key to fields
+  field_id INTEGER NOT NULL REFERENCES fields(id), -- foreign key to fields
+  package_id INTEGER NOT NULL REFERENCES packages(id) -- foreign key to packages
 );
 
 CREATE TABLE IF NOT EXISTS package_icons (
@@ -205,19 +205,19 @@ CREATE TABLE IF NOT EXISTS package_screenshots (
 CREATE TABLE IF NOT EXISTS pipeline_tests (
   -- Pipeline test cases for data streams. Each row is one test event file with optional per-case config.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  skip_link TEXT, -- link to issue for skipped test (from per-case config)
-  skip_reason TEXT, -- reason test is skipped (from per-case config)
-  numeric_keyword_fields JSON, -- keyword fields allowed numeric values (from per-case config)
-  multiline JSON, -- multi-line configuration (from per-case raw config)
-  name TEXT NOT NULL, -- test case stem name (e.g. test-example)
-  expected_path TEXT, -- path to expected output file
-  config_path TEXT, -- path to per-case config file
   dynamic_fields JSON, -- dynamic fields with regex patterns (from per-case config)
+  numeric_keyword_fields JSON, -- keyword fields allowed numeric values (from per-case config)
+  name TEXT NOT NULL, -- test case stem name (e.g. test-example)
+  skip_link TEXT, -- link to issue for skipped test (from per-case config)
   fields JSON, -- field definitions (from per-case config)
   string_number_fields JSON, -- numeric fields allowed string values (from per-case config)
+  multiline JSON, -- multi-line configuration (from per-case raw config)
   data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
   format TEXT NOT NULL, -- event file format (json or raw)
-  event_path TEXT NOT NULL -- path to event file
+  event_path TEXT NOT NULL, -- path to event file
+  expected_path TEXT, -- path to expected output file
+  config_path TEXT, -- path to per-case config file
+  skip_reason TEXT -- reason test is skipped (from per-case config)
 );
 
 CREATE TABLE IF NOT EXISTS policy_templates (
@@ -286,9 +286,9 @@ CREATE TABLE IF NOT EXISTS policy_template_screenshots (
 CREATE TABLE IF NOT EXISTS policy_tests (
   -- Policy test cases for data streams and input packages.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  case_name TEXT NOT NULL, -- test case name extracted from filename
   data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set for integration packages)
   packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set for input packages)
-  case_name TEXT NOT NULL, -- test case name extracted from filename
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
@@ -341,9 +341,9 @@ CREATE TABLE IF NOT EXISTS streams (
 CREATE TABLE IF NOT EXISTS system_tests (
   -- System test cases for data streams and input packages.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  case_name TEXT NOT NULL, -- test case name extracted from filename
   data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set for integration packages)
   packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set for input packages)
-  case_name TEXT NOT NULL, -- test case name extracted from filename
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
@@ -428,18 +428,18 @@ CREATE TABLE IF NOT EXISTS vars (
 CREATE TABLE IF NOT EXISTS deprecations (
   -- Deprecation notices for packages, policy templates, inputs, data streams, and vars. Each row links to exactly one parent entity via a nullable FK.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  policy_templates_id INTEGER REFERENCES policy_templates(id), -- foreign key to policy_templates (set when a policy template is deprecated)
+  since TEXT NOT NULL, -- version since when deprecated
+  replaced_by_data_stream TEXT, -- name of the data stream that replaces the deprecated one
+  replaced_by_package TEXT, -- name of the package that replaces the deprecated one
   packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set when a package is deprecated)
   policy_template_inputs_id INTEGER REFERENCES policy_template_inputs(id), -- foreign key to policy_template_inputs (set when an input is deprecated)
   data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set when a data stream is deprecated)
-  description TEXT NOT NULL, -- reason for deprecation
-  replaced_by_variable TEXT, -- name of the variable that replaces the deprecated one
-  policy_templates_id INTEGER REFERENCES policy_templates(id), -- foreign key to policy_templates (set when a policy template is deprecated)
   vars_id INTEGER REFERENCES vars(id), -- foreign key to vars (set when a var is deprecated)
-  since TEXT NOT NULL, -- version since when deprecated
-  replaced_by_data_stream TEXT, -- name of the data stream that replaces the deprecated one
+  description TEXT NOT NULL, -- reason for deprecation
   replaced_by_input TEXT, -- name of the input that replaces the deprecated one
-  replaced_by_package TEXT, -- name of the package that replaces the deprecated one
-  replaced_by_policy_template TEXT -- name of the policy template that replaces the deprecated one
+  replaced_by_policy_template TEXT, -- name of the policy template that replaces the deprecated one
+  replaced_by_variable TEXT -- name of the variable that replaces the deprecated one
 );
 
 CREATE TABLE IF NOT EXISTS package_vars (

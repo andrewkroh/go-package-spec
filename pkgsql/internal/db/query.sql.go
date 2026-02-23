@@ -3,7 +3,7 @@
 //   sqlc v1.29.0
 // source: query.sql
 
-package pkgsql
+package db
 
 import (
 	"context"
@@ -238,18 +238,18 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 
 const insertDeprecations = `-- name: InsertDeprecations :one
 INSERT INTO deprecations (
+  policy_templates_id,
+  since,
+  replaced_by_data_stream,
+  replaced_by_package,
   packages_id,
   policy_template_inputs_id,
   data_streams_id,
-  description,
-  replaced_by_variable,
-  policy_templates_id,
   vars_id,
-  since,
-  replaced_by_data_stream,
+  description,
   replaced_by_input,
-  replaced_by_package,
-  replaced_by_policy_template
+  replaced_by_policy_template,
+  replaced_by_variable
 ) VALUES (
   ?,
   ?,
@@ -267,34 +267,34 @@ INSERT INTO deprecations (
 `
 
 type InsertDeprecationsParams struct {
+	PolicyTemplatesID        sql.NullInt64
+	Since                    string
+	ReplacedByDataStream     sql.NullString
+	ReplacedByPackage        sql.NullString
 	PackagesID               sql.NullInt64
 	PolicyTemplateInputsID   sql.NullInt64
 	DataStreamsID            sql.NullInt64
-	Description              string
-	ReplacedByVariable       sql.NullString
-	PolicyTemplatesID        sql.NullInt64
 	VarsID                   sql.NullInt64
-	Since                    string
-	ReplacedByDataStream     sql.NullString
+	Description              string
 	ReplacedByInput          sql.NullString
-	ReplacedByPackage        sql.NullString
 	ReplacedByPolicyTemplate sql.NullString
+	ReplacedByVariable       sql.NullString
 }
 
 func (q *Queries) InsertDeprecations(ctx context.Context, arg InsertDeprecationsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertDeprecations,
+		arg.PolicyTemplatesID,
+		arg.Since,
+		arg.ReplacedByDataStream,
+		arg.ReplacedByPackage,
 		arg.PackagesID,
 		arg.PolicyTemplateInputsID,
 		arg.DataStreamsID,
-		arg.Description,
-		arg.ReplacedByVariable,
-		arg.PolicyTemplatesID,
 		arg.VarsID,
-		arg.Since,
-		arg.ReplacedByDataStream,
+		arg.Description,
 		arg.ReplacedByInput,
-		arg.ReplacedByPackage,
 		arg.ReplacedByPolicyTemplate,
+		arg.ReplacedByVariable,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -303,8 +303,8 @@ func (q *Queries) InsertDeprecations(ctx context.Context, arg InsertDeprecations
 
 const insertDiscoveryFields = `-- name: InsertDiscoveryFields :one
 INSERT INTO discovery_fields (
-  packages_id,
-  name
+  name,
+  packages_id
 ) VALUES (
   ?,
   ?
@@ -312,12 +312,12 @@ INSERT INTO discovery_fields (
 `
 
 type InsertDiscoveryFieldsParams struct {
-	PackagesID int64
 	Name       string
+	PackagesID int64
 }
 
 func (q *Queries) InsertDiscoveryFields(ctx context.Context, arg InsertDiscoveryFieldsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertDiscoveryFields, arg.PackagesID, arg.Name)
+	row := q.db.QueryRowContext(ctx, insertDiscoveryFields, arg.Name, arg.PackagesID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -506,12 +506,12 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 
 const insertImages = `-- name: InsertImages :one
 INSERT INTO images (
-  height,
-  byte_size,
   sha256,
   packages_id,
   src,
-  width
+  width,
+  height,
+  byte_size
 ) VALUES (
   ?,
   ?,
@@ -523,22 +523,22 @@ INSERT INTO images (
 `
 
 type InsertImagesParams struct {
-	Height     sql.NullInt64
-	ByteSize   int64
 	Sha256     string
 	PackagesID int64
 	Src        string
 	Width      sql.NullInt64
+	Height     sql.NullInt64
+	ByteSize   int64
 }
 
 func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertImages,
-		arg.Height,
-		arg.ByteSize,
 		arg.Sha256,
 		arg.PackagesID,
 		arg.Src,
 		arg.Width,
+		arg.Height,
+		arg.ByteSize,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -589,10 +589,10 @@ func (q *Queries) InsertIngestPipelines(ctx context.Context, arg InsertIngestPip
 const insertIngestProcessors = `-- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
-  type,
-  attributes,
   json_pointer,
-  ordinal
+  ordinal,
+  type,
+  attributes
 ) VALUES (
   ?,
   ?,
@@ -604,19 +604,19 @@ INSERT INTO ingest_processors (
 
 type InsertIngestProcessorsParams struct {
 	IngestPipelinesID int64
-	Type              string
-	Attributes        interface{}
 	JsonPointer       string
 	Ordinal           int64
+	Type              string
+	Attributes        interface{}
 }
 
 func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestProcessorsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertIngestProcessors,
 		arg.IngestPipelinesID,
-		arg.Type,
-		arg.Attributes,
 		arg.JsonPointer,
 		arg.Ordinal,
+		arg.Type,
+		arg.Attributes,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -647,8 +647,8 @@ func (q *Queries) InsertPackageCategories(ctx context.Context, arg InsertPackage
 
 const insertPackageFields = `-- name: InsertPackageFields :one
 INSERT INTO package_fields (
-  package_id,
-  field_id
+  field_id,
+  package_id
 ) VALUES (
   ?,
   ?
@@ -656,12 +656,12 @@ INSERT INTO package_fields (
 `
 
 type InsertPackageFieldsParams struct {
-	PackageID int64
 	FieldID   int64
+	PackageID int64
 }
 
 func (q *Queries) InsertPackageFields(ctx context.Context, arg InsertPackageFieldsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPackageFields, arg.PackageID, arg.FieldID)
+	row := q.db.QueryRowContext(ctx, insertPackageFields, arg.FieldID, arg.PackageID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -858,19 +858,19 @@ func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) 
 
 const insertPipelineTests = `-- name: InsertPipelineTests :one
 INSERT INTO pipeline_tests (
-  skip_link,
-  skip_reason,
-  numeric_keyword_fields,
-  multiline,
-  name,
-  expected_path,
-  config_path,
   dynamic_fields,
+  numeric_keyword_fields,
+  name,
+  skip_link,
   fields,
   string_number_fields,
+  multiline,
   data_streams_id,
   format,
-  event_path
+  event_path,
+  expected_path,
+  config_path,
+  skip_reason
 ) VALUES (
   ?,
   ?,
@@ -889,36 +889,36 @@ INSERT INTO pipeline_tests (
 `
 
 type InsertPipelineTestsParams struct {
-	SkipLink             sql.NullString
-	SkipReason           sql.NullString
-	NumericKeywordFields interface{}
-	Multiline            interface{}
-	Name                 string
-	ExpectedPath         sql.NullString
-	ConfigPath           sql.NullString
 	DynamicFields        interface{}
+	NumericKeywordFields interface{}
+	Name                 string
+	SkipLink             sql.NullString
 	Fields               interface{}
 	StringNumberFields   interface{}
+	Multiline            interface{}
 	DataStreamsID        int64
 	Format               string
 	EventPath            string
+	ExpectedPath         sql.NullString
+	ConfigPath           sql.NullString
+	SkipReason           sql.NullString
 }
 
 func (q *Queries) InsertPipelineTests(ctx context.Context, arg InsertPipelineTestsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPipelineTests,
-		arg.SkipLink,
-		arg.SkipReason,
-		arg.NumericKeywordFields,
-		arg.Multiline,
-		arg.Name,
-		arg.ExpectedPath,
-		arg.ConfigPath,
 		arg.DynamicFields,
+		arg.NumericKeywordFields,
+		arg.Name,
+		arg.SkipLink,
 		arg.Fields,
 		arg.StringNumberFields,
+		arg.Multiline,
 		arg.DataStreamsID,
 		arg.Format,
 		arg.EventPath,
+		arg.ExpectedPath,
+		arg.ConfigPath,
+		arg.SkipReason,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -1205,9 +1205,9 @@ func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTem
 
 const insertPolicyTests = `-- name: InsertPolicyTests :one
 INSERT INTO policy_tests (
+  case_name,
   data_streams_id,
   packages_id,
-  case_name,
   file_path,
   file_line,
   file_column,
@@ -1232,9 +1232,9 @@ INSERT INTO policy_tests (
 `
 
 type InsertPolicyTestsParams struct {
+	CaseName      string
 	DataStreamsID sql.NullInt64
 	PackagesID    sql.NullInt64
-	CaseName      string
 	FilePath      sql.NullString
 	FileLine      sql.NullInt64
 	FileColumn    sql.NullInt64
@@ -1247,9 +1247,9 @@ type InsertPolicyTestsParams struct {
 
 func (q *Queries) InsertPolicyTests(ctx context.Context, arg InsertPolicyTestsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPolicyTests,
+		arg.CaseName,
 		arg.DataStreamsID,
 		arg.PackagesID,
-		arg.CaseName,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,
@@ -1429,9 +1429,9 @@ func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (i
 
 const insertSystemTests = `-- name: InsertSystemTests :one
 INSERT INTO system_tests (
+  case_name,
   data_streams_id,
   packages_id,
-  case_name,
   file_path,
   file_line,
   file_column,
@@ -1478,9 +1478,9 @@ INSERT INTO system_tests (
 `
 
 type InsertSystemTestsParams struct {
+	CaseName                        string
 	DataStreamsID                   sql.NullInt64
 	PackagesID                      sql.NullInt64
-	CaseName                        string
 	FilePath                        sql.NullString
 	FileLine                        sql.NullInt64
 	FileColumn                      sql.NullInt64
@@ -1504,9 +1504,9 @@ type InsertSystemTestsParams struct {
 
 func (q *Queries) InsertSystemTests(ctx context.Context, arg InsertSystemTestsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertSystemTests,
+		arg.CaseName,
 		arg.DataStreamsID,
 		arg.PackagesID,
-		arg.CaseName,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,

@@ -17,5 +17,5 @@
 // and pass a *sql.DB.
 //
 //go:generate go run ../cmd/gensql -tables ../cmd/gensql/tables.yml -output . -package pkgsql
-//go:generate sqlc generate
+//go:generate go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.29.0 generate -f internal/db/sqlc.yaml
 package pkgsql
