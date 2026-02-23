@@ -3,7 +3,11 @@ package pkgsql_test
 import (
 	"context"
 	"database/sql"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 
@@ -564,4 +568,111 @@ discovery:
 	if dfName != "event.category" {
 		t.Errorf("expected event.category, got %s", dfName)
 	}
+}
+
+func TestBuildFleetPackagesDB(t *testing.T) {
+	dir := os.Getenv("INTEGRATIONS_DIR")
+	if dir == "" {
+		t.Skip("INTEGRATIONS_DIR not set")
+	}
+
+	packagesDir := filepath.Join(dir, "packages")
+	entries, err := os.ReadDir(packagesDir)
+	if err != nil {
+		t.Fatalf("reading packages directory: %v", err)
+	}
+
+	dbPath := filepath.Join(".", "fleet-packages.sqlite")
+	os.Remove(dbPath)
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Enable WAL mode and other SQLite optimizations for bulk inserts.
+	for _, pragma := range []string{
+		"PRAGMA journal_mode=WAL",
+		"PRAGMA synchronous=NORMAL",
+		"PRAGMA cache_size=-64000",
+		"PRAGMA mmap_size=268435456",
+		"PRAGMA temp_store=MEMORY",
+	} {
+		if _, err := db.Exec(pragma); err != nil {
+			t.Fatalf("setting %s: %v", pragma, err)
+		}
+	}
+
+	ctx := context.Background()
+
+	// Create tables.
+	for _, ddl := range pkgsql.TableSchemas() {
+		if _, err := db.ExecContext(ctx, ddl); err != nil {
+			t.Fatalf("creating tables: %v", err)
+		}
+	}
+
+	opts := []pkgreader.Option{
+		pkgreader.WithKnownFields(),
+		pkgreader.WithGitMetadata(),
+		pkgreader.WithImageMetadata(),
+		pkgreader.WithTestConfigs(),
+		pkgreader.WithAgentTemplates(),
+	}
+
+	// Read packages in parallel, write to DB sequentially.
+	type result struct {
+		pkg  *pkgreader.Package
+		name string
+		err  error
+	}
+
+	// Use more workers than CPUs since package reading is I/O bound
+	// (git blame subprocess, file reads).
+	workers := 4 * runtime.NumCPU()
+	work := make(chan string, workers)
+	results := make(chan result, workers)
+
+	var wg sync.WaitGroup
+	for range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for name := range work {
+				pkgPath := filepath.Join(packagesDir, name)
+				pkg, err := pkgreader.Read(pkgPath, opts...)
+				results <- result{pkg: pkg, name: name, err: err}
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	go func() {
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			work <- entry.Name()
+		}
+		close(work)
+	}()
+
+	var loaded int
+	for r := range results {
+		if r.err != nil {
+			t.Fatalf("reading package %s: %v", r.name, r.err)
+		}
+
+		if err := pkgsql.WritePackage(ctx, db, r.pkg); err != nil {
+			t.Fatalf("writing package %s: %v", r.name, r.err)
+		}
+		loaded++
+	}
+
+	t.Logf("loaded %d packages into %s", loaded, dbPath)
 }

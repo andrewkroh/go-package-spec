@@ -74,7 +74,10 @@ func WritePackage(ctx context.Context, db *sql.DB, pkg *pkgreader.Package, opts 
 	}
 	defer tx.Rollback()
 
-	q := dbpkg.New(tx)
+	sc := newStmtCache(tx)
+	defer sc.close()
+
+	q := dbpkg.New(sc)
 
 	if err := writePackage(ctx, q, pkg, cfg); err != nil {
 		return err
