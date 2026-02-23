@@ -2,7 +2,10 @@
 
 package pkgspec
 
-import yamlv3 "gopkg.in/yaml.v3"
+import (
+	"encoding/json"
+	yamlv3 "gopkg.in/yaml.v3"
+)
 
 // AgentPreStartScript optional: Custom sh script to be executed before starting the Elastic Agent
 // process (e.g. export environment variables)
@@ -206,13 +209,38 @@ func (v *PolicyTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 
 type PolicyTestDataStream struct {
 	// Variables used to configure settings defined in the data stream manifest.
-	Vars *TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
+	Vars                 *TestVars      `json:"vars,omitempty" yaml:"vars,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for PolicyTestDataStream.
+// It merges AdditionalProperties into the flat JSON output.
+func (v PolicyTestDataStream) MarshalJSON() ([]byte, error) {
+	type plainPolicyTestDataStream PolicyTestDataStream
+	data, err := json.Marshal(plainPolicyTestDataStream(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 // StaticTestConfig holds configuration for a static test case (test-*-config.yml).
 type StaticTestConfig struct {
-	FileMetadata `json:"-" yaml:"-"`
-	Skip         TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	FileMetadata         `json:"-" yaml:"-"`
+	Skip                 TestSkip       `json:"skip,omitempty" yaml:"skip,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for StaticTestConfig.
@@ -226,6 +254,29 @@ func (v *StaticTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	v.FileMetadata.line = node.Line
 	v.FileMetadata.column = node.Column
 	return nil
+}
+
+// MarshalJSON implements json.Marshaler for StaticTestConfig.
+// It merges AdditionalProperties into the flat JSON output.
+func (v StaticTestConfig) MarshalJSON() ([]byte, error) {
+	type plainStaticTestConfig StaticTestConfig
+	data, err := json.Marshal(plainStaticTestConfig(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 // SystemTestAgent configuration overrides for the Elastic Agent
@@ -252,7 +303,31 @@ type SystemTestAgent struct {
 	// Runtime to run the Elastic Agent process
 	Runtime SystemTestAgentRuntime `json:"runtime,omitempty" yaml:"runtime,omitempty"`
 	// User that runs the Elastic Agent process
-	User string `json:"user,omitempty" yaml:"user,omitempty"`
+	User                 string         `json:"user,omitempty" yaml:"user,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for SystemTestAgent.
+// It merges AdditionalProperties into the flat JSON output.
+func (v SystemTestAgent) MarshalJSON() ([]byte, error) {
+	type plainSystemTestAgent SystemTestAgent
+	data, err := json.Marshal(plainSystemTestAgent(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 // SystemTestAgentBaseImage elastic Agent image to be used for testing. Setting `default` will be
@@ -349,7 +424,8 @@ type SystemTestConfig struct {
 	// Variables used to configure settings defined in the package manifest.
 	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 	// Timeout for waiting for metrics data during a system test.
-	WaitForDataTimeout string `json:"wait_for_data_timeout,omitempty" yaml:"wait_for_data_timeout,omitempty"`
+	WaitForDataTimeout   string         `json:"wait_for_data_timeout,omitempty" yaml:"wait_for_data_timeout,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for SystemTestConfig.
@@ -365,9 +441,56 @@ func (v *SystemTestConfig) UnmarshalYAML(node *yamlv3.Node) error {
 	return nil
 }
 
+// MarshalJSON implements json.Marshaler for SystemTestConfig.
+// It merges AdditionalProperties into the flat JSON output.
+func (v SystemTestConfig) MarshalJSON() ([]byte, error) {
+	type plainSystemTestConfig SystemTestConfig
+	data, err := json.Marshal(plainSystemTestConfig(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
+}
+
 type SystemTestDataStream struct {
 	// Variables used to configure settings defined in the data stream manifest.
-	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
+	Vars                 TestVars       `json:"vars,omitempty" yaml:"vars,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for SystemTestDataStream.
+// It merges AdditionalProperties into the flat JSON output.
+func (v SystemTestDataStream) MarshalJSON() ([]byte, error) {
+	type plainSystemTestDataStream SystemTestDataStream
+	data, err := json.Marshal(plainSystemTestDataStream(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 // TestCategoryConfig controls parallelism and skip for a test category.
@@ -416,5 +539,29 @@ type TestSkip struct {
 
 // TestVars holds variables defined for a test case.
 type TestVars struct {
-	DataStreamDataset string `json:"data_stream.dataset,omitempty" yaml:"data_stream.dataset,omitempty"`
+	DataStreamDataset    string         `json:"data_stream.dataset,omitempty" yaml:"data_stream.dataset,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for TestVars.
+// It merges AdditionalProperties into the flat JSON output.
+func (v TestVars) MarshalJSON() ([]byte, error) {
+	type plainTestVars TestVars
+	data, err := json.Marshal(plainTestVars(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }

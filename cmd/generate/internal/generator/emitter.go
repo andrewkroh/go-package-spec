@@ -12,6 +12,10 @@ import (
 )
 
 const (
+	jsonPkg = "encoding/json"
+)
+
+const (
 	yamlPkg = "gopkg.in/yaml.v3"
 )
 
@@ -131,6 +135,11 @@ func (e *Emitter) emitStruct(f *File, goType *GoType) {
 	// Generate UnmarshalYAML for types that need YAML position capture.
 	if goType.EmbedMeta || goType.NeedsUnmarshalYAML {
 		e.emitUnmarshalYAML(f, goType)
+	}
+
+	// Generate MarshalJSON for types with additional properties.
+	if goType.HasAdditionalProperties {
+		e.emitMarshalJSON(f, goType)
 	}
 }
 
@@ -272,6 +281,69 @@ func (e *Emitter) emitUnmarshalYAML(f *File, goType *GoType) {
 	).Id("UnmarshalYAML").Params(
 		Id("node").Op("*").Qual(yamlPkg, "Node"),
 	).Error().Block(body...)
+	f.Line()
+}
+
+// emitMarshalJSON generates a MarshalJSON method that merges additional
+// properties into the flat JSON output. It uses the type-alias trick to
+// marshal declared fields, then overlays the AdditionalProperties map.
+func (e *Emitter) emitMarshalJSON(f *File, goType *GoType) {
+	aliasName := "plain" + goType.Name
+
+	var body []Code
+
+	// type alias = TypeName
+	body = append(body, Type().Id(aliasName).Id(goType.Name))
+
+	// data, err := json.Marshal(alias(v))
+	body = append(body,
+		List(Id("data"), Err()).Op(":=").Qual(jsonPkg, "Marshal").Call(
+			Id(aliasName).Call(Id("v")),
+		),
+	)
+	// if err != nil { return nil, err }
+	body = append(body, If(Err().Op("!=").Nil()).Block(
+		Return(Nil(), Err()),
+	))
+
+	// if len(v.AdditionalProperties) == 0 { return data, nil }
+	body = append(body, If(
+		Len(Id("v").Dot("AdditionalProperties")).Op("==").Lit(0),
+	).Block(
+		Return(Id("data"), Nil()),
+	))
+
+	// var m map[string]any
+	body = append(body, Var().Id("m").Map(String()).Any())
+
+	// if err := json.Unmarshal(data, &m); err != nil { return nil, err }
+	body = append(body, If(
+		Err().Op(":=").Qual(jsonPkg, "Unmarshal").Call(Id("data"), Op("&").Id("m")),
+		Err().Op("!=").Nil(),
+	).Block(
+		Return(Nil(), Err()),
+	))
+
+	// for k, val := range v.AdditionalProperties { if _, exists := m[k]; !exists { m[k] = val } }
+	body = append(body, For(
+		List(Id("k"), Id("val")).Op(":=").Range().Id("v").Dot("AdditionalProperties"),
+	).Block(
+		If(
+			List(Id("_"), Id("exists")).Op(":=").Id("m").Index(Id("k")),
+			Op("!").Id("exists"),
+		).Block(
+			Id("m").Index(Id("k")).Op("=").Id("val"),
+		),
+	))
+
+	// return json.Marshal(m)
+	body = append(body, Return(Qual(jsonPkg, "Marshal").Call(Id("m"))))
+
+	f.Comment(fmt.Sprintf("MarshalJSON implements json.Marshaler for %s.", goType.Name))
+	f.Comment("It merges AdditionalProperties into the flat JSON output.")
+	f.Func().Params(
+		Id("v").Id(goType.Name),
+	).Id("MarshalJSON").Params().Parens(List(Index().Byte(), Error())).Block(body...)
 	f.Line()
 }
 

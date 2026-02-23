@@ -2,7 +2,10 @@
 
 package pkgspec
 
-import yamlv3 "gopkg.in/yaml.v3"
+import (
+	"encoding/json"
+	yamlv3 "gopkg.in/yaml.v3"
+)
 
 // RoutingRule defines a single routing rule within a RoutingRuleSet (technical preview).
 type RoutingRule struct {
@@ -12,7 +15,31 @@ type RoutingRule struct {
 	Namespace StringOrStrings `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	// TargetDataset is the field reference or static value for the dataset part of the data stream
 	// name.
-	TargetDataset StringOrStrings `json:"target_dataset" yaml:"target_dataset"`
+	TargetDataset        StringOrStrings `json:"target_dataset" yaml:"target_dataset"`
+	AdditionalProperties map[string]any  `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for RoutingRule.
+// It merges AdditionalProperties into the flat JSON output.
+func (v RoutingRule) MarshalJSON() ([]byte, error) {
+	type plainRoutingRule RoutingRule
+	data, err := json.Marshal(plainRoutingRule(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 // RoutingRuleSet represents a set of routing rules for rerouting documents from a source dataset.

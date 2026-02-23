@@ -2,6 +2,8 @@
 
 package pkgspec
 
+import "encoding/json"
+
 // AgentlessResourceRequests the computing resources that the Agentless deployment will be initially
 // allocated.
 type AgentlessResourceRequests struct {
@@ -79,7 +81,31 @@ type DeploymentModesAgentless struct {
 type DeploymentModesDefault struct {
 	// Indicates if the default deployment mode is available for this template policy. It is enabled by
 	// default.
-	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Enabled              *bool          `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for DeploymentModesDefault.
+// It merges AdditionalProperties into the flat JSON output.
+func (v DeploymentModesDefault) MarshalJSON() ([]byte, error) {
+	type plainDeploymentModesDefault DeploymentModesDefault
+	data, err := json.Marshal(plainDeploymentModesDefault(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 type InputPolicyTemplate struct {

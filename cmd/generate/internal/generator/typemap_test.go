@@ -39,17 +39,20 @@ func TestTypeMapper_SimpleObject(t *testing.T) {
 	if st.Kind != GoTypeStruct {
 		t.Errorf("kind = %v, want GoTypeStruct", st.Kind)
 	}
-	if len(st.Fields) != 3 {
-		t.Fatalf("got %d fields, want 3", len(st.Fields))
+	if len(st.Fields) != 4 {
+		t.Fatalf("got %d fields, want 4", len(st.Fields))
+	}
+	if !st.HasAdditionalProperties {
+		t.Error("expected HasAdditionalProperties to be true")
 	}
 
 	// Check fields by name.
 	fieldMap := make(map[string]GoField)
 	for _, f := range st.Fields {
-		fieldMap[f.JSONName] = f
+		fieldMap[f.Name] = f
 	}
 
-	nameField := fieldMap["name"]
+	nameField := fieldMap["Name"]
 	if nameField.Type.Builtin != "string" {
 		t.Errorf("name type = %v, want string", nameField.Type)
 	}
@@ -57,14 +60,139 @@ func TestTypeMapper_SimpleObject(t *testing.T) {
 		t.Error("name should be required")
 	}
 
-	ageField := fieldMap["age"]
+	ageField := fieldMap["Age"]
 	if ageField.Type.Builtin != "int" {
 		t.Errorf("age type = %v, want int", ageField.Type)
 	}
 
-	activeField := fieldMap["active"]
+	activeField := fieldMap["Active"]
 	if !activeField.Type.Pointer {
 		t.Error("optional boolean should be a pointer")
+	}
+
+	apField := fieldMap["AdditionalProperties"]
+	if !apField.Type.Map {
+		t.Error("AdditionalProperties should be a map type")
+	}
+	if apField.Type.MapValue == nil || apField.Type.MapValue.Builtin != "any" {
+		t.Error("AdditionalProperties map value should be any")
+	}
+	if apField.JSONTag != "-" {
+		t.Errorf("AdditionalProperties JSONTag = %q, want %q", apField.JSONTag, "-")
+	}
+	if apField.YAMLTag != ",inline" {
+		t.Errorf("AdditionalProperties YAMLTag = %q, want %q", apField.YAMLTag, ",inline")
+	}
+}
+
+func TestTypeMapper_AdditionalProperties(t *testing.T) {
+	tests := []struct {
+		name           string
+		schema         string
+		wantAdditional bool
+		wantValueType  string // expected map value type (empty if no additional props)
+	}{
+		{
+			name: "false",
+			schema: `{
+				"type": "object",
+				"additionalProperties": false,
+				"properties": {"name": {"type": "string"}}
+			}`,
+			wantAdditional: false,
+		},
+		{
+			name: "true_explicit",
+			schema: `{
+				"type": "object",
+				"additionalProperties": true,
+				"properties": {"name": {"type": "string"}}
+			}`,
+			wantAdditional: true,
+			wantValueType:  "any",
+		},
+		{
+			name: "default_omitted",
+			schema: `{
+				"type": "object",
+				"properties": {"name": {"type": "string"}}
+			}`,
+			wantAdditional: true,
+			wantValueType:  "any",
+		},
+		{
+			name: "typed_schema",
+			schema: `{
+				"type": "object",
+				"additionalProperties": {"type": "string"},
+				"properties": {"name": {"type": "string"}}
+			}`,
+			wantAdditional: true,
+			wantValueType:  "string",
+		},
+		{
+			name: "allOf_false",
+			schema: `{
+				"type": "object",
+				"properties": {"name": {"type": "string"}},
+				"allOf": [{"additionalProperties": false}]
+			}`,
+			wantAdditional: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeFile(t, dir, "test.json", tt.schema)
+
+			reg := NewSchemaRegistry(dir)
+			mapper := NewTypeMapper(reg)
+			mapper.RegisterEntryPoint("test.json", "TestType")
+
+			if err := mapper.ProcessEntryPoint("test.json"); err != nil {
+				t.Fatal(err)
+			}
+
+			types := mapper.TypesByName()
+			st, ok := types["TestType"]
+			if !ok {
+				t.Fatal("expected TestType type")
+			}
+
+			if st.HasAdditionalProperties != tt.wantAdditional {
+				t.Errorf("HasAdditionalProperties = %v, want %v", st.HasAdditionalProperties, tt.wantAdditional)
+			}
+
+			// Find the AdditionalProperties field.
+			var apField *GoField
+			for i := range st.Fields {
+				if st.Fields[i].Name == "AdditionalProperties" {
+					apField = &st.Fields[i]
+					break
+				}
+			}
+
+			if tt.wantAdditional {
+				if apField == nil {
+					t.Fatal("expected AdditionalProperties field")
+				}
+				if !apField.Type.Map {
+					t.Error("AdditionalProperties should be a map")
+				}
+				if apField.Type.MapValue == nil {
+					t.Fatal("MapValue is nil")
+				}
+				got := apField.Type.MapValue.String()
+				if got != tt.wantValueType {
+					t.Errorf("map value type = %q, want %q", got, tt.wantValueType)
+				}
+			} else {
+				if apField != nil {
+					t.Error("did not expect AdditionalProperties field")
+				}
+			}
+		})
 	}
 }
 

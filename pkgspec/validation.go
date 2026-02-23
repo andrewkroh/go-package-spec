@@ -2,7 +2,10 @@
 
 package pkgspec
 
-import yamlv3 "gopkg.in/yaml.v3"
+import (
+	"encoding/json"
+	yamlv3 "gopkg.in/yaml.v3"
+)
 
 type Validation struct {
 	FileMetadata `json:"-" yaml:"-"`
@@ -36,8 +39,32 @@ type ValidationDocsStructure struct {
 }
 
 type ValidationDocsStructureSkip struct {
-	Reason string `json:"reason,omitempty" yaml:"reason,omitempty"`
-	Title  string `json:"title,omitempty" yaml:"title,omitempty"`
+	Reason               string         `json:"reason,omitempty" yaml:"reason,omitempty"`
+	Title                string         `json:"title,omitempty" yaml:"title,omitempty"`
+	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+}
+
+// MarshalJSON implements json.Marshaler for ValidationDocsStructureSkip.
+// It merges AdditionalProperties into the flat JSON output.
+func (v ValidationDocsStructureSkip) MarshalJSON() ([]byte, error) {
+	type plainValidationDocsStructureSkip ValidationDocsStructureSkip
+	data, err := json.Marshal(plainValidationDocsStructureSkip(v))
+	if err != nil {
+		return nil, err
+	}
+	if len(v.AdditionalProperties) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, val := range v.AdditionalProperties {
+		if _, exists := m[k]; !exists {
+			m[k] = val
+		}
+	}
+	return json.Marshal(m)
 }
 
 // ValidationErrors rules to manage the validation results
