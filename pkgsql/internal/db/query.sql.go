@@ -54,10 +54,16 @@ func (q *Queries) InsertBuildManifests(ctx context.Context, arg InsertBuildManif
 const insertChangelogEntries = `-- name: InsertChangelogEntries :one
 INSERT INTO changelog_entries (
   changelogs_id,
+  file_path,
+  file_line,
+  file_column,
   description,
   link,
   type
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -67,6 +73,9 @@ INSERT INTO changelog_entries (
 
 type InsertChangelogEntriesParams struct {
 	ChangelogsID int64
+	FilePath     sql.NullString
+	FileLine     sql.NullInt64
+	FileColumn   sql.NullInt64
 	Description  string
 	Link         string
 	Type         string
@@ -75,6 +84,9 @@ type InsertChangelogEntriesParams struct {
 func (q *Queries) InsertChangelogEntries(ctx context.Context, arg InsertChangelogEntriesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertChangelogEntries,
 		arg.ChangelogsID,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
 		arg.Description,
 		arg.Link,
 		arg.Type,
@@ -592,8 +604,14 @@ INSERT INTO ingest_processors (
   attributes,
   json_pointer,
   ordinal,
-  type
+  type,
+  file_path,
+  file_line,
+  file_column
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -608,6 +626,9 @@ type InsertIngestProcessorsParams struct {
 	JsonPointer       string
 	Ordinal           int64
 	Type              string
+	FilePath          sql.NullString
+	FileLine          sql.NullInt64
+	FileColumn        sql.NullInt64
 }
 
 func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestProcessorsParams) (int64, error) {
@@ -617,6 +638,9 @@ func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestPr
 		arg.JsonPointer,
 		arg.Ordinal,
 		arg.Type,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -1125,6 +1149,9 @@ func (q *Queries) InsertPolicyTemplateVars(ctx context.Context, arg InsertPolicy
 const insertPolicyTemplates = `-- name: InsertPolicyTemplates :one
 INSERT INTO policy_templates (
   packages_id,
+  file_path,
+  file_line,
+  file_column,
   configuration_links,
   data_streams,
   deployment_modes_agentless_division,
@@ -1156,12 +1183,18 @@ INSERT INTO policy_templates (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id
 `
 
 type InsertPolicyTemplatesParams struct {
 	PackagesID                                      int64
+	FilePath                                        sql.NullString
+	FileLine                                        sql.NullInt64
+	FileColumn                                      sql.NullInt64
 	ConfigurationLinks                              interface{}
 	DataStreams                                     interface{}
 	DeploymentModesAgentlessDivision                sql.NullString
@@ -1182,6 +1215,9 @@ type InsertPolicyTemplatesParams struct {
 func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTemplatesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPolicyTemplates,
 		arg.PackagesID,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
 		arg.ConfigurationLinks,
 		arg.DataStreams,
 		arg.DeploymentModesAgentlessDivision,
@@ -1267,10 +1303,16 @@ func (q *Queries) InsertPolicyTests(ctx context.Context, arg InsertPolicyTestsPa
 const insertRoutingRules = `-- name: InsertRoutingRules :one
 INSERT INTO routing_rules (
   data_streams_id,
+  file_path,
+  file_line,
+  file_column,
   "if",
   namespace,
   target_dataset
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -1280,6 +1322,9 @@ INSERT INTO routing_rules (
 
 type InsertRoutingRulesParams struct {
 	DataStreamsID int64
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
 	If            string
 	Namespace     interface{}
 	TargetDataset interface{}
@@ -1288,6 +1333,9 @@ type InsertRoutingRulesParams struct {
 func (q *Queries) InsertRoutingRules(ctx context.Context, arg InsertRoutingRulesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertRoutingRules,
 		arg.DataStreamsID,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
 		arg.If,
 		arg.Namespace,
 		arg.TargetDataset,
@@ -1389,6 +1437,9 @@ func (q *Queries) InsertStreamVars(ctx context.Context, arg InsertStreamVarsPara
 const insertStreams = `-- name: InsertStreams :one
 INSERT INTO streams (
   data_streams_id,
+  file_path,
+  file_line,
+  file_column,
   description,
   enabled,
   input,
@@ -1400,12 +1451,18 @@ INSERT INTO streams (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id
 `
 
 type InsertStreamsParams struct {
 	DataStreamsID int64
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
 	Description   string
 	Enabled       sql.NullBool
 	Input         string
@@ -1416,6 +1473,9 @@ type InsertStreamsParams struct {
 func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertStreams,
 		arg.DataStreamsID,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
 		arg.Description,
 		arg.Enabled,
 		arg.Input,
@@ -1686,6 +1746,9 @@ func (q *Queries) InsertTransforms(ctx context.Context, arg InsertTransformsPara
 
 const insertVars = `-- name: InsertVars :one
 INSERT INTO vars (
+  file_path,
+  file_line,
+  file_column,
   "default",
   description,
   hide_in_deployment_modes,
@@ -1714,11 +1777,17 @@ INSERT INTO vars (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id
 `
 
 type InsertVarsParams struct {
+	FilePath              sql.NullString
+	FileLine              sql.NullInt64
+	FileColumn            sql.NullInt64
 	Default               interface{}
 	Description           sql.NullString
 	HideInDeploymentModes interface{}
@@ -1737,6 +1806,9 @@ type InsertVarsParams struct {
 
 func (q *Queries) InsertVars(ctx context.Context, arg InsertVarsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertVars,
+		arg.FilePath,
+		arg.FileLine,
+		arg.FileColumn,
 		arg.Default,
 		arg.Description,
 		arg.HideInDeploymentModes,

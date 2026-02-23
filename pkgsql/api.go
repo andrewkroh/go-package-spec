@@ -565,6 +565,9 @@ func writeProcessors(ctx context.Context, q *dbpkg.Queries, processors []*pkgspe
 			Attributes:        attrsVal,
 			JsonPointer:       pointer,
 			Ordinal:           int64(i),
+			FilePath:          toNullString(proc.FilePath()),
+			FileLine:          toNullInt64(proc.Line()),
+			FileColumn:        toNullInt64(proc.Column()),
 		})
 		if err != nil {
 			return fmt.Errorf("inserting processor %s: %w", proc.Type, err)

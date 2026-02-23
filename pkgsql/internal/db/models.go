@@ -31,6 +31,9 @@ type Changelog struct {
 type ChangelogEntry struct {
 	ID           int64
 	ChangelogsID int64
+	FilePath     sql.NullString
+	FileLine     sql.NullInt64
+	FileColumn   sql.NullInt64
 	Description  string
 	Link         string
 	Type         string
@@ -158,6 +161,9 @@ type IngestProcessor struct {
 	JsonPointer       string
 	Ordinal           int64
 	Type              string
+	FilePath          sql.NullString
+	FileLine          sql.NullInt64
+	FileColumn        sql.NullInt64
 }
 
 type Package struct {
@@ -239,6 +245,9 @@ type PipelineTest struct {
 type PolicyTemplate struct {
 	ID                                              int64
 	PackagesID                                      int64
+	FilePath                                        sql.NullString
+	FileLine                                        sql.NullInt64
+	FileColumn                                      sql.NullInt64
 	ConfigurationLinks                              interface{}
 	DataStreams                                     interface{}
 	DeploymentModesAgentlessDivision                sql.NullString
@@ -324,6 +333,9 @@ type PolicyTest struct {
 type RoutingRule struct {
 	ID            int64
 	DataStreamsID int64
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
 	If            string
 	Namespace     interface{}
 	TargetDataset interface{}
@@ -349,6 +361,9 @@ type StaticTest struct {
 type Stream struct {
 	ID            int64
 	DataStreamsID int64
+	FilePath      sql.NullString
+	FileLine      sql.NullInt64
+	FileColumn    sql.NullInt64
 	Description   string
 	Enabled       sql.NullBool
 	Input         string
@@ -428,6 +443,9 @@ type TransformField struct {
 
 type Var struct {
 	ID                    int64
+	FilePath              sql.NullString
+	FileLine              sql.NullInt64
+	FileColumn            sql.NullInt64
 	Default               interface{}
 	Description           sql.NullString
 	HideInDeploymentModes interface{}

@@ -30,6 +30,7 @@ types:
 
   Var:
     doc: "Var represents an input variable definition for a package."
+    embed_meta: true
     fields:
       default:
         type: any
@@ -119,6 +120,7 @@ types:
   RoutingRule2:
     name: RoutingRule
     doc: "RoutingRule defines a single routing rule within a RoutingRuleSet (technical preview)."
+    embed_meta: true
     fields:
       target_dataset:
         type: StringOrStrings
@@ -282,6 +284,7 @@ types:
 
   DataStreamManifestStream:
     name: DataStreamStream
+    embed_meta: true
 
   DataStreamManifestType:
     name: DataStreamType
@@ -300,6 +303,7 @@ types:
 
   IntegrationManifestPolicyTemplate:
     name: PolicyTemplate
+    embed_meta: true
 
   InputManifestPolicyTemplate:
     name: InputPolicyTemplate
@@ -358,6 +362,7 @@ types:
 
   ChangelogChange:
     name: ChangelogEntry
+    embed_meta: true
 
   ChangelogChangeType:
     name: ChangelogEntryType

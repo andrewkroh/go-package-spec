@@ -2,13 +2,17 @@
 
 package pkgspec
 
-import "encoding/json"
+import (
+	"encoding/json"
+	yamlv3 "gopkg.in/yaml.v3"
+)
 
 // RequiredVars required conditional variables for the package.
 type RequiredVars struct{}
 
 // Var represents an input variable definition for a package.
 type Var struct {
+	FileMetadata `json:"-" yaml:"-"`
 	// Default is the default value for the variable.
 	Default    any        `json:"default,omitempty" yaml:"default,omitempty"`
 	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
@@ -50,6 +54,19 @@ type Var struct {
 	// List of allowed URL schemes for the url type. If empty, any scheme is allowed. An empty string
 	// can be used to indicate that the scheme is not mandatory.
 	URLAllowedSchemes []string `json:"url_allowed_schemes,omitempty" yaml:"url_allowed_schemes,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for Var.
+// It captures the YAML node position for FileMetadata.
+func (v *Var) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainVar Var
+	x := (*plainVar)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
 }
 
 type VarGroup struct {

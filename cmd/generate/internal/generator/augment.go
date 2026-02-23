@@ -19,6 +19,7 @@ type AugmentConfig struct {
 type AugmentType struct {
 	Name        string                  `yaml:"name,omitempty"`
 	Doc         string                  `yaml:"doc,omitempty"`
+	EmbedMeta   bool                    `yaml:"embed_meta,omitempty"`
 	Fields      map[string]AugmentField `yaml:"fields,omitempty"`
 	ExtraFields []AugmentExtraField     `yaml:"extra_fields,omitempty"`
 }
@@ -113,6 +114,11 @@ func ApplyAugmentations(types map[string]*GoType, config *AugmentConfig) {
 
 		if aug.Doc != "" {
 			goType.Doc = aug.Doc
+		}
+
+		// Enable FileMetadata embedding if requested.
+		if aug.EmbedMeta && !goType.EmbedMeta {
+			goType.EmbedMeta = true
 		}
 
 		// Apply field overrides.

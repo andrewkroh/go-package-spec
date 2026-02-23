@@ -198,6 +198,9 @@ func mapChangelogEntriesParams(v *pkgspec.ChangelogEntry, parentID int64) db.Ins
 	return db.InsertChangelogEntriesParams{
 		ChangelogsID: parentID,
 		Description:  v.Description,
+		FileColumn:   toNullInt64(v.Column()),
+		FileLine:     toNullInt64(v.Line()),
+		FilePath:     toNullString(v.FilePath()),
 		Link:         v.Link,
 		Type:         string(v.Type),
 	}
@@ -276,6 +279,9 @@ func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) db.Inse
 		DeploymentModesAgentlessTeam:                    toNullString(v.DeploymentModes.Agentless.Team),
 		DeploymentModesDefaultEnabled:                   toNullBool(v.DeploymentModes.Default.Enabled),
 		Description:                                     v.Description,
+		FileColumn:                                      toNullInt64(v.Column()),
+		FileLine:                                        toNullInt64(v.Line()),
+		FilePath:                                        toNullString(v.FilePath()),
 		FipsCompatible:                                  toNullBool(v.FipsCompatible),
 		Multiple:                                        toNullBool(v.Multiple),
 		Name:                                            v.Name,
@@ -341,6 +347,9 @@ func mapPolicyTestsParams(v *pkgspec.PolicyTestConfig, caseName string) db.Inser
 func mapRoutingRulesParams(v *pkgspec.RoutingRule, parentID int64) db.InsertRoutingRulesParams {
 	return db.InsertRoutingRulesParams{
 		DataStreamsID: parentID,
+		FileColumn:    toNullInt64(v.Column()),
+		FileLine:      toNullInt64(v.Line()),
+		FilePath:      toNullString(v.FilePath()),
 		If:            v.If,
 		Namespace:     jsonNullString(v.Namespace),
 		TargetDataset: jsonNullString(v.TargetDataset),
@@ -365,6 +374,9 @@ func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) db.InsertStre
 		DataStreamsID: parentID,
 		Description:   v.Description,
 		Enabled:       toNullBool(v.Enabled),
+		FileColumn:    toNullInt64(v.Column()),
+		FileLine:      toNullInt64(v.Line()),
+		FilePath:      toNullString(v.FilePath()),
 		Input:         v.Input,
 		TemplatePath:  toNullString(v.TemplatePath),
 		Title:         v.Title,
@@ -438,6 +450,9 @@ func mapVarsParams(v *pkgspec.Var) db.InsertVarsParams {
 	return db.InsertVarsParams{
 		Default:               jsonNullString(v.Default),
 		Description:           toNullString(v.Description),
+		FileColumn:            toNullInt64(v.Column()),
+		FileLine:              toNullInt64(v.Line()),
+		FilePath:              toNullString(v.FilePath()),
 		HideInDeploymentModes: jsonNullString(v.HideInDeploymentModes),
 		MaxDuration:           toNullString(v.MaxDuration),
 		MinDuration:           toNullString(v.MinDuration),

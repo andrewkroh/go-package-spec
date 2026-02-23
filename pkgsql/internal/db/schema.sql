@@ -93,6 +93,9 @@ CREATE TABLE IF NOT EXISTS changelog_entries (
   -- Individual changelog entries within a changelog version.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   changelogs_id INTEGER NOT NULL REFERENCES changelogs(id), -- foreign key to changelogs
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   description TEXT NOT NULL, -- Description of change.
   link TEXT NOT NULL, -- Link to issue or PR describing change in detail.
   type TEXT NOT NULL -- Type of change.
@@ -164,7 +167,10 @@ CREATE TABLE IF NOT EXISTS ingest_processors (
   attributes JSON, -- JSON-encoded processor attributes
   json_pointer TEXT NOT NULL, -- RFC 6901 JSON Pointer location within the pipeline
   ordinal INTEGER NOT NULL, -- order of processor within the pipeline
-  type TEXT NOT NULL -- processor type (e.g. set, grok, rename)
+  type TEXT NOT NULL, -- processor type (e.g. set, grok, rename)
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER -- source file column number
 );
 
 CREATE TABLE IF NOT EXISTS package_categories (
@@ -224,6 +230,9 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   -- Policy templates offered by integration packages. Defines how an integration is configured in Fleet.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   configuration_links JSON, -- JSON-encoded ConfigurationLinks
   data_streams JSON, -- List of data streams compatible with the policy template.
   deployment_modes_agentless_division TEXT, -- The division responsible for the integration. This is used to tag the agentless agent deployments for monitoring.
@@ -303,6 +312,9 @@ CREATE TABLE IF NOT EXISTS routing_rules (
   -- Routing rules for rerouting documents from a source dataset (technical preview).
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   "if" TEXT NOT NULL, -- Conditionally execute the processor
   namespace JSON, -- Namespace is the field reference or static value for the namespace part of the data stream name.
   target_dataset JSON -- TargetDataset is the field reference or static value for the dataset part of the data stream name.
@@ -331,6 +343,9 @@ CREATE TABLE IF NOT EXISTS streams (
   -- Streams offered by a data stream.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   description TEXT NOT NULL, -- Description of the stream. It should describe what is being collected and with what collector, following the structure "Collect X from Y with X".
   enabled BOOLEAN, -- Is stream enabled?
   input TEXT NOT NULL, -- Input
@@ -409,6 +424,9 @@ CREATE TABLE IF NOT EXISTS transform_fields (
 CREATE TABLE IF NOT EXISTS vars (
   -- Input variable definitions. Linked to packages, policy templates, streams, or inputs via join tables.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  file_path TEXT, -- source file path
+  file_line INTEGER, -- source file line number
+  file_column INTEGER, -- source file column number
   "default" JSON, -- Default is the default value for the variable.
   description TEXT, -- Short description of variable.
   hide_in_deployment_modes JSON, -- Whether this variable should be hidden in the UI for agent policies intended to some specific deployment modes.
