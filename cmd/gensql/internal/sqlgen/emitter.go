@@ -141,10 +141,23 @@ func emitHelpers(f *File) {
 
 	// jsonNullString
 	f.Comment("jsonNullString marshals a value to a sql.NullString JSON column.")
+	f.Comment("Zero-value structs and nil pointers produce NULL instead of empty JSON.")
+	f.Comment("Non-nil pointers are preserved even if they point to a zero-value struct,")
+	f.Comment("because a non-nil pointer indicates the YAML key was explicitly present.")
 	f.Func().Id("jsonNullString").Params(
 		Id("v").Any(),
 	).Qual(databaseSQLPkg, "NullString").Block(
 		If(Id("v").Op("==").Nil()).Block(
+			Return(Qual(databaseSQLPkg, "NullString").Values()),
+		),
+		Id("rv").Op(":=").Qual("reflect", "ValueOf").Call(Id("v")),
+		Comment("For non-pointer types (bare structs, slices, maps), treat zero"),
+		Comment("values as NULL to avoid storing empty JSON like \"{}\" or \"[]\"."),
+		If(Id("rv").Dot("Kind").Call().Op("!=").Qual("reflect", "Ptr").Op("&&").Id("rv").Dot("IsZero").Call()).Block(
+			Return(Qual(databaseSQLPkg, "NullString").Values()),
+		),
+		Comment("Nil pointers are NULL."),
+		If(Id("rv").Dot("Kind").Call().Op("==").Qual("reflect", "Ptr").Op("&&").Id("rv").Dot("IsNil").Call()).Block(
 			Return(Qual(databaseSQLPkg, "NullString").Values()),
 		),
 		List(Id("data"), Id("err")).Op(":=").Qual(encodingJSONPkg, "Marshal").Call(Id("v")),
