@@ -362,7 +362,7 @@ func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.Inser
 	return db.InsertSystemTestsParams{
 		AgentBaseImage:                  toNullString(string(v.Agent.BaseImage)),
 		AgentLinuxCapabilities:          jsonNullString(v.Agent.LinuxCapabilities),
-		AgentPidMode:                    toNullString(string(v.Agent.PidMode)),
+		AgentPidMode:                    toNullString(string(v.Agent.PIDMode)),
 		AgentPorts:                      jsonNullString(v.Agent.Ports),
 		AgentPreStartScriptContents:     v.Agent.PreStartScript.Contents,
 		AgentPreStartScriptLanguage:     toNullString(string(v.Agent.PreStartScript.Language)),

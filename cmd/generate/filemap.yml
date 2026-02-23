@@ -165,7 +165,7 @@ files:
     - SystemTestAgent
     - SystemTestAgentBaseImage
     - SystemTestAgentLinuxCapability
-    - SystemTestAgentPidMode
+    - SystemTestAgentPIDMode
     - AgentPreStartScript
     - AgentPreStartScriptLanguage
     - AgentProvisioningScript

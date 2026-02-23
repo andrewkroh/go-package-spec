@@ -17,6 +17,7 @@ var knownAbbreviations = map[string]string{
 	"cpu":   "CPU",
 	"ilm":   "ILM",
 	"ip":    "IP",
+	"pid":   "PID",
 	"api":   "API",
 	"ssl":   "SSL",
 	"tls":   "TLS",

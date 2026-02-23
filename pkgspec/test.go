@@ -240,7 +240,7 @@ type SystemTestAgent struct {
 	LinuxCapabilities []SystemTestAgentLinuxCapability `json:"linux_capabilities,omitempty" yaml:"linux_capabilities,omitempty"`
 	// Control access to PID namespaces. When set to `host`, the Elastic Agent will have access to the
 	// PID namespace of the host.
-	PidMode SystemTestAgentPidMode `json:"pid_mode,omitempty" yaml:"pid_mode,omitempty"`
+	PIDMode SystemTestAgentPIDMode `json:"pid_mode,omitempty" yaml:"pid_mode,omitempty"`
 	// List of ports to be exposed to access to the Elastic Agent
 	Ports []string `json:"ports,omitempty" yaml:"ports,omitempty"`
 	// Optional: Custom sh script to be executed before starting the Elastic Agent process (e.g. export
@@ -317,13 +317,13 @@ const (
 	SystemTestAgentLinuxCapabilityWakeAlarm         SystemTestAgentLinuxCapability = "WAKE_ALARM"
 )
 
-// SystemTestAgentPidMode control access to PID namespaces. When set to `host`, the Elastic Agent
+// SystemTestAgentPIDMode control access to PID namespaces. When set to `host`, the Elastic Agent
 // will have access to the PID namespace of the host.
-type SystemTestAgentPidMode string
+type SystemTestAgentPIDMode string
 
-// Enum values for SystemTestAgentPidMode.
+// Enum values for SystemTestAgentPIDMode.
 const (
-	SystemTestAgentPidModeHost SystemTestAgentPidMode = "host"
+	SystemTestAgentPIDModeHost SystemTestAgentPIDMode = "host"
 )
 
 // SystemTestAgentRuntime runtime to run the Elastic Agent process

@@ -316,8 +316,8 @@ types:
   SystemTestConfigAgentLinuxCapability:
     name: SystemTestAgentLinuxCapability
 
-  SystemTestConfigAgentPidMode:
-    name: SystemTestAgentPidMode
+  SystemTestConfigAgentPIDMode:
+    name: SystemTestAgentPIDMode
 
   SystemTestConfigAgentRuntime:
     name: SystemTestAgentRuntime
