@@ -26,12 +26,17 @@ tables:
     inline:
       - Owner
       - Source
+      - Deprecated
+      - Deprecated.ReplacedBy
     exclude:
       - Categories
       - Icons
       - Screenshots
-    json_columns:
-      - Deprecated
+    columns:
+      deprecated_description:
+        not_null: false
+      deprecated_since:
+        not_null: false
 
   package_categories:
     comment: "Categories assigned to a package."
@@ -84,9 +89,15 @@ tables:
       - DeploymentModes.Agentless
       - DeploymentModes.Agentless.Resources
       - DeploymentModes.Agentless.Resources.Requests
-    json_columns:
       - Deprecated
+      - Deprecated.ReplacedBy
+    json_columns:
       - ConfigurationLinks
+    columns:
+      deprecated_description:
+        not_null: false
+      deprecated_since:
+        not_null: false
 
   policy_template_categories:
     comment: "Categories assigned to a policy template."
@@ -118,10 +129,17 @@ tables:
     exclude:
       - Vars
       - RequiredVars
-    json_columns:
+    inline:
       - Deprecated
+      - Deprecated.ReplacedBy
+    json_columns:
       - DeploymentModes
       - HideInVarGroupOptions
+    columns:
+      deprecated_description:
+        not_null: false
+      deprecated_since:
+        not_null: false
 
   data_streams:
     type: DataStreamManifest
@@ -134,14 +152,20 @@ tables:
         comment: "directory name of the data stream"
     inline:
       - Elasticsearch
+      - Deprecated
+      - Deprecated.ReplacedBy
     exclude:
       - Streams
       - Categories
       - Agent
     json_columns:
-      - Deprecated
       - Elasticsearch.IndexTemplate
       - Elasticsearch.Privileges
+    columns:
+      deprecated_description:
+        not_null: false
+      deprecated_since:
+        not_null: false
 
   sample_events:
     comment: "Sample event data for data streams."

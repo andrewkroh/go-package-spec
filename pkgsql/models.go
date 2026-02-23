@@ -37,32 +37,38 @@ type ChangelogEntry struct {
 }
 
 type DataStream struct {
-	ID                            int64
-	PackagesID                    int64
-	DirName                       string
-	FilePath                      sql.NullString
-	FileLine                      sql.NullInt64
-	FileColumn                    sql.NullInt64
-	Dataset                       sql.NullString
-	DatasetIsPrefix               sql.NullBool
-	Deprecated                    interface{}
-	ElasticsearchDynamicDataset   sql.NullBool
-	ElasticsearchDynamicNamespace sql.NullBool
-	ElasticsearchIndexMode        sql.NullString
-	ElasticsearchIndexTemplate    interface{}
-	ElasticsearchPrivileges       interface{}
-	ElasticsearchSourceMode       sql.NullString
-	Hidden                        sql.NullBool
-	IlmPolicy                     sql.NullString
-	Release                       sql.NullString
-	Title                         string
-	Type                          sql.NullString
+	ID                                 int64
+	PackagesID                         int64
+	DirName                            string
+	FilePath                           sql.NullString
+	FileLine                           sql.NullInt64
+	FileColumn                         sql.NullInt64
+	Dataset                            sql.NullString
+	DatasetIsPrefix                    sql.NullBool
+	DeprecatedDescription              sql.NullString
+	DeprecatedReplacedByDataStream     sql.NullString
+	DeprecatedReplacedByInput          sql.NullString
+	DeprecatedReplacedByPackage        sql.NullString
+	DeprecatedReplacedByPolicyTemplate sql.NullString
+	DeprecatedReplacedByVariable       sql.NullString
+	DeprecatedSince                    sql.NullString
+	ElasticsearchDynamicDataset        sql.NullBool
+	ElasticsearchDynamicNamespace      sql.NullBool
+	ElasticsearchIndexMode             sql.NullString
+	ElasticsearchIndexTemplate         interface{}
+	ElasticsearchPrivileges            interface{}
+	ElasticsearchSourceMode            sql.NullString
+	Hidden                             sql.NullBool
+	IlmPolicy                          sql.NullString
+	Release                            sql.NullString
+	Title                              string
+	Type                               sql.NullString
 }
 
 type DataStreamField struct {
 	ID           int64
-	DataStreamID int64
 	FieldID      int64
+	DataStreamID int64
 }
 
 type DiscoveryField struct {
@@ -118,12 +124,12 @@ type Field struct {
 
 type Image struct {
 	ID         int64
-	PackagesID int64
 	Src        string
 	Width      sql.NullInt64
 	Height     sql.NullInt64
 	ByteSize   int64
 	Sha256     string
+	PackagesID int64
 }
 
 type IngestPipeline struct {
@@ -146,26 +152,32 @@ type IngestProcessor struct {
 }
 
 type Package struct {
-	ID                             int64
-	AgentPrivilegesRoot            sql.NullBool
-	ElasticsearchPrivilegesCluster interface{}
-	PolicyTemplatesBehavior        sql.NullString
-	DirName                        string
-	ConditionsKibanaVersion        sql.NullString
-	ConditionsElasticSubscription  sql.NullString
-	FilePath                       sql.NullString
-	FileLine                       sql.NullInt64
-	FileColumn                     sql.NullInt64
-	Deprecated                     interface{}
-	Description                    string
-	FormatVersion                  string
-	Name                           string
-	OwnerGithub                    string
-	OwnerType                      string
-	SourceLicense                  sql.NullString
-	Title                          string
-	Type                           string
-	Version                        string
+	ID                                 int64
+	ElasticsearchPrivilegesCluster     interface{}
+	PolicyTemplatesBehavior            sql.NullString
+	DirName                            string
+	ConditionsKibanaVersion            sql.NullString
+	ConditionsElasticSubscription      sql.NullString
+	AgentPrivilegesRoot                sql.NullBool
+	FilePath                           sql.NullString
+	FileLine                           sql.NullInt64
+	FileColumn                         sql.NullInt64
+	DeprecatedDescription              sql.NullString
+	DeprecatedReplacedByDataStream     sql.NullString
+	DeprecatedReplacedByInput          sql.NullString
+	DeprecatedReplacedByPackage        sql.NullString
+	DeprecatedReplacedByPolicyTemplate sql.NullString
+	DeprecatedReplacedByVariable       sql.NullString
+	DeprecatedSince                    sql.NullString
+	Description                        string
+	FormatVersion                      string
+	Name                               string
+	OwnerGithub                        string
+	OwnerType                          string
+	SourceLicense                      sql.NullString
+	Title                              string
+	Type                               string
+	Version                            string
 }
 
 type PackageCategory struct {
@@ -201,8 +213,8 @@ type PackageScreenshot struct {
 
 type PackageVar struct {
 	ID        int64
-	VarID     int64
 	PackageID int64
+	VarID     int64
 }
 
 type PolicyTemplate struct {
@@ -218,7 +230,13 @@ type PolicyTemplate struct {
 	DeploymentModesAgentlessResourcesRequestsMemory sql.NullString
 	DeploymentModesAgentlessTeam                    sql.NullString
 	DeploymentModesDefaultEnabled                   sql.NullBool
-	Deprecated                                      interface{}
+	DeprecatedDescription                           sql.NullString
+	DeprecatedReplacedByDataStream                  sql.NullString
+	DeprecatedReplacedByInput                       sql.NullString
+	DeprecatedReplacedByPackage                     sql.NullString
+	DeprecatedReplacedByPolicyTemplate              sql.NullString
+	DeprecatedReplacedByVariable                    sql.NullString
+	DeprecatedSince                                 sql.NullString
 	Description                                     string
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
@@ -228,8 +246,8 @@ type PolicyTemplate struct {
 
 type PolicyTemplateCategory struct {
 	ID               int64
-	PolicyTemplateID int64
 	Category         string
+	PolicyTemplateID int64
 }
 
 type PolicyTemplateIcon struct {
@@ -243,23 +261,29 @@ type PolicyTemplateIcon struct {
 }
 
 type PolicyTemplateInput struct {
-	ID                    int64
-	PolicyTemplatesID     int64
-	DeploymentModes       interface{}
-	Deprecated            interface{}
-	Description           string
-	HideInVarGroupOptions interface{}
-	InputGroup            sql.NullString
-	Multi                 sql.NullBool
-	TemplatePath          sql.NullString
-	Title                 string
-	Type                  string
+	ID                                 int64
+	PolicyTemplatesID                  int64
+	DeploymentModes                    interface{}
+	DeprecatedDescription              sql.NullString
+	DeprecatedReplacedByDataStream     sql.NullString
+	DeprecatedReplacedByInput          sql.NullString
+	DeprecatedReplacedByPackage        sql.NullString
+	DeprecatedReplacedByPolicyTemplate sql.NullString
+	DeprecatedReplacedByVariable       sql.NullString
+	DeprecatedSince                    sql.NullString
+	Description                        string
+	HideInVarGroupOptions              interface{}
+	InputGroup                         sql.NullString
+	Multi                              sql.NullBool
+	TemplatePath                       sql.NullString
+	Title                              string
+	Type                               string
 }
 
 type PolicyTemplateInputVar struct {
 	ID                    int64
-	PolicyTemplateInputID int64
 	VarID                 int64
+	PolicyTemplateInputID int64
 }
 
 type PolicyTemplateScreenshot struct {
