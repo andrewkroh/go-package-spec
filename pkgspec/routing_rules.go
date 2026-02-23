@@ -9,6 +9,7 @@ import (
 
 // RoutingRule defines a single routing rule within a RoutingRuleSet (technical preview).
 type RoutingRule struct {
+	FileMetadata `json:"-" yaml:"-"`
 	// Conditionally execute the processor
 	If string `json:"if" yaml:"if"`
 	// Namespace is the field reference or static value for the namespace part of the data stream name.
@@ -17,6 +18,19 @@ type RoutingRule struct {
 	// name.
 	TargetDataset        StringOrStrings `json:"target_dataset" yaml:"target_dataset"`
 	AdditionalProperties map[string]any  `json:"-" yaml:",inline"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for RoutingRule.
+// It captures the YAML node position for FileMetadata.
+func (v *RoutingRule) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainRoutingRule RoutingRule
+	x := (*plainRoutingRule)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
 }
 
 // MarshalJSON implements json.Marshaler for RoutingRule.

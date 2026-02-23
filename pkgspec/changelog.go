@@ -31,12 +31,26 @@ func (v *Changelog) UnmarshalYAML(node *yamlv3.Node) error {
 }
 
 type ChangelogEntry struct {
+	FileMetadata `json:"-" yaml:"-"`
 	// Description of change.
 	Description string `json:"description" yaml:"description"`
 	// Link to issue or PR describing change in detail.
 	Link string `json:"link" yaml:"link"`
 	// Type of change.
 	Type ChangelogEntryType `json:"type" yaml:"type"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for ChangelogEntry.
+// It captures the YAML node position for FileMetadata.
+func (v *ChangelogEntry) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainChangelogEntry ChangelogEntry
+	x := (*plainChangelogEntry)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
 }
 
 // ChangelogEntryType type of change.

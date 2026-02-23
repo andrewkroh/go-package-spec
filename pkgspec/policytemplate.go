@@ -2,7 +2,10 @@
 
 package pkgspec
 
-import "encoding/json"
+import (
+	"encoding/json"
+	yamlv3 "gopkg.in/yaml.v3"
+)
 
 // AgentlessResourceRequests the computing resources that the Agentless deployment will be initially
 // allocated.
@@ -144,6 +147,7 @@ const (
 )
 
 type PolicyTemplate struct {
+	FileMetadata       `json:"-" yaml:"-"`
 	Categories         []Category          `json:"categories,omitempty" yaml:"categories,omitempty"`
 	ConfigurationLinks []ConfigurationLink `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
 	// List of data streams compatible with the policy template.
@@ -163,6 +167,19 @@ type PolicyTemplate struct {
 	// Title of policy template.
 	Title string `json:"title" yaml:"title"`
 	Vars  []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for PolicyTemplate.
+// It captures the YAML node position for FileMetadata.
+func (v *PolicyTemplate) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainPolicyTemplate PolicyTemplate
+	x := (*plainPolicyTemplate)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
 }
 
 type PolicyTemplateInput struct {

@@ -158,6 +158,7 @@ func readDataStream(fsys fs.FS, dsPath string, cfg *config) (*DataStream, error)
 			return nil, fmt.Errorf("reading routing rules: %w", err)
 		}
 	}
+	pkgspec.AnnotateFileMetadata(routingRulesPath, &routingRules)
 	ds.RoutingRules = routingRules
 
 	// Read sample event (optional).

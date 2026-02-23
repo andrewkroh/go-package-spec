@@ -108,6 +108,7 @@ const (
 )
 
 type DataStreamStream struct {
+	FileMetadata `json:"-" yaml:"-"`
 	// Description of the stream. It should describe what is being collected and with what collector,
 	// following the structure "Collect X from Y with X".
 	Description string `json:"description" yaml:"description"`
@@ -122,6 +123,19 @@ type DataStreamStream struct {
 	Title     string     `json:"title" yaml:"title"`
 	VarGroups []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	Vars      []Var      `json:"vars,omitempty" yaml:"vars,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler for DataStreamStream.
+// It captures the YAML node position for FileMetadata.
+func (v *DataStreamStream) UnmarshalYAML(node *yamlv3.Node) error {
+	type plainDataStreamStream DataStreamStream
+	x := (*plainDataStreamStream)(v)
+	if err := node.Decode(x); err != nil {
+		return err
+	}
+	v.FileMetadata.line = node.Line
+	v.FileMetadata.column = node.Column
+	return nil
 }
 
 // DataStreamType type of data stream

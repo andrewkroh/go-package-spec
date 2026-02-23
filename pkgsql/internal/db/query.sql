@@ -163,10 +163,16 @@ INSERT INTO changelogs (
 -- name: InsertChangelogEntries :one
 INSERT INTO changelog_entries (
   changelogs_id,
+  file_path,
+  file_line,
+  file_column,
   description,
   link,
   type
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -272,8 +278,14 @@ INSERT INTO ingest_processors (
   attributes,
   json_pointer,
   ordinal,
-  type
+  type,
+  file_path,
+  file_line,
+  file_column
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -365,6 +377,9 @@ INSERT INTO pipeline_tests (
 -- name: InsertPolicyTemplates :one
 INSERT INTO policy_templates (
   packages_id,
+  file_path,
+  file_line,
+  file_column,
   configuration_links,
   data_streams,
   deployment_modes_agentless_division,
@@ -381,6 +396,9 @@ INSERT INTO policy_templates (
   name,
   title
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -493,10 +511,16 @@ INSERT INTO policy_tests (
 -- name: InsertRoutingRules :one
 INSERT INTO routing_rules (
   data_streams_id,
+  file_path,
+  file_line,
+  file_column,
   "if",
   namespace,
   target_dataset
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -534,12 +558,18 @@ INSERT INTO static_tests (
 -- name: InsertStreams :one
 INSERT INTO streams (
   data_streams_id,
+  file_path,
+  file_line,
+  file_column,
   description,
   enabled,
   input,
   template_path,
   title
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -666,6 +696,9 @@ INSERT INTO transform_fields (
 
 -- name: InsertVars :one
 INSERT INTO vars (
+  file_path,
+  file_line,
+  file_column,
   "default",
   description,
   hide_in_deployment_modes,
@@ -681,6 +714,9 @@ INSERT INTO vars (
   type,
   url_allowed_schemes
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
