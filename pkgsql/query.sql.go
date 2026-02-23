@@ -156,13 +156,6 @@ INSERT INTO data_streams (
   file_column,
   dataset,
   dataset_is_prefix,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   elasticsearch_dynamic_dataset,
   elasticsearch_dynamic_namespace,
   elasticsearch_index_mode,
@@ -192,43 +185,29 @@ INSERT INTO data_streams (
   ?,
   ?,
   ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?
 ) RETURNING id
 `
 
 type InsertDataStreamsParams struct {
-	PackagesID                         int64
-	DirName                            string
-	FilePath                           sql.NullString
-	FileLine                           sql.NullInt64
-	FileColumn                         sql.NullInt64
-	Dataset                            sql.NullString
-	DatasetIsPrefix                    sql.NullBool
-	DeprecatedDescription              sql.NullString
-	DeprecatedReplacedByDataStream     sql.NullString
-	DeprecatedReplacedByInput          sql.NullString
-	DeprecatedReplacedByPackage        sql.NullString
-	DeprecatedReplacedByPolicyTemplate sql.NullString
-	DeprecatedReplacedByVariable       sql.NullString
-	DeprecatedSince                    sql.NullString
-	ElasticsearchDynamicDataset        sql.NullBool
-	ElasticsearchDynamicNamespace      sql.NullBool
-	ElasticsearchIndexMode             sql.NullString
-	ElasticsearchIndexTemplate         interface{}
-	ElasticsearchPrivileges            interface{}
-	ElasticsearchSourceMode            sql.NullString
-	Hidden                             sql.NullBool
-	IlmPolicy                          sql.NullString
-	Release                            sql.NullString
-	Title                              string
-	Type                               sql.NullString
+	PackagesID                    int64
+	DirName                       string
+	FilePath                      sql.NullString
+	FileLine                      sql.NullInt64
+	FileColumn                    sql.NullInt64
+	Dataset                       sql.NullString
+	DatasetIsPrefix               sql.NullBool
+	ElasticsearchDynamicDataset   sql.NullBool
+	ElasticsearchDynamicNamespace sql.NullBool
+	ElasticsearchIndexMode        sql.NullString
+	ElasticsearchIndexTemplate    interface{}
+	ElasticsearchPrivileges       interface{}
+	ElasticsearchSourceMode       sql.NullString
+	Hidden                        sql.NullBool
+	IlmPolicy                     sql.NullString
+	Release                       sql.NullString
+	Title                         string
+	Type                          sql.NullString
 }
 
 func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsParams) (int64, error) {
@@ -240,13 +219,6 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 		arg.FileColumn,
 		arg.Dataset,
 		arg.DatasetIsPrefix,
-		arg.DeprecatedDescription,
-		arg.DeprecatedReplacedByDataStream,
-		arg.DeprecatedReplacedByInput,
-		arg.DeprecatedReplacedByPackage,
-		arg.DeprecatedReplacedByPolicyTemplate,
-		arg.DeprecatedReplacedByVariable,
-		arg.DeprecatedSince,
 		arg.ElasticsearchDynamicDataset,
 		arg.ElasticsearchDynamicNamespace,
 		arg.ElasticsearchIndexMode,
@@ -258,6 +230,71 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 		arg.Release,
 		arg.Title,
 		arg.Type,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertDeprecations = `-- name: InsertDeprecations :one
+INSERT INTO deprecations (
+  policy_templates_id,
+  policy_template_inputs_id,
+  data_streams_id,
+  replaced_by_input,
+  replaced_by_package,
+  replaced_by_policy_template,
+  replaced_by_variable,
+  packages_id,
+  vars_id,
+  description,
+  since,
+  replaced_by_data_stream
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertDeprecationsParams struct {
+	PolicyTemplatesID        sql.NullInt64
+	PolicyTemplateInputsID   sql.NullInt64
+	DataStreamsID            sql.NullInt64
+	ReplacedByInput          sql.NullString
+	ReplacedByPackage        sql.NullString
+	ReplacedByPolicyTemplate sql.NullString
+	ReplacedByVariable       sql.NullString
+	PackagesID               sql.NullInt64
+	VarsID                   sql.NullInt64
+	Description              string
+	Since                    string
+	ReplacedByDataStream     sql.NullString
+}
+
+func (q *Queries) InsertDeprecations(ctx context.Context, arg InsertDeprecationsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertDeprecations,
+		arg.PolicyTemplatesID,
+		arg.PolicyTemplateInputsID,
+		arg.DataStreamsID,
+		arg.ReplacedByInput,
+		arg.ReplacedByPackage,
+		arg.ReplacedByPolicyTemplate,
+		arg.ReplacedByVariable,
+		arg.PackagesID,
+		arg.VarsID,
+		arg.Description,
+		arg.Since,
+		arg.ReplacedByDataStream,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -469,12 +506,12 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 
 const insertImages = `-- name: InsertImages :one
 INSERT INTO images (
-  src,
   width,
   height,
   byte_size,
   sha256,
-  packages_id
+  packages_id,
+  src
 ) VALUES (
   ?,
   ?,
@@ -486,22 +523,22 @@ INSERT INTO images (
 `
 
 type InsertImagesParams struct {
-	Src        string
 	Width      sql.NullInt64
 	Height     sql.NullInt64
 	ByteSize   int64
 	Sha256     string
 	PackagesID int64
+	Src        string
 }
 
 func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertImages,
-		arg.Src,
 		arg.Width,
 		arg.Height,
 		arg.ByteSize,
 		arg.Sha256,
 		arg.PackagesID,
+		arg.Src,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -732,22 +769,15 @@ func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsPa
 
 const insertPackages = `-- name: InsertPackages :one
 INSERT INTO packages (
-  elasticsearch_privileges_cluster,
-  policy_templates_behavior,
-  dir_name,
   conditions_kibana_version,
   conditions_elastic_subscription,
   agent_privileges_root,
+  elasticsearch_privileges_cluster,
+  policy_templates_behavior,
+  dir_name,
   file_path,
   file_line,
   file_column,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   description,
   format_version,
   name,
@@ -775,63 +805,42 @@ INSERT INTO packages (
   ?,
   ?,
   ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?
 ) RETURNING id
 `
 
 type InsertPackagesParams struct {
-	ElasticsearchPrivilegesCluster     interface{}
-	PolicyTemplatesBehavior            sql.NullString
-	DirName                            string
-	ConditionsKibanaVersion            sql.NullString
-	ConditionsElasticSubscription      sql.NullString
-	AgentPrivilegesRoot                sql.NullBool
-	FilePath                           sql.NullString
-	FileLine                           sql.NullInt64
-	FileColumn                         sql.NullInt64
-	DeprecatedDescription              sql.NullString
-	DeprecatedReplacedByDataStream     sql.NullString
-	DeprecatedReplacedByInput          sql.NullString
-	DeprecatedReplacedByPackage        sql.NullString
-	DeprecatedReplacedByPolicyTemplate sql.NullString
-	DeprecatedReplacedByVariable       sql.NullString
-	DeprecatedSince                    sql.NullString
-	Description                        string
-	FormatVersion                      string
-	Name                               string
-	OwnerGithub                        string
-	OwnerType                          string
-	SourceLicense                      sql.NullString
-	Title                              string
-	Type                               string
-	Version                            string
+	ConditionsKibanaVersion        sql.NullString
+	ConditionsElasticSubscription  sql.NullString
+	AgentPrivilegesRoot            sql.NullBool
+	ElasticsearchPrivilegesCluster interface{}
+	PolicyTemplatesBehavior        sql.NullString
+	DirName                        string
+	FilePath                       sql.NullString
+	FileLine                       sql.NullInt64
+	FileColumn                     sql.NullInt64
+	Description                    string
+	FormatVersion                  string
+	Name                           string
+	OwnerGithub                    string
+	OwnerType                      string
+	SourceLicense                  sql.NullString
+	Title                          string
+	Type                           string
+	Version                        string
 }
 
 func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPackages,
-		arg.ElasticsearchPrivilegesCluster,
-		arg.PolicyTemplatesBehavior,
-		arg.DirName,
 		arg.ConditionsKibanaVersion,
 		arg.ConditionsElasticSubscription,
 		arg.AgentPrivilegesRoot,
+		arg.ElasticsearchPrivilegesCluster,
+		arg.PolicyTemplatesBehavior,
+		arg.DirName,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,
-		arg.DeprecatedDescription,
-		arg.DeprecatedReplacedByDataStream,
-		arg.DeprecatedReplacedByInput,
-		arg.DeprecatedReplacedByPackage,
-		arg.DeprecatedReplacedByPolicyTemplate,
-		arg.DeprecatedReplacedByVariable,
-		arg.DeprecatedSince,
 		arg.Description,
 		arg.FormatVersion,
 		arg.Name,
@@ -849,8 +858,8 @@ func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) 
 
 const insertPolicyTemplateCategories = `-- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  category,
-  policy_template_id
+  policy_template_id,
+  category
 ) VALUES (
   ?,
   ?
@@ -858,12 +867,12 @@ INSERT INTO policy_template_categories (
 `
 
 type InsertPolicyTemplateCategoriesParams struct {
-	Category         string
 	PolicyTemplateID int64
+	Category         string
 }
 
 func (q *Queries) InsertPolicyTemplateCategories(ctx context.Context, arg InsertPolicyTemplateCategoriesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.Category, arg.PolicyTemplateID)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.PolicyTemplateID, arg.Category)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -912,8 +921,8 @@ func (q *Queries) InsertPolicyTemplateIcons(ctx context.Context, arg InsertPolic
 
 const insertPolicyTemplateInputVars = `-- name: InsertPolicyTemplateInputVars :one
 INSERT INTO policy_template_input_vars (
-  var_id,
-  policy_template_input_id
+  policy_template_input_id,
+  var_id
 ) VALUES (
   ?,
   ?
@@ -921,12 +930,12 @@ INSERT INTO policy_template_input_vars (
 `
 
 type InsertPolicyTemplateInputVarsParams struct {
-	VarID                 int64
 	PolicyTemplateInputID int64
+	VarID                 int64
 }
 
 func (q *Queries) InsertPolicyTemplateInputVars(ctx context.Context, arg InsertPolicyTemplateInputVarsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateInputVars, arg.VarID, arg.PolicyTemplateInputID)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateInputVars, arg.PolicyTemplateInputID, arg.VarID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -936,13 +945,6 @@ const insertPolicyTemplateInputs = `-- name: InsertPolicyTemplateInputs :one
 INSERT INTO policy_template_inputs (
   policy_templates_id,
   deployment_modes,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   description,
   hide_in_var_group_options,
   input_group,
@@ -959,47 +961,26 @@ INSERT INTO policy_template_inputs (
   ?,
   ?,
   ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?
 ) RETURNING id
 `
 
 type InsertPolicyTemplateInputsParams struct {
-	PolicyTemplatesID                  int64
-	DeploymentModes                    interface{}
-	DeprecatedDescription              sql.NullString
-	DeprecatedReplacedByDataStream     sql.NullString
-	DeprecatedReplacedByInput          sql.NullString
-	DeprecatedReplacedByPackage        sql.NullString
-	DeprecatedReplacedByPolicyTemplate sql.NullString
-	DeprecatedReplacedByVariable       sql.NullString
-	DeprecatedSince                    sql.NullString
-	Description                        string
-	HideInVarGroupOptions              interface{}
-	InputGroup                         sql.NullString
-	Multi                              sql.NullBool
-	TemplatePath                       sql.NullString
-	Title                              string
-	Type                               string
+	PolicyTemplatesID     int64
+	DeploymentModes       interface{}
+	Description           string
+	HideInVarGroupOptions interface{}
+	InputGroup            sql.NullString
+	Multi                 sql.NullBool
+	TemplatePath          sql.NullString
+	Title                 string
+	Type                  string
 }
 
 func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPolicyTemplateInputsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPolicyTemplateInputs,
 		arg.PolicyTemplatesID,
 		arg.DeploymentModes,
-		arg.DeprecatedDescription,
-		arg.DeprecatedReplacedByDataStream,
-		arg.DeprecatedReplacedByInput,
-		arg.DeprecatedReplacedByPackage,
-		arg.DeprecatedReplacedByPolicyTemplate,
-		arg.DeprecatedReplacedByVariable,
-		arg.DeprecatedSince,
 		arg.Description,
 		arg.HideInVarGroupOptions,
 		arg.InputGroup,
@@ -1085,26 +1066,12 @@ INSERT INTO policy_templates (
   deployment_modes_agentless_resources_requests_memory,
   deployment_modes_agentless_team,
   deployment_modes_default_enabled,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   description,
   fips_compatible,
   multiple,
   name,
   title
 ) VALUES (
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?,
   ?,
   ?,
@@ -1136,13 +1103,6 @@ type InsertPolicyTemplatesParams struct {
 	DeploymentModesAgentlessResourcesRequestsMemory sql.NullString
 	DeploymentModesAgentlessTeam                    sql.NullString
 	DeploymentModesDefaultEnabled                   sql.NullBool
-	DeprecatedDescription                           sql.NullString
-	DeprecatedReplacedByDataStream                  sql.NullString
-	DeprecatedReplacedByInput                       sql.NullString
-	DeprecatedReplacedByPackage                     sql.NullString
-	DeprecatedReplacedByPolicyTemplate              sql.NullString
-	DeprecatedReplacedByVariable                    sql.NullString
-	DeprecatedSince                                 sql.NullString
 	Description                                     string
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
@@ -1163,13 +1123,6 @@ func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTem
 		arg.DeploymentModesAgentlessResourcesRequestsMemory,
 		arg.DeploymentModesAgentlessTeam,
 		arg.DeploymentModesDefaultEnabled,
-		arg.DeprecatedDescription,
-		arg.DeprecatedReplacedByDataStream,
-		arg.DeprecatedReplacedByInput,
-		arg.DeprecatedReplacedByPackage,
-		arg.DeprecatedReplacedByPolicyTemplate,
-		arg.DeprecatedReplacedByVariable,
-		arg.DeprecatedSince,
 		arg.Description,
 		arg.FipsCompatible,
 		arg.Multiple,
@@ -1216,8 +1169,8 @@ func (q *Queries) InsertRoutingRules(ctx context.Context, arg InsertRoutingRules
 
 const insertSampleEvents = `-- name: InsertSampleEvents :one
 INSERT INTO sample_events (
-  event,
-  data_streams_id
+  data_streams_id,
+  event
 ) VALUES (
   ?,
   ?
@@ -1225,12 +1178,12 @@ INSERT INTO sample_events (
 `
 
 type InsertSampleEventsParams struct {
-	Event         interface{}
 	DataStreamsID int64
+	Event         interface{}
 }
 
 func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEventsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.Event, arg.DataStreamsID)
+	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event)
 	var id int64
 	err := row.Scan(&id)
 	return id, err

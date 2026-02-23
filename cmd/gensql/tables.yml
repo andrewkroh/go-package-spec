@@ -26,17 +26,11 @@ tables:
     inline:
       - Owner
       - Source
-      - Deprecated
-      - Deprecated.ReplacedBy
     exclude:
       - Categories
       - Icons
       - Screenshots
-    columns:
-      deprecated_description:
-        not_null: false
-      deprecated_since:
-        not_null: false
+      - Deprecated
 
   package_categories:
     comment: "Categories assigned to a package."
@@ -83,21 +77,15 @@ tables:
       - Screenshots
       - Inputs
       - Vars
+      - Deprecated
     inline:
       - DeploymentModes
       - DeploymentModes.Default
       - DeploymentModes.Agentless
       - DeploymentModes.Agentless.Resources
       - DeploymentModes.Agentless.Resources.Requests
-      - Deprecated
-      - Deprecated.ReplacedBy
     json_columns:
       - ConfigurationLinks
-    columns:
-      deprecated_description:
-        not_null: false
-      deprecated_since:
-        not_null: false
 
   policy_template_categories:
     comment: "Categories assigned to a policy template."
@@ -129,17 +117,10 @@ tables:
     exclude:
       - Vars
       - RequiredVars
-    inline:
       - Deprecated
-      - Deprecated.ReplacedBy
     json_columns:
       - DeploymentModes
       - HideInVarGroupOptions
-    columns:
-      deprecated_description:
-        not_null: false
-      deprecated_since:
-        not_null: false
 
   data_streams:
     type: DataStreamManifest
@@ -152,20 +133,14 @@ tables:
         comment: "directory name of the data stream"
     inline:
       - Elasticsearch
-      - Deprecated
-      - Deprecated.ReplacedBy
     exclude:
       - Streams
       - Categories
       - Agent
+      - Deprecated
     json_columns:
       - Elasticsearch.IndexTemplate
       - Elasticsearch.Privileges
-    columns:
-      deprecated_description:
-        not_null: false
-      deprecated_since:
-        not_null: false
 
   sample_events:
     comment: "Sample event data for data streams."
@@ -441,3 +416,50 @@ tables:
     inline:
       - Dependencies
       - Dependencies.ECS
+
+  deprecations:
+    comment: "Deprecation notices for packages, policy templates, inputs, data streams, and vars. Each row links to exactly one parent entity via a nullable FK."
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        fk: packages
+        comment: "foreign key to packages (set when a package is deprecated)"
+      policy_templates_id:
+        type: INTEGER
+        fk: policy_templates
+        comment: "foreign key to policy_templates (set when a policy template is deprecated)"
+      policy_template_inputs_id:
+        type: INTEGER
+        fk: policy_template_inputs
+        comment: "foreign key to policy_template_inputs (set when an input is deprecated)"
+      data_streams_id:
+        type: INTEGER
+        fk: data_streams
+        comment: "foreign key to data_streams (set when a data stream is deprecated)"
+      vars_id:
+        type: INTEGER
+        fk: vars
+        comment: "foreign key to vars (set when a var is deprecated)"
+      description:
+        type: TEXT
+        not_null: true
+        comment: "reason for deprecation"
+      since:
+        type: TEXT
+        not_null: true
+        comment: "version since when deprecated"
+      replaced_by_data_stream:
+        type: TEXT
+        comment: "name of the data stream that replaces the deprecated one"
+      replaced_by_input:
+        type: TEXT
+        comment: "name of the input that replaces the deprecated one"
+      replaced_by_package:
+        type: TEXT
+        comment: "name of the package that replaces the deprecated one"
+      replaced_by_policy_template:
+        type: TEXT
+        comment: "name of the policy template that replaces the deprecated one"
+      replaced_by_variable:
+        type: TEXT
+        comment: "name of the variable that replaces the deprecated one"

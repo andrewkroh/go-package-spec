@@ -47,22 +47,15 @@ CREATE TABLE IF NOT EXISTS fields (
 CREATE TABLE IF NOT EXISTS packages (
   -- Fleet packages (integration, input, or content). Each row is one package version.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  elasticsearch_privileges_cluster JSON, -- Elasticsearch cluster privilege requirements (JSON array)
-  policy_templates_behavior TEXT, -- behavior when multiple policy templates are defined (all, combined_policy, individual_policies)
-  dir_name TEXT NOT NULL UNIQUE, -- directory name of the package
   conditions_kibana_version TEXT, -- required Kibana version range
   conditions_elastic_subscription TEXT, -- required Elastic subscription level
   agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
+  elasticsearch_privileges_cluster JSON, -- Elasticsearch cluster privilege requirements (JSON array)
+  policy_templates_behavior TEXT, -- behavior when multiple policy templates are defined (all, combined_policy, individual_policies)
+  dir_name TEXT NOT NULL UNIQUE, -- directory name of the package
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
-  deprecated_description TEXT, -- Reason of deprecation.
-  deprecated_replaced_by_data_stream TEXT, -- Name of the data stream that replaces the deprecated one.
-  deprecated_replaced_by_input TEXT, -- Name of the input that replaces the deprecated one.
-  deprecated_replaced_by_package TEXT, -- Name of the package that replaces the deprecated one.
-  deprecated_replaced_by_policy_template TEXT, -- Name of the policy template that replaces the deprecated one.
-  deprecated_replaced_by_variable TEXT, -- Name of the variable that replaces the deprecated one.
-  deprecated_since TEXT, -- Version since when is deprecated.
   description TEXT NOT NULL, -- Description
   format_version TEXT NOT NULL, -- The version of the package specification format used by this package.
   name TEXT NOT NULL, -- The name of the package.
@@ -115,13 +108,6 @@ CREATE TABLE IF NOT EXISTS data_streams (
   file_column INTEGER, -- source file column number
   dataset TEXT, -- Name of data set.
   dataset_is_prefix BOOLEAN, -- If true, the index pattern in the ES template will contain the dataset as a prefix only
-  deprecated_description TEXT, -- Reason of deprecation.
-  deprecated_replaced_by_data_stream TEXT, -- Name of the data stream that replaces the deprecated one.
-  deprecated_replaced_by_input TEXT, -- Name of the input that replaces the deprecated one.
-  deprecated_replaced_by_package TEXT, -- Name of the package that replaces the deprecated one.
-  deprecated_replaced_by_policy_template TEXT, -- Name of the policy template that replaces the deprecated one.
-  deprecated_replaced_by_variable TEXT, -- Name of the variable that replaces the deprecated one.
-  deprecated_since TEXT, -- Version since when is deprecated.
   elasticsearch_dynamic_dataset BOOLEAN, -- When set to true, agents running this integration are granted data stream privileges for all datasets of its type
   elasticsearch_dynamic_namespace BOOLEAN, -- When set to true, agents running this integration are granted data stream privileges for all namespaces of its type
   elasticsearch_index_mode TEXT, -- Elasticsearch.IndexMode
@@ -152,12 +138,12 @@ CREATE TABLE IF NOT EXISTS discovery_fields (
 CREATE TABLE IF NOT EXISTS images (
   -- Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  src TEXT NOT NULL, -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
   width INTEGER, -- image width in pixels (NULL for SVG)
   height INTEGER, -- image height in pixels (NULL for SVG)
   byte_size INTEGER NOT NULL, -- file size in bytes
   sha256 TEXT NOT NULL, -- hex-encoded SHA-256 hash of file contents
-  packages_id INTEGER NOT NULL REFERENCES packages(id) -- foreign key to packages
+  packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  src TEXT NOT NULL -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
 );
 
 CREATE TABLE IF NOT EXISTS ingest_pipelines (
@@ -230,13 +216,6 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   deployment_modes_agentless_resources_requests_memory TEXT, -- The amount of memory that the Agentless deployment will be initially allocated.
   deployment_modes_agentless_team TEXT, -- The team responsible for the integration. This is used to tag the agentless agent deployments for monitoring.
   deployment_modes_default_enabled BOOLEAN, -- Indicates if the default deployment mode is available for this template policy. It is enabled by default.
-  deprecated_description TEXT, -- Reason of deprecation.
-  deprecated_replaced_by_data_stream TEXT, -- Name of the data stream that replaces the deprecated one.
-  deprecated_replaced_by_input TEXT, -- Name of the input that replaces the deprecated one.
-  deprecated_replaced_by_package TEXT, -- Name of the package that replaces the deprecated one.
-  deprecated_replaced_by_policy_template TEXT, -- Name of the policy template that replaces the deprecated one.
-  deprecated_replaced_by_variable TEXT, -- Name of the variable that replaces the deprecated one.
-  deprecated_since TEXT, -- Version since when is deprecated.
   description TEXT NOT NULL, -- Longer description of policy template.
   fips_compatible BOOLEAN, -- FipsCompatible
   multiple BOOLEAN, -- Multiple
@@ -247,8 +226,8 @@ CREATE TABLE IF NOT EXISTS policy_templates (
 CREATE TABLE IF NOT EXISTS policy_template_categories (
   -- Categories assigned to a policy template.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  category TEXT NOT NULL, -- category value
-  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id) -- foreign key to policy_templates
+  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id), -- foreign key to policy_templates
+  category TEXT NOT NULL -- category value
 );
 
 CREATE TABLE IF NOT EXISTS policy_template_icons (
@@ -267,13 +246,6 @@ CREATE TABLE IF NOT EXISTS policy_template_inputs (
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   policy_templates_id INTEGER NOT NULL REFERENCES policy_templates(id), -- foreign key to policy_templates
   deployment_modes JSON, -- List of deployment modes that this input is compatible with. If not specified, the input is compatible with all deployment modes.
-  deprecated_description TEXT, -- Reason of deprecation.
-  deprecated_replaced_by_data_stream TEXT, -- Name of the data stream that replaces the deprecated one.
-  deprecated_replaced_by_input TEXT, -- Name of the input that replaces the deprecated one.
-  deprecated_replaced_by_package TEXT, -- Name of the package that replaces the deprecated one.
-  deprecated_replaced_by_policy_template TEXT, -- Name of the policy template that replaces the deprecated one.
-  deprecated_replaced_by_variable TEXT, -- Name of the variable that replaces the deprecated one.
-  deprecated_since TEXT, -- Version since when is deprecated.
   description TEXT NOT NULL, -- Longer description of input.
   hide_in_var_group_options JSON, -- HideInVarGroupOptions filters out specific var_group options for this input.
   input_group TEXT, -- Name of the input group
@@ -305,8 +277,8 @@ CREATE TABLE IF NOT EXISTS routing_rules (
 CREATE TABLE IF NOT EXISTS sample_events (
   -- Sample event data for data streams.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  event JSON NOT NULL, -- sample event data (JSON)
-  data_streams_id INTEGER NOT NULL REFERENCES data_streams(id) -- foreign key to data_streams
+  data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
+  event JSON NOT NULL -- sample event data (JSON)
 );
 
 CREATE TABLE IF NOT EXISTS streams (
@@ -380,6 +352,23 @@ CREATE TABLE IF NOT EXISTS vars (
   url_allowed_schemes JSON -- List of allowed URL schemes for the url type. If empty, any scheme is allowed. An empty string can be used to indicate that the scheme is not mandatory.
 );
 
+CREATE TABLE IF NOT EXISTS deprecations (
+  -- Deprecation notices for packages, policy templates, inputs, data streams, and vars. Each row links to exactly one parent entity via a nullable FK.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  policy_templates_id INTEGER REFERENCES policy_templates(id), -- foreign key to policy_templates (set when a policy template is deprecated)
+  policy_template_inputs_id INTEGER REFERENCES policy_template_inputs(id), -- foreign key to policy_template_inputs (set when an input is deprecated)
+  data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set when a data stream is deprecated)
+  replaced_by_input TEXT, -- name of the input that replaces the deprecated one
+  replaced_by_package TEXT, -- name of the package that replaces the deprecated one
+  replaced_by_policy_template TEXT, -- name of the policy template that replaces the deprecated one
+  replaced_by_variable TEXT, -- name of the variable that replaces the deprecated one
+  packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set when a package is deprecated)
+  vars_id INTEGER REFERENCES vars(id), -- foreign key to vars (set when a var is deprecated)
+  description TEXT NOT NULL, -- reason for deprecation
+  since TEXT NOT NULL, -- version since when deprecated
+  replaced_by_data_stream TEXT -- name of the data stream that replaces the deprecated one
+);
+
 CREATE TABLE IF NOT EXISTS package_vars (
   -- Join table linking vars to packages.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
@@ -390,8 +379,8 @@ CREATE TABLE IF NOT EXISTS package_vars (
 CREATE TABLE IF NOT EXISTS policy_template_input_vars (
   -- Join table linking vars to policy template inputs.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  var_id INTEGER NOT NULL REFERENCES vars(id), -- foreign key to vars
-  policy_template_input_id INTEGER NOT NULL REFERENCES policy_template_inputs(id) -- foreign key to policy_template_inputs
+  policy_template_input_id INTEGER NOT NULL REFERENCES policy_template_inputs(id), -- foreign key to policy_template_inputs
+  var_id INTEGER NOT NULL REFERENCES vars(id) -- foreign key to vars
 );
 
 CREATE TABLE IF NOT EXISTS policy_template_vars (

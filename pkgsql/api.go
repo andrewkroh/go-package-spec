@@ -120,15 +120,24 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 	// Insert package.
 	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(
 		m,
-		elasticsearchPrivilegesCluster,
-		policyTemplatesBehavior,
-		dirName,
 		conditionsKibanaVersion,
 		conditionsElasticSubscription,
 		agentPrivilegesRoot,
+		elasticsearchPrivilegesCluster,
+		policyTemplatesBehavior,
+		dirName,
 	))
 	if err != nil {
 		return fmt.Errorf("inserting package: %w", err)
+	}
+
+	// Insert package deprecation.
+	if isDeprecated(m.Deprecated) {
+		p := deprecationParams(m.Deprecated)
+		p.PackagesID = sql.NullInt64{Int64: pkgID, Valid: true}
+		if _, err := q.InsertDeprecations(ctx, p); err != nil {
+			return fmt.Errorf("inserting package deprecation: %w", err)
+		}
 	}
 
 	// Insert categories.
@@ -230,6 +239,15 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 			return fmt.Errorf("inserting policy template: %w", err)
 		}
 
+		// Insert policy template deprecation.
+		if isDeprecated(pt.Deprecated) {
+			p := deprecationParams(pt.Deprecated)
+			p.PolicyTemplatesID = sql.NullInt64{Int64: ptID, Valid: true}
+			if _, err := q.InsertDeprecations(ctx, p); err != nil {
+				return fmt.Errorf("inserting policy template deprecation: %w", err)
+			}
+		}
+
 		// Insert policy template categories.
 		for _, cat := range pt.Categories {
 			_, err := q.InsertPolicyTemplateCategories(ctx, InsertPolicyTemplateCategoriesParams{
@@ -274,6 +292,15 @@ func writeIntegration(ctx context.Context, q *Queries, pkg *pkgreader.Package, p
 			inpID, err := q.InsertPolicyTemplateInputs(ctx, mapPolicyTemplateInputsParams(inp, ptID))
 			if err != nil {
 				return fmt.Errorf("inserting policy template input: %w", err)
+			}
+
+			// Insert input deprecation.
+			if isDeprecated(inp.Deprecated) {
+				p := deprecationParams(inp.Deprecated)
+				p.PolicyTemplateInputsID = sql.NullInt64{Int64: inpID, Valid: true}
+				if _, err := q.InsertDeprecations(ctx, p); err != nil {
+					return fmt.Errorf("inserting input deprecation: %w", err)
+				}
 			}
 
 			// Insert input vars.
@@ -387,6 +414,15 @@ func writeDataStream(ctx context.Context, q *Queries, dsName string, ds *pkgread
 	dsID, err := q.InsertDataStreams(ctx, mapDataStreamsParams(&ds.Manifest, pkgID, dsName))
 	if err != nil {
 		return fmt.Errorf("inserting data stream: %w", err)
+	}
+
+	// Insert data stream deprecation.
+	if isDeprecated(ds.Manifest.Deprecated) {
+		p := deprecationParams(ds.Manifest.Deprecated)
+		p.DataStreamsID = sql.NullInt64{Int64: dsID, Valid: true}
+		if _, err := q.InsertDeprecations(ctx, p); err != nil {
+			return fmt.Errorf("inserting data stream deprecation: %w", err)
+		}
 	}
 
 	// Insert sample event.
@@ -557,8 +593,37 @@ func writeVars(ctx context.Context, q *Queries, vars []pkgspec.Var, link func(va
 		if err := link(varID); err != nil {
 			return fmt.Errorf("linking var %s: %w", vars[i].Name, err)
 		}
+
+		// Insert var deprecation.
+		if isDeprecated(vars[i].Deprecated) {
+			p := deprecationParams(vars[i].Deprecated)
+			p.VarsID = sql.NullInt64{Int64: varID, Valid: true}
+			if _, err := q.InsertDeprecations(ctx, p); err != nil {
+				return fmt.Errorf("inserting var %s deprecation: %w", vars[i].Name, err)
+			}
+		}
 	}
 	return nil
+}
+
+// isDeprecated reports whether a Deprecated struct indicates active deprecation.
+func isDeprecated(d pkgspec.Deprecated) bool {
+	return d.Since != ""
+}
+
+// deprecationParams builds the common InsertDeprecationsParams fields from a
+// Deprecated struct. The caller must set the appropriate FK field (PackagesID,
+// PolicyTemplatesID, etc.) before passing to InsertDeprecations.
+func deprecationParams(d pkgspec.Deprecated) InsertDeprecationsParams {
+	return InsertDeprecationsParams{
+		Description:              d.Description,
+		Since:                    d.Since,
+		ReplacedByDataStream:     toNullString(d.ReplacedBy.DataStream),
+		ReplacedByInput:          toNullString(d.ReplacedBy.Input),
+		ReplacedByPackage:        toNullString(d.ReplacedBy.Package),
+		ReplacedByPolicyTemplate: toNullString(d.ReplacedBy.PolicyTemplate),
+		ReplacedByVariable:       toNullString(d.ReplacedBy.Variable),
+	}
 }
 
 // transformManifestStart extracts the Start field from a TransformManifest.

@@ -87,22 +87,15 @@ INSERT INTO fields (
 
 -- name: InsertPackages :one
 INSERT INTO packages (
-  elasticsearch_privileges_cluster,
-  policy_templates_behavior,
-  dir_name,
   conditions_kibana_version,
   conditions_elastic_subscription,
   agent_privileges_root,
+  elasticsearch_privileges_cluster,
+  policy_templates_behavior,
+  dir_name,
   file_path,
   file_line,
   file_column,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   description,
   format_version,
   name,
@@ -113,13 +106,6 @@ INSERT INTO packages (
   type,
   version
 ) VALUES (
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?,
   ?,
   ?,
@@ -196,13 +182,6 @@ INSERT INTO data_streams (
   file_column,
   dataset,
   dataset_is_prefix,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   elasticsearch_dynamic_dataset,
   elasticsearch_dynamic_namespace,
   elasticsearch_index_mode,
@@ -215,13 +194,6 @@ INSERT INTO data_streams (
   title,
   type
 ) VALUES (
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?,
   ?,
   ?,
@@ -262,12 +234,12 @@ INSERT INTO discovery_fields (
 
 -- name: InsertImages :one
 INSERT INTO images (
-  src,
   width,
   height,
   byte_size,
   sha256,
-  packages_id
+  packages_id,
+  src
 ) VALUES (
   ?,
   ?,
@@ -372,13 +344,6 @@ INSERT INTO policy_templates (
   deployment_modes_agentless_resources_requests_memory,
   deployment_modes_agentless_team,
   deployment_modes_default_enabled,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   description,
   fips_compatible,
   multiple,
@@ -400,20 +365,13 @@ INSERT INTO policy_templates (
   ?,
   ?,
   ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?
 ) RETURNING id;
 
 -- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  category,
-  policy_template_id
+  policy_template_id,
+  category
 ) VALUES (
   ?,
   ?
@@ -440,13 +398,6 @@ INSERT INTO policy_template_icons (
 INSERT INTO policy_template_inputs (
   policy_templates_id,
   deployment_modes,
-  deprecated_description,
-  deprecated_replaced_by_data_stream,
-  deprecated_replaced_by_input,
-  deprecated_replaced_by_package,
-  deprecated_replaced_by_policy_template,
-  deprecated_replaced_by_variable,
-  deprecated_since,
   description,
   hide_in_var_group_options,
   input_group,
@@ -455,13 +406,6 @@ INSERT INTO policy_template_inputs (
   title,
   type
 ) VALUES (
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
-  ?,
   ?,
   ?,
   ?,
@@ -503,8 +447,8 @@ INSERT INTO routing_rules (
 
 -- name: InsertSampleEvents :one
 INSERT INTO sample_events (
-  event,
-  data_streams_id
+  data_streams_id,
+  event
 ) VALUES (
   ?,
   ?
@@ -627,6 +571,35 @@ INSERT INTO vars (
   ?
 ) RETURNING id;
 
+-- name: InsertDeprecations :one
+INSERT INTO deprecations (
+  policy_templates_id,
+  policy_template_inputs_id,
+  data_streams_id,
+  replaced_by_input,
+  replaced_by_package,
+  replaced_by_policy_template,
+  replaced_by_variable,
+  packages_id,
+  vars_id,
+  description,
+  since,
+  replaced_by_data_stream
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertPackageVars :one
 INSERT INTO package_vars (
   package_id,
@@ -638,8 +611,8 @@ INSERT INTO package_vars (
 
 -- name: InsertPolicyTemplateInputVars :one
 INSERT INTO policy_template_input_vars (
-  var_id,
-  policy_template_input_id
+  policy_template_input_id,
+  var_id
 ) VALUES (
   ?,
   ?

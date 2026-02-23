@@ -239,7 +239,6 @@ func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitemp
 	}
 
 	// Apply column overrides (highest priority).
-	notNullOverridden := false
 	if override, ok := overrides[sqlName]; ok {
 		if override.Comment != "" {
 			col.Comment = override.Comment
@@ -249,7 +248,6 @@ func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitemp
 		}
 		if override.NotNull != nil {
 			col.NotNull = *override.NotNull
-			notNullOverridden = true
 		}
 		col.Unique = override.Unique
 	}
@@ -264,7 +262,7 @@ func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitemp
 
 	// If type was overridden, use it.
 	if col.SQLType != "" {
-		if !notNullOverridden && !isPointer && !omitempty {
+		if !isPointer && !omitempty {
 			col.NotNull = true
 		}
 		return col, nil
@@ -276,27 +274,25 @@ func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitemp
 		if isNamedStringType(t) {
 			col.IsEnum = true
 		}
-		if !notNullOverridden && !isPointer && !omitempty {
+		if !isPointer && !omitempty {
 			col.NotNull = true
 		}
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		col.SQLType = "INTEGER"
-		if !notNullOverridden && !isPointer && !omitempty {
+		if !isPointer && !omitempty {
 			col.NotNull = true
 		}
 
 	case reflect.Float32, reflect.Float64:
 		col.SQLType = "REAL"
-		if !notNullOverridden && !isPointer && !omitempty {
+		if !isPointer && !omitempty {
 			col.NotNull = true
 		}
 
 	case reflect.Bool:
 		col.SQLType = "BOOLEAN"
-		if notNullOverridden {
-			// Explicit override takes precedence.
-		} else if isPointer {
+		if isPointer {
 			// *bool is always nullable
 		} else if !omitempty {
 			col.NotNull = true
@@ -322,9 +318,7 @@ func goTypeToColumn(t reflect.Type, sqlName, goField, docComment string, omitemp
 		// Check for time.Time.
 		if t.PkgPath() == "time" && t.Name() == "Time" {
 			col.SQLType = "TEXT"
-			if notNullOverridden {
-				// Explicit override takes precedence.
-			} else if isPointer {
+			if isPointer {
 				// *time.Time is always nullable
 			} else if !omitempty {
 				col.NotNull = true
