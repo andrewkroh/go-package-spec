@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/andrewkroh/go-package-spec/internal/generator"
+	"github.com/andrewkroh/go-package-spec/cmd/generate/internal/generator"
 )
 
 func main() {

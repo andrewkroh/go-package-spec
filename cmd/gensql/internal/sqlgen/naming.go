@@ -18,7 +18,7 @@ func ToSQLName(s string) string {
 
 // splitWords breaks an identifier string into its component words.
 // It handles snake_case, kebab-case, dot-separated, and camelCase boundaries.
-// Duplicated from internal/generator/naming.go to avoid cross-package coupling.
+// Duplicated from cmd/generate/internal/generator/naming.go to avoid cross-package coupling.
 func splitWords(s string) []string {
 	var words []string
 	var current strings.Builder

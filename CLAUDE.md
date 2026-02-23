@@ -18,14 +18,14 @@ cmd/generate/
   main.go                      CLI entry point for code generator
   augment.yml                  Type/field augmentation config
   filemap.yml                  Type -> output file mapping
-internal/generator/            Code generation pipeline
-  augment.go                   Type/field overrides + extra_fields + base_types
-  emitter.go                   Go source emission via dave/jennifer/jen
-  filemap.go                   Maps types to output files
-  generator.go                 Orchestrator (Run pipeline)
-  loader.go                    JSON Schema parser + $ref resolution
-  naming.go                    Go identifier conventions
-  typemap.go                   JSON Schema -> GoType conversion
+  internal/generator/          Code generation pipeline
+    augment.go                 Type/field overrides + extra_fields + base_types
+    emitter.go                 Go source emission via dave/jennifer/jen
+    filemap.go                 Maps types to output files
+    generator.go               Orchestrator (Run pipeline)
+    loader.go                  JSON Schema parser + $ref resolution
+    naming.go                  Go identifier conventions
+    typemap.go                 JSON Schema -> GoType conversion
 pkgspec/                   Generated data model (DO NOT EDIT except hand-written files below)
   annotation.go                Hand-written: exports AnnotateFileMetadata
   processor.go                 Hand-written: Processor type with custom marshal/unmarshal
@@ -50,16 +50,16 @@ pkgreader/                        Package reader (loads from disk into pkgspec t
 cmd/gensql/
   main.go                      CLI entry point for SQL generator
   tables.yml                   Table → type mapping config
-internal/sqlgen/               SQL generation pipeline
-  config.go                    tables.yml loader
-  registry.go                  Type name → reflect.Type registry
-  reflect.go                   Struct field → SQL column walker
-  naming.go                    Go → SQL name conversion
-  sort.go                      Topological sort by FK dependencies
-  schema.go                    schema.sql emitter
-  query.go                     query.sql emitter
-  emitter.go                   tables.go + insert.go emitter (jennifer/jen)
-  generator.go                 Orchestrator (Run pipeline)
+  internal/sqlgen/             SQL generation pipeline
+    config.go                  tables.yml loader
+    registry.go                Type name → reflect.Type registry
+    reflect.go                 Struct field → SQL column walker
+    naming.go                  Go → SQL name conversion
+    sort.go                    Topological sort by FK dependencies
+    schema.go                  schema.sql emitter
+    query.go                   query.sql emitter
+    emitter.go                 tables.go + insert.go emitter (jennifer/jen)
+    generator.go               Orchestrator (Run pipeline)
 pkgsql/                        SQL interface for loading packages into SQLite
   internal/db/                 Generated sqlc output (hidden from consumers)
     sqlc.yaml                  sqlc configuration (package db)
@@ -140,7 +140,7 @@ Both steps are automated via `go generate ./pkgsql/`.
 
 `tables.yml` defines each SQL table and maps it to a pkgspec Go type. The generator uses reflection to walk struct fields and produce SQL columns. Key config options per table:
 
-- **`type`**: pkgspec type name (looked up in `internal/sqlgen/registry.go`)
+- **`type`**: pkgspec type name (looked up in `cmd/gensql/internal/sqlgen/registry.go`)
 - **`parent`**: parent table name (adds FK column automatically)
 - **`inline`**: list of struct fields to expand into separate columns (e.g. `Owner.Github` → `owner_github`)
 - **`json_columns`**: list of struct fields stored as a single JSON TEXT column
@@ -169,7 +169,7 @@ Both steps are automated via `go generate ./pkgsql/`.
 ### Adding a new table
 
 1. Add the entry to `cmd/gensql/tables.yml`
-2. If the Go type isn't in the registry, add it to `internal/sqlgen/registry.go`
+2. If the Go type isn't in the registry, add it to `cmd/gensql/internal/sqlgen/registry.go`
 3. Run `go generate ./pkgsql/`
 4. Add insertion logic to `pkgsql/api.go` in the appropriate `writeX` function
 

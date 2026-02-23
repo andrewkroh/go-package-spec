@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/andrewkroh/go-package-spec/internal/sqlgen"
+	"github.com/andrewkroh/go-package-spec/cmd/gensql/internal/sqlgen"
 )
 
 func main() {
