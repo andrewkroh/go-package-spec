@@ -93,11 +93,11 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 
 	// Extract type-specific fields for the packages table.
 	var (
-		conditionsKibanaVersion       sql.NullString
-		conditionsElasticSubscription sql.NullString
-		agentPrivilegesRoot           sql.NullBool
+		conditionsKibanaVersion        sql.NullString
+		conditionsElasticSubscription  sql.NullString
+		agentPrivilegesRoot            sql.NullBool
 		elasticsearchPrivilegesCluster any
-		policyTemplatesBehavior       sql.NullString
+		policyTemplatesBehavior        sql.NullString
 	)
 	switch im := pkg.IntegrationManifest(); {
 	case im != nil:
@@ -120,12 +120,12 @@ func writePackage(ctx context.Context, q *Queries, pkg *pkgreader.Package, cfg *
 	// Insert package.
 	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(
 		m,
-		conditionsKibanaVersion,
-		conditionsElasticSubscription,
 		agentPrivilegesRoot,
 		elasticsearchPrivilegesCluster,
 		policyTemplatesBehavior,
 		dirName,
+		conditionsKibanaVersion,
+		conditionsElasticSubscription,
 	))
 	if err != nil {
 		return fmt.Errorf("inserting package: %w", err)

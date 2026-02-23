@@ -36,8 +36,10 @@ INSERT INTO fields (
   subobjects,
   type,
   unit,
-  value
+  value,
+  json_pointer
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -79,12 +81,12 @@ INSERT INTO fields (
 
 -- name: InsertPackages :one
 INSERT INTO packages (
-  conditions_elastic_subscription,
   agent_privileges_root,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
   dir_name,
   conditions_kibana_version,
+  conditions_elastic_subscription,
   deprecated,
   description,
   format_version,
@@ -206,12 +208,12 @@ INSERT INTO discovery_fields (
 
 -- name: InsertImages :one
 INSERT INTO images (
-  packages_id,
-  src,
-  width,
   height,
   byte_size,
-  sha256
+  sha256,
+  packages_id,
+  src,
+  width
 ) VALUES (
   ?,
   ?,
@@ -235,10 +237,10 @@ INSERT INTO ingest_pipelines (
 -- name: InsertIngestProcessors :one
 INSERT INTO ingest_processors (
   ingest_pipelines_id,
-  ordinal,
   type,
   attributes,
-  json_pointer
+  json_pointer,
+  ordinal
 ) VALUES (
   ?,
   ?,
@@ -324,8 +326,8 @@ INSERT INTO policy_templates (
 
 -- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  category,
-  policy_template_id
+  policy_template_id,
+  category
 ) VALUES (
   ?,
   ?

@@ -104,6 +104,7 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 		IncludeInRoot:         toNullBool(v.IncludeInRoot),
 		Index:                 toNullBool(v.Index),
 		InferenceID:           toNullString(v.InferenceID),
+		JsonPointer:           toNullString(v.JsonPointer),
 		MetricType:            toNullString(string(v.MetricType)),
 		Metrics:               jsonNullString(v.Metrics),
 		MultiFields:           jsonNullString(v.MultiFields),
@@ -127,7 +128,7 @@ func mapFieldsParams(v *pkgspec.FlatField) InsertFieldsParams {
 }
 
 // mapPackagesParams converts a Manifest to InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, conditionsElasticSubscription sql.NullString, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string, conditionsKibanaVersion sql.NullString) InsertPackagesParams {
+func mapPackagesParams(v *pkgspec.Manifest, agentPrivilegesRoot sql.NullBool, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString, dirName string, conditionsKibanaVersion sql.NullString, conditionsElasticSubscription sql.NullString) InsertPackagesParams {
 	return InsertPackagesParams{
 		AgentPrivilegesRoot:            agentPrivilegesRoot,
 		ConditionsElasticSubscription:  conditionsElasticSubscription,

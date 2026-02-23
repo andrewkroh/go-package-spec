@@ -144,6 +144,9 @@ type Field struct {
 	Unit FieldUnit `json:"unit,omitempty" yaml:"unit,omitempty"`
 	// The value to associate with a constant_keyword field.
 	Value string `json:"value,omitempty" yaml:"value,omitempty"`
+	// JsonPointer is the RFC 6901 JSON Pointer to this field's location in the original fields file
+	// (e.g. /0/fields/1). Set by pkgreader after parsing.
+	JsonPointer string `json:"json_pointer,omitempty" yaml:"-"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for Field.

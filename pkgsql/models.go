@@ -101,16 +101,17 @@ type Field struct {
 	Type                  sql.NullString
 	Unit                  sql.NullString
 	Value                 sql.NullString
+	JsonPointer           sql.NullString
 }
 
 type Image struct {
 	ID         int64
-	Src        string
-	Width      sql.NullInt64
 	Height     sql.NullInt64
 	ByteSize   int64
 	Sha256     string
 	PackagesID int64
+	Src        string
+	Width      sql.NullInt64
 }
 
 type IngestPipeline struct {
@@ -131,12 +132,12 @@ type IngestProcessor struct {
 
 type Package struct {
 	ID                             int64
-	ConditionsKibanaVersion        sql.NullString
-	ConditionsElasticSubscription  sql.NullString
 	AgentPrivilegesRoot            sql.NullBool
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
 	DirName                        string
+	ConditionsKibanaVersion        sql.NullString
+	ConditionsElasticSubscription  sql.NullString
 	Deprecated                     interface{}
 	Description                    string
 	FormatVersion                  string
@@ -182,8 +183,8 @@ type PackageScreenshot struct {
 
 type PackageVar struct {
 	ID        int64
-	VarID     int64
 	PackageID int64
+	VarID     int64
 }
 
 type PolicyTemplate struct {
@@ -202,8 +203,8 @@ type PolicyTemplate struct {
 
 type PolicyTemplateCategory struct {
 	ID               int64
-	Category         string
 	PolicyTemplateID int64
+	Category         string
 }
 
 type PolicyTemplateIcon struct {

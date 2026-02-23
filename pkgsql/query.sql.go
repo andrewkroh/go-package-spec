@@ -256,8 +256,10 @@ INSERT INTO fields (
   subobjects,
   type,
   unit,
-  value
+  value,
+  json_pointer
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -336,6 +338,7 @@ type InsertFieldsParams struct {
 	Type                  sql.NullString
 	Unit                  sql.NullString
 	Value                 sql.NullString
+	JsonPointer           sql.NullString
 }
 
 func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int64, error) {
@@ -377,6 +380,7 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 		arg.Type,
 		arg.Unit,
 		arg.Value,
+		arg.JsonPointer,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -385,12 +389,12 @@ func (q *Queries) InsertFields(ctx context.Context, arg InsertFieldsParams) (int
 
 const insertImages = `-- name: InsertImages :one
 INSERT INTO images (
-  src,
-  width,
   height,
   byte_size,
   sha256,
-  packages_id
+  packages_id,
+  src,
+  width
 ) VALUES (
   ?,
   ?,
@@ -402,22 +406,22 @@ INSERT INTO images (
 `
 
 type InsertImagesParams struct {
-	Src        string
-	Width      sql.NullInt64
 	Height     sql.NullInt64
 	ByteSize   int64
 	Sha256     string
 	PackagesID int64
+	Src        string
+	Width      sql.NullInt64
 }
 
 func (q *Queries) InsertImages(ctx context.Context, arg InsertImagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertImages,
-		arg.Src,
-		arg.Width,
 		arg.Height,
 		arg.ByteSize,
 		arg.Sha256,
 		arg.PackagesID,
+		arg.Src,
+		arg.Width,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -610,8 +614,8 @@ func (q *Queries) InsertPackageScreenshots(ctx context.Context, arg InsertPackag
 
 const insertPackageVars = `-- name: InsertPackageVars :one
 INSERT INTO package_vars (
-  var_id,
-  package_id
+  package_id,
+  var_id
 ) VALUES (
   ?,
   ?
@@ -619,12 +623,12 @@ INSERT INTO package_vars (
 `
 
 type InsertPackageVarsParams struct {
-	VarID     int64
 	PackageID int64
+	VarID     int64
 }
 
 func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPackageVars, arg.VarID, arg.PackageID)
+	row := q.db.QueryRowContext(ctx, insertPackageVars, arg.PackageID, arg.VarID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -632,12 +636,12 @@ func (q *Queries) InsertPackageVars(ctx context.Context, arg InsertPackageVarsPa
 
 const insertPackages = `-- name: InsertPackages :one
 INSERT INTO packages (
-  conditions_kibana_version,
-  conditions_elastic_subscription,
   agent_privileges_root,
   elasticsearch_privileges_cluster,
   policy_templates_behavior,
   dir_name,
+  conditions_kibana_version,
+  conditions_elastic_subscription,
   deprecated,
   description,
   format_version,
@@ -669,12 +673,12 @@ INSERT INTO packages (
 `
 
 type InsertPackagesParams struct {
-	ConditionsKibanaVersion        sql.NullString
-	ConditionsElasticSubscription  sql.NullString
 	AgentPrivilegesRoot            sql.NullBool
 	ElasticsearchPrivilegesCluster interface{}
 	PolicyTemplatesBehavior        sql.NullString
 	DirName                        string
+	ConditionsKibanaVersion        sql.NullString
+	ConditionsElasticSubscription  sql.NullString
 	Deprecated                     interface{}
 	Description                    string
 	FormatVersion                  string
@@ -689,12 +693,12 @@ type InsertPackagesParams struct {
 
 func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPackages,
-		arg.ConditionsKibanaVersion,
-		arg.ConditionsElasticSubscription,
 		arg.AgentPrivilegesRoot,
 		arg.ElasticsearchPrivilegesCluster,
 		arg.PolicyTemplatesBehavior,
 		arg.DirName,
+		arg.ConditionsKibanaVersion,
+		arg.ConditionsElasticSubscription,
 		arg.Deprecated,
 		arg.Description,
 		arg.FormatVersion,
@@ -713,8 +717,8 @@ func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) 
 
 const insertPolicyTemplateCategories = `-- name: InsertPolicyTemplateCategories :one
 INSERT INTO policy_template_categories (
-  category,
-  policy_template_id
+  policy_template_id,
+  category
 ) VALUES (
   ?,
   ?
@@ -722,12 +726,12 @@ INSERT INTO policy_template_categories (
 `
 
 type InsertPolicyTemplateCategoriesParams struct {
-	Category         string
 	PolicyTemplateID int64
+	Category         string
 }
 
 func (q *Queries) InsertPolicyTemplateCategories(ctx context.Context, arg InsertPolicyTemplateCategoriesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.Category, arg.PolicyTemplateID)
+	row := q.db.QueryRowContext(ctx, insertPolicyTemplateCategories, arg.PolicyTemplateID, arg.Category)
 	var id int64
 	err := row.Scan(&id)
 	return id, err

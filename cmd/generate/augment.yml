@@ -6,6 +6,12 @@ types:
 
   Field:
     doc: "Field represents a field definition in a data stream's field mapping."
+    extra_fields:
+      - name: JsonPointer
+        type: string
+        doc: "JsonPointer is the RFC 6901 JSON Pointer to this field's location in the original fields file (e.g. /0/fields/1). Set by pkgreader after parsing."
+        json: "json_pointer,omitempty"
+        yaml: "-"
     fields:
       example:
         type: any

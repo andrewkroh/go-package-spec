@@ -235,6 +235,51 @@ func TestFlattenFields_DottedNameInGroup(t *testing.T) {
 	}
 }
 
+func TestFlattenFields_PreservesJsonPointer(t *testing.T) {
+	fields := []Field{
+		{
+			Name: "test",
+			Type: FieldTypeGroup,
+			Fields: []Field{
+				{
+					Name:        "message",
+					Type:        FieldTypeText,
+					JsonPointer: "/0/fields/0",
+				},
+				{
+					Name:        "level",
+					Type:        FieldTypeKeyword,
+					JsonPointer: "/0/fields/1",
+				},
+			},
+			JsonPointer: "/0",
+		},
+		{
+			Name:        "@timestamp",
+			Type:        FieldTypeDate,
+			JsonPointer: "/1",
+		},
+	}
+
+	flat := FlattenFields(fields, nil)
+
+	if len(flat) != 3 {
+		t.Fatalf("got %d fields, want 3", len(flat))
+	}
+
+	want := map[string]string{
+		"@timestamp":   "/1",
+		"test.level":   "/0/fields/1",
+		"test.message": "/0/fields/0",
+	}
+
+	for _, f := range flat {
+		if f.JsonPointer != want[f.Name] {
+			t.Errorf("field %q: got JsonPointer %q, want %q", f.Name, f.JsonPointer, want[f.Name])
+		}
+	}
+}
+
 func flatFieldNames(flat []FlatField) []string {
 	names := make([]string, len(flat))
 	for i, f := range flat {

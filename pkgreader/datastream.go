@@ -227,6 +227,7 @@ func readFieldsFile(fsys fs.FS, filePath string, cfg *config) (*FieldsFile, erro
 	}
 
 	pkgspec.AnnotateFileMetadata(filePath, &fields)
+	pkgspec.AnnotateFieldPointers(fields)
 
 	return &FieldsFile{
 		Fields: fields,

@@ -37,18 +37,19 @@ CREATE TABLE IF NOT EXISTS fields (
   subobjects BOOLEAN, -- Specifies if field names containing dots should be expanded into subobjects. For example, if this is set to `true`, a field named `foo.bar` will be expanded into an object with a field named `bar` ...
   type TEXT, -- Datatype of field. If the type is set to object, a dynamic mapping is created. In this case, if the name doesn't contain any wildcard, the wildcard is added as the last segment of the path.
   unit TEXT, -- Unit type to associate with a numeric field. This is attached to the field as metadata (via `meta`). By default, a field does not have a unit. The convention for percents is to use value 1 to mean ...
-  value TEXT -- The value to associate with a constant_keyword field.
+  value TEXT, -- The value to associate with a constant_keyword field.
+  json_pointer TEXT -- JsonPointer is the RFC 6901 JSON Pointer to this field's location in the original fields file (e.g. /0/fields/1). Set by pkgreader after parsing.
 );
 
 CREATE TABLE IF NOT EXISTS packages (
   -- Fleet packages (integration, input, or content). Each row is one package version.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  conditions_elastic_subscription TEXT, -- required Elastic subscription level
   agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
   elasticsearch_privileges_cluster JSON, -- Elasticsearch cluster privilege requirements (JSON array)
   policy_templates_behavior TEXT, -- behavior when multiple policy templates are defined (all, combined_policy, individual_policies)
   dir_name TEXT NOT NULL UNIQUE, -- directory name of the package
   conditions_kibana_version TEXT, -- required Kibana version range
+  conditions_elastic_subscription TEXT, -- required Elastic subscription level
   deprecated JSON, -- JSON-encoded Deprecated
   description TEXT NOT NULL, -- Description
   format_version TEXT NOT NULL, -- The version of the package specification format used by this package.
@@ -124,12 +125,12 @@ CREATE TABLE IF NOT EXISTS discovery_fields (
 CREATE TABLE IF NOT EXISTS images (
   -- Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
-  src TEXT NOT NULL, -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
-  width INTEGER, -- image width in pixels (NULL for SVG)
   height INTEGER, -- image height in pixels (NULL for SVG)
   byte_size INTEGER NOT NULL, -- file size in bytes
-  sha256 TEXT NOT NULL -- hex-encoded SHA-256 hash of file contents
+  sha256 TEXT NOT NULL, -- hex-encoded SHA-256 hash of file contents
+  packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  src TEXT NOT NULL, -- image path with leading slash to match icon/screenshot src (e.g. /img/icon.png)
+  width INTEGER -- image width in pixels (NULL for SVG)
 );
 
 CREATE TABLE IF NOT EXISTS ingest_pipelines (
@@ -144,10 +145,10 @@ CREATE TABLE IF NOT EXISTS ingest_processors (
   -- Individual ingest processors flattened from pipelines. Nested on_failure handlers are included as separate rows.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   ingest_pipelines_id INTEGER NOT NULL REFERENCES ingest_pipelines(id), -- foreign key to ingest_pipelines
-  ordinal INTEGER NOT NULL, -- order of processor within the pipeline
   type TEXT NOT NULL, -- processor type (e.g. set, grok, rename)
   attributes JSON, -- JSON-encoded processor attributes
-  json_pointer TEXT NOT NULL -- RFC 6901 JSON Pointer location within the pipeline
+  json_pointer TEXT NOT NULL, -- RFC 6901 JSON Pointer location within the pipeline
+  ordinal INTEGER NOT NULL -- order of processor within the pipeline
 );
 
 CREATE TABLE IF NOT EXISTS package_categories (
@@ -203,8 +204,8 @@ CREATE TABLE IF NOT EXISTS policy_templates (
 CREATE TABLE IF NOT EXISTS policy_template_categories (
   -- Categories assigned to a policy template.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
-  category TEXT NOT NULL, -- category value
-  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id) -- foreign key to policy_templates
+  policy_template_id INTEGER NOT NULL REFERENCES policy_templates(id), -- foreign key to policy_templates
+  category TEXT NOT NULL -- category value
 );
 
 CREATE TABLE IF NOT EXISTS policy_template_icons (
