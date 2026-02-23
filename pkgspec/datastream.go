@@ -17,10 +17,14 @@ type DataStreamElasticsearch struct {
 	// Elasticsearch privilege requirements
 	Privileges DataStreamElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
 	// Source mode to use. This configures how the document source (`_source`) is stored for this data
-	// stream. If configured as `default`, this mode is not configured and it uses Elasticsearch
-	// defaults. If configured as `synthetic`, it enables [synthetic source], that doesn't store the
-	// source, but tries to rebuild it from the indexed fields when queried. If no configured or set to
-	// `synthetic`, users may override the setting from Fleet UI.
+	// stream.
+	//
+	// If configured as `default`, this mode is not configured and it uses Elasticsearch defaults.
+	//
+	// If configured as `synthetic`, it enables [synthetic source], that doesn't store the source, but
+	// tries to rebuild it from the indexed fields when queried.
+	//
+	// If no configured or set to `synthetic`, users may override the setting from Fleet UI.
 	//
 	// [synthetic source]: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/mapping-source-field.html#synthetic-source
 	SourceMode DataStreamSourceMode `json:"source_mode,omitempty" yaml:"source_mode,omitempty"`
@@ -85,10 +89,14 @@ const (
 )
 
 // DataStreamSourceMode source mode to use. This configures how the document source (`_source`) is
-// stored for this data stream. If configured as `default`, this mode is not configured and it uses
-// Elasticsearch defaults. If configured as `synthetic`, it enables [synthetic source], that doesn't
-// store the source, but tries to rebuild it from the indexed fields when queried. If no configured
-// or set to `synthetic`, users may override the setting from Fleet UI.
+// stored for this data stream.
+//
+// If configured as `default`, this mode is not configured and it uses Elasticsearch defaults.
+//
+// If configured as `synthetic`, it enables [synthetic source], that doesn't store the source, but
+// tries to rebuild it from the indexed fields when queried.
+//
+// If no configured or set to `synthetic`, users may override the setting from Fleet UI.
 //
 // [synthetic source]: https://www.elastic.co/guide/en/elasticsearch/reference/8.4/mapping-source-field.html#synthetic-source
 type DataStreamSourceMode string

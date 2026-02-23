@@ -422,8 +422,8 @@ var mdLinkRe = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 
 // docComment holds formatted doc text and any extracted link definitions.
 type docComment struct {
-	text  string           // main text with Markdown links replaced by [text] refs
-	links []docCommentLink // extracted link definitions in order of appearance
+	paragraphs []string         // paragraphs separated by blank lines in the output
+	links      []docCommentLink // extracted link definitions in order of appearance
 }
 
 type docCommentLink struct {
@@ -431,18 +431,9 @@ type docCommentLink struct {
 	url  string
 }
 
-// formatDocComment formats a Go doc comment for a type or enum.
-// It ensures the comment starts with the type name per Go convention,
-// normalizes whitespace, and converts Markdown links to Go doc link references.
-func formatDocComment(name, doc string) docComment {
-	// Normalize: collapse all whitespace (newlines, tabs, multiple spaces)
-	// into single spaces.
-	doc = strings.Join(strings.Fields(doc), " ")
-	if doc == "" {
-		return docComment{text: name + " is a generated type."}
-	}
-
-	// Extract Markdown links [text](url) → [text], collecting definitions.
+// extractLinks replaces Markdown links [text](url) with Go doc [text]
+// references, collecting link definitions for appending at the end.
+func extractLinks(doc string) (string, []docCommentLink) {
 	var links []docCommentLink
 	seen := map[string]bool{}
 	doc = mdLinkRe.ReplaceAllStringFunc(doc, func(match string) string {
@@ -454,62 +445,124 @@ func formatDocComment(name, doc string) docComment {
 		}
 		return "[" + linkText + "]"
 	})
+	return doc, links
+}
 
-	// If doc already starts with the name, return as is.
-	if strings.HasPrefix(doc, name+" ") || strings.HasPrefix(doc, name+".") {
-		return docComment{text: doc, links: links}
+// splitParagraphs splits a doc string into paragraphs at newline boundaries.
+// Each non-empty line (or group of continuation lines) becomes a separate
+// paragraph. Within each paragraph, whitespace is normalized to single spaces.
+func splitParagraphs(doc string) []string {
+	doc = strings.TrimSpace(doc)
+	if doc == "" {
+		return nil
 	}
 
-	// Prepend name.
-	// Ensure first character after name is lowercase unless it's an acronym.
-	firstChar := ""
-	if len(doc) > 0 {
-		firstChar = strings.ToLower(doc[:1])
-		if doc[:1] == strings.ToUpper(doc[:1]) {
-			// Check if it's the start of an acronym or a sentence.
-			if len(doc) > 1 && doc[1:2] == strings.ToUpper(doc[1:2]) {
-				// Acronym — keep it uppercase.
-				firstChar = doc[:1]
+	// If no newlines, treat as a single paragraph.
+	if !strings.Contains(doc, "\n") {
+		return []string{strings.Join(strings.Fields(doc), " ")}
+	}
+
+	// Each newline-separated line becomes a paragraph. Continuation lines
+	// (indented with leading whitespace) are joined to the previous line.
+	// Blank lines are skipped (they don't produce empty paragraphs).
+	rawLines := strings.Split(doc, "\n")
+	var paragraphs []string
+	var current strings.Builder
+
+	flush := func() {
+		text := strings.Join(strings.Fields(current.String()), " ")
+		if text != "" {
+			paragraphs = append(paragraphs, text)
+		}
+		current.Reset()
+	}
+
+	for _, line := range rawLines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			flush()
+			continue
+		}
+		// A line that starts with a lowercase letter, or is indented,
+		// is a continuation of the previous paragraph.
+		isContinuation := current.Len() > 0 &&
+			(len(line) > 0 && (line[0] == ' ' || line[0] == '\t') ||
+				len(trimmed) > 0 && trimmed[0] >= 'a' && trimmed[0] <= 'z')
+		if isContinuation {
+			current.WriteByte(' ')
+			current.WriteString(trimmed)
+			continue
+		}
+		// Otherwise, start a new paragraph.
+		flush()
+		current.WriteString(trimmed)
+	}
+	flush()
+
+	return paragraphs
+}
+
+// formatDocComment formats a Go doc comment for a type or enum.
+// It ensures the comment starts with the type name per Go convention,
+// converts Markdown links to Go doc link references, and preserves
+// paragraph structure from the original description.
+func formatDocComment(name, doc string) docComment {
+	doc = strings.TrimSpace(doc)
+	if doc == "" {
+		return docComment{paragraphs: []string{name + " is a generated type."}}
+	}
+
+	// Extract links before splitting paragraphs.
+	doc, links := extractLinks(doc)
+
+	paragraphs := splitParagraphs(doc)
+	if len(paragraphs) == 0 {
+		return docComment{paragraphs: []string{name + " is a generated type."}, links: links}
+	}
+
+	// Prepend name to the first paragraph per Go convention.
+	first := paragraphs[0]
+	if !strings.HasPrefix(first, name+" ") && !strings.HasPrefix(first, name+".") {
+		firstChar := strings.ToLower(first[:1])
+		if first[:1] == strings.ToUpper(first[:1]) {
+			if len(first) > 1 && first[1:2] == strings.ToUpper(first[1:2]) {
+				firstChar = first[:1]
 			}
 		}
+		paragraphs[0] = name + " " + firstChar + first[1:]
 	}
 
-	return docComment{text: name + " " + firstChar + doc[1:], links: links}
+	return docComment{paragraphs: paragraphs, links: links}
 }
 
 // formatFieldDocComment formats a doc comment for a struct field.
 // Unlike type-level comments, field comments do not prepend the field name,
 // since the field name is already visible in the struct declaration.
 func formatFieldDocComment(doc string) docComment {
-	doc = strings.Join(strings.Fields(doc), " ")
+	doc = strings.TrimSpace(doc)
 	if doc == "" {
 		return docComment{}
 	}
 
-	// Extract Markdown links [text](url) → [text], collecting definitions.
-	var links []docCommentLink
-	seen := map[string]bool{}
-	doc = mdLinkRe.ReplaceAllStringFunc(doc, func(match string) string {
-		m := mdLinkRe.FindStringSubmatch(match)
-		linkText, linkURL := m[1], m[2]
-		if !seen[linkText] {
-			seen[linkText] = true
-			links = append(links, docCommentLink{text: linkText, url: linkURL})
-		}
-		return "[" + linkText + "]"
-	})
+	doc, links := extractLinks(doc)
 
-	// Capitalize the first letter for a proper sentence.
-	if len(doc) > 0 {
-		doc = strings.ToUpper(doc[:1]) + doc[1:]
+	paragraphs := splitParagraphs(doc)
+	if len(paragraphs) == 0 {
+		return docComment{}
 	}
 
-	return docComment{text: doc, links: links}
+	// Capitalize the first letter of the first paragraph.
+	first := paragraphs[0]
+	if len(first) > 0 {
+		paragraphs[0] = strings.ToUpper(first[:1]) + first[1:]
+	}
+
+	return docComment{paragraphs: paragraphs, links: links}
 }
 
 // wrapComment word-wraps a docComment into lines that fit within maxWidth
-// characters including the "// " prefix (3 chars). Link definitions are
-// appended after a blank comment line.
+// characters including the "// " prefix (3 chars). Paragraphs are separated
+// by blank comment lines. Link definitions are appended after a blank line.
 func wrapComment(dc docComment, maxWidth int) []string {
 	contentWidth := maxWidth - 3 // account for "// " prefix
 	if contentWidth < 20 {
@@ -517,25 +570,11 @@ func wrapComment(dc docComment, maxWidth int) []string {
 	}
 
 	var lines []string
-	text := dc.text
-	for len(text) > 0 {
-		if len(text) <= contentWidth {
-			lines = append(lines, text)
-			break
+	for i, para := range dc.paragraphs {
+		if i > 0 {
+			lines = append(lines, "") // blank line between paragraphs
 		}
-
-		// Find the last space at or before the limit.
-		cut := contentWidth
-		for cut > 0 && text[cut] != ' ' {
-			cut--
-		}
-		if cut == 0 {
-			// No space found; force break at limit.
-			cut = contentWidth
-		}
-
-		lines = append(lines, text[:cut])
-		text = strings.TrimLeft(text[cut:], " ")
+		lines = append(lines, wrapText(para, contentWidth)...)
 	}
 
 	// Append link definitions.
@@ -546,5 +585,34 @@ func wrapComment(dc docComment, maxWidth int) []string {
 		}
 	}
 
+	return lines
+}
+
+// wrapText word-wraps a single paragraph into lines of at most maxWidth chars.
+func wrapText(text string, maxWidth int) []string {
+	var lines []string
+	for len(text) > 0 {
+		if len(text) <= maxWidth {
+			lines = append(lines, text)
+			break
+		}
+
+		cut := maxWidth
+		for cut > 0 && text[cut] != ' ' {
+			cut--
+		}
+		if cut == 0 {
+			// The current word exceeds maxWidth (e.g. a long URL).
+			// Keep it intact by finding the next space instead.
+			cut = strings.IndexByte(text, ' ')
+			if cut == -1 {
+				lines = append(lines, text)
+				break
+			}
+		}
+
+		lines = append(lines, text[:cut])
+		text = strings.TrimLeft(text[cut:], " ")
+	}
 	return lines
 }

@@ -110,9 +110,11 @@ type ConditionsAgent struct {
 
 // ConditionsElastic elastic conditions
 type ConditionsElastic struct {
-	// Stack features that are required by the package to work properly. The package should not be used
-	// in deployments without the indicated features. Packages that don't indicate any capability
-	// condition can be used on any deployment.
+	// Stack features that are required by the package to work properly.
+	//
+	// The package should not be used in deployments without the indicated features.
+	//
+	// Packages that don't indicate any capability condition can be used on any deployment.
 	Capabilities []ConditionsElasticCapability `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
 	// The subscription required for this package.
 	Subscription ConditionsElasticSubscription `json:"subscription,omitempty" yaml:"subscription,omitempty"`

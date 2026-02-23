@@ -14,11 +14,14 @@ type Field struct {
 	// can then be queried as a single field.
 	CopyTo string `json:"copy_to,omitempty" yaml:"copy_to,omitempty"`
 	// The date format(s) that can be parsed. Type date format default to
-	// `strict_date_optional_time||epoch_millis`, see the [doc]. In JSON documents, dates are
-	// represented as strings. Elasticsearch uses a set of preconfigured formats to recognize and parse
-	// these strings into a long value representing _milliseconds-since-the-epoch_ in UTC. Besides the
-	// [built-in formats], your own [custom formats] can be specified using the familiar `yyyy/MM/dd`
-	// syntax.
+	// `strict_date_optional_time||epoch_millis`, see the [doc].
+	//
+	// In JSON documents, dates are represented as strings. Elasticsearch uses a set of preconfigured
+	// formats to recognize and parse these strings into a long value representing
+	// _milliseconds-since-the-epoch_ in UTC.
+	//
+	// Besides the [built-in formats], your own [custom formats] can be specified using the familiar
+	// `yyyy/MM/dd` syntax.
 	//
 	// [doc]: https://www.elastic.co/guide/en/elasticsearch/reference/current/date.html#date-params
 	// [built-in formats]: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html#built-in-date-formats
@@ -81,8 +84,9 @@ type Field struct {
 	Metrics    any             `json:"metrics,omitempty" yaml:"metrics,omitempty"`
 	// It is often useful to index the same field in different ways for different purposes. This is the
 	// purpose of multi-fields. For instance, a string field could be mapped as a text field for
-	// full-text search, and as a keyword field for sorting or aggregations. Fleet honors this for
-	// `keyword`, `text`, and `wildcard` types.
+	// full-text search, and as a keyword field for sorting or aggregations.
+	//
+	// Fleet honors this for `keyword`, `text`, and `wildcard` types.
 	MultiFields []Field `json:"multi_fields,omitempty" yaml:"multi_fields,omitempty"`
 	// Name of field. Names containing dots are automatically split into sub-fields. Names with
 	// wildcards generate dynamic mappings.
@@ -95,11 +99,15 @@ type Field struct {
 	// analysis index settings.
 	Normalizer string `json:"normalizer,omitempty" yaml:"normalizer,omitempty"`
 	// The null_value parameter allows you to replace explicit null values with the specified value so
-	// that it can be indexed and searched. A null value cannot be indexed or searched. When a field is
-	// set to null, (or an empty array or an array of null values) it is treated as though that field
-	// has no values. The null_value needs to be the same data type as the field. For instance, a long
-	// field cannot have a string null_value. The null_value only influences how data is indexed, it
-	// doesn’t modify the _source document.
+	// that it can be indexed and searched.
+	//
+	// A null value cannot be indexed or searched. When a field is set to null, (or an empty array or an
+	// array of null values) it is treated as though that field has no values.
+	//
+	// The null_value needs to be the same data type as the field. For instance, a long field cannot
+	// have a string null_value.
+	//
+	// The null_value only influences how data is indexed, it doesn’t modify the _source document.
 	NullValue any `json:"null_value,omitempty" yaml:"null_value,omitempty"`
 	// Type of the members of the object when `type: object` is used. In these cases a dynamic template
 	// is created so direct subobjects of this field have the type indicated. When

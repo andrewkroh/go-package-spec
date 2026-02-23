@@ -48,6 +48,7 @@ const (
 type IndexMappingConfig struct{}
 
 // IndexMode index mode to use. Index mode can be used to enable use case specific functionalities.
+//
 // This setting must be installed in the composable index template, not in the package component
 // templates.
 type IndexMode string
@@ -102,22 +103,40 @@ type IndexTemplateMappings struct {
 	DynamicDateFormats []string `json:"dynamic_date_formats,omitempty" yaml:"dynamic_date_formats,omitempty"`
 	// DynamicTemplates defines custom rules for dynamic field mapping.
 	DynamicTemplates any `json:"dynamic_templates,omitempty" yaml:"dynamic_templates,omitempty"`
-	// Turn the support for subobjects on or off in the mapping configuration for the data stream. By
-	// default, it's set to `true`, enabling Elasticsearch to expands fields that contain dots in their
-	// names to their corresponding object structure. Setting it to `false` restricts objects from
-	// holding subobjects, enabling storing documents with dot-contained field names and common
-	// prefixes. It is still possible to send documents that have objects to a data stream that has set
-	// subobjects to `false`. Example when the subobjects mapping option is `false`: PUT my-index-000001
-	// { "mappings": { "subobjects": false } } PUT my-index-000001/_doc/metric_1 { "time" : "100ms",
-	// "time.min" : "10ms", "time.max" : "900ms" } Before disabling subobjects, consider the following
-	// implications: - Nested field types cannot be used in data streams. - The subobjects mapping
-	// definition is immutable. - This setting depends on auto-flattening mappings, which comes with
-	// limitations [^1] for integration and custom mappings in data streams without subobjects. -
-	// Auto-flattening is available starting from version 8.14, integrations must be on at least this
-	// version. For comprehensive details on subobjects, refer to the Elasticsearch documentation [^2].
+	// Turn the support for subobjects on or off in the mapping configuration for the data stream.
+	//
+	// By default, it's set to `true`, enabling Elasticsearch to expands fields that contain dots in
+	// their names to their corresponding object structure.
+	//
+	// Setting it to `false` restricts objects from holding subobjects, enabling storing documents with
+	// dot-contained field names and common prefixes.
+	//
+	// It is still possible to send documents that have objects to a data stream that has set subobjects
+	// to `false`.
+	//
+	// Example when the subobjects mapping option is `false`:
+	//
+	// PUT my-index-000001 { "mappings": { "subobjects": false }
+	//
+	// }
+	//
+	// PUT my-index-000001/_doc/metric_1 { "time" : "100ms", "time.min" : "10ms", "time.max" : "900ms"
+	//
+	// }
+	//
+	// Before disabling subobjects, consider the following implications:
+	//
+	// - Nested field types cannot be used in data streams. - The subobjects mapping definition is
+	// immutable. - This setting depends on auto-flattening mappings, which comes with limitations [^1]
+	// for integration and custom mappings in data streams without subobjects. - Auto-flattening is
+	// available starting from version 8.14, integrations must be on at least this version.
+	//
+	// For comprehensive details on subobjects, refer to the Elasticsearch documentation [^2].
+	//
 	// [^1]: Auto-flattening limitations are documented at:
-	// https://www.elastic.co/guide/en/elasticsearch/reference/master/subobjects.html#_auto_flattening_o
-	// bject_mappings [^2]: Elasticsearch documentation on subobjects:
+	// https://www.elastic.co/guide/en/elasticsearch/reference/master/subobjects.html#_auto_flattening_object_mappings
+	//
+	// [^2]: Elasticsearch documentation on subobjects:
 	// https://www.elastic.co/guide/en/elasticsearch/reference/current/subobjects.html
 	Subobjects *bool `json:"subobjects,omitempty" yaml:"subobjects,omitempty"`
 }

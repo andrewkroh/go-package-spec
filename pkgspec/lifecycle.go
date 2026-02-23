@@ -6,8 +6,9 @@ import yamlv3 "gopkg.in/yaml.v3"
 
 type Lifecycle struct {
 	FileMetadata `json:"-" yaml:"-"`
-	// Every document collected will be stored at least during this time frame. Any time after this
-	// duration the documents could be deleted.
+	// Every document collected will be stored at least during this time frame.
+	//
+	// Any time after this duration the documents could be deleted.
 	DataRetention string `json:"data_retention" yaml:"data_retention"`
 }
 

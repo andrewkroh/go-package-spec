@@ -38,10 +38,12 @@ type Var struct {
 	ShowUser *bool `json:"show_user,omitempty" yaml:"show_user,omitempty"`
 	// Title of variable.
 	Title string `json:"title,omitempty" yaml:"title,omitempty"`
-	// Data type of variable. A duration type is a sequence of decimal numbers, each with a unit suffix,
-	// such as "60s", "1m" or "2h45m". Duration values must follow these rules: - Use time units of
-	// "ms", "s", "m", "h". - When using min_duration, default, and max_duration, they must satisfy: 0
-	// <= min_duration <= default <= max_duration
+	// Data type of variable.
+	//
+	// A duration type is a sequence of decimal numbers, each with a unit suffix, such as "60s", "1m" or
+	// "2h45m". Duration values must follow these rules: - Use time units of "ms", "s", "m", "h". - When
+	// using min_duration, default, and max_duration, they must satisfy: 0 <= min_duration <= default <=
+	// max_duration
 	Type VarType `json:"type" yaml:"type"`
 	// List of allowed URL schemes for the url type. If empty, any scheme is allowed. An empty string
 	// can be used to indicate that the scheme is not mandatory.
@@ -95,10 +97,12 @@ const (
 	VarHideInDeploymentModeAgentless VarHideInDeploymentMode = "agentless"
 )
 
-// VarType data type of variable. A duration type is a sequence of decimal numbers, each with a unit
-// suffix, such as "60s", "1m" or "2h45m". Duration values must follow these rules: - Use time units
-// of "ms", "s", "m", "h". - When using min_duration, default, and max_duration, they must satisfy:
-// 0 <= min_duration <= default <= max_duration
+// VarType data type of variable.
+//
+// A duration type is a sequence of decimal numbers, each with a unit suffix, such as "60s", "1m" or
+// "2h45m". Duration values must follow these rules: - Use time units of "ms", "s", "m", "h". - When
+// using min_duration, default, and max_duration, they must satisfy: 0 <= min_duration <= default <=
+// max_duration
 type VarType string
 
 // Enum values for VarType.
