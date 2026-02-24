@@ -255,7 +255,7 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 			return err
 		}
 	case pkgspec.ManifestTypeContent:
-		if err := writeContent(ctx, q, pkg, pkgID); err != nil {
+		if err := writeContent(ctx, q, pkg, pkgID, pathPrefix); err != nil {
 			return err
 		}
 	}
@@ -423,7 +423,7 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 	}
 
 	// Insert Kibana saved objects.
-	if err := writeKibanaObjects(ctx, q, pkg, pkgID); err != nil {
+	if err := writeKibanaObjects(ctx, q, pkg, pkgID, pathPrefix); err != nil {
 		return err
 	}
 
@@ -485,7 +485,7 @@ func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, p
 	return nil
 }
 
-func writeContent(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64) error {
+func writeContent(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, pathPrefix string) error {
 	cm := pkg.ContentManifest()
 	if cm == nil {
 		return nil
@@ -503,14 +503,14 @@ func writeContent(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 	}
 
 	// Insert Kibana saved objects.
-	if err := writeKibanaObjects(ctx, q, pkg, pkgID); err != nil {
+	if err := writeKibanaObjects(ctx, q, pkg, pkgID, pathPrefix); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64) error {
+func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, pathPrefix string) error {
 	for assetType, objects := range pkg.KibanaObjects {
 		for _, obj := range objects {
 			objID, err := q.InsertKibanaSavedObjects(ctx, dbpkg.InsertKibanaSavedObjectsParams{
@@ -520,7 +520,7 @@ func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pa
 				ObjectType:           toNullString(obj.Type),
 				Title:                toNullString(obj.Attributes.Title),
 				Description:          toNullString(obj.Attributes.Description),
-				FilePath:             obj.Path(),
+				FilePath:             path.Join(pathPrefix, obj.Path()),
 				CoreMigrationVersion: toNullString(obj.CoreMigrationVersion),
 				TypeMigrationVersion: toNullString(obj.TypeMigrationVersion),
 				Managed:              toNullBool(obj.Managed),
