@@ -72,7 +72,8 @@ pkgsql/                        SQL interface for loading packages into SQLite
   tables.go                    Generated: unexported table constants + creates slice
   insert.go                    Generated: Type → db.InsertXParams param mapping
   api.go                       Hand-written: WritePackages/WritePackage/TableSchemas
-  fts.go                       Hand-written: FTS5 virtual table schema + RebuildDocsFTS
+  fts.go                       Hand-written: FTS5 virtual table schemas + RebuildFTS
+  strip.go                     Hand-written: stripFieldTables content stripping for FTS
   api_test.go                  Hand-written: Integration tests
   doc.go                       Hand-written: go:generate directives
 ```
@@ -166,8 +167,9 @@ Both steps are automated via `go generate ./pkgsql/`.
 - **Comments inside CREATE TABLE body**: All documentation goes inside `(...)` so `sqlite_master.sql` preserves them — making the database file self-documenting.
 - **Processor as special case**: `Processor` has no standard struct tags; its table is defined via `extra_columns` only.
 - **No SQLite driver in pkgsql**: Only `database/sql`. Tests use `modernc.org/sqlite`.
-- **Internal db subpackage**: sqlc-generated types (`Queries`, `DBTX`, `InsertXParams` structs) live in `pkgsql/internal/db/` so the public API surface is just `WritePackages`, `WritePackage`, `TableSchemas`, `Option`, `WithECSLookup`, `WithDocContent`, `DocReader`, `OSDocReader`, and `RebuildDocsFTS`. The `api.go` file imports internal/db with a `dbpkg` alias to avoid shadowing the `db *sql.DB` parameter name.
-- **FTS5 full-text search**: The `docs` table stores doc file paths and optional markdown content. A companion `docs_fts` FTS5 virtual table (external content mode, porter stemming) provides full-text search. `WritePackages` rebuilds the index automatically; callers using `WritePackage` directly must call `RebuildDocsFTS`. The FTS5 schema is hand-written in `fts.go` since the code generator cannot produce `CREATE VIRTUAL TABLE` syntax.
+- **Internal db subpackage**: sqlc-generated types (`Queries`, `DBTX`, `InsertXParams` structs) live in `pkgsql/internal/db/` so the public API surface is just `WritePackages`, `WritePackage`, `TableSchemas`, `Option`, `WithECSLookup`, `WithDocContent`, `DocReader`, `OSDocReader`, and `RebuildFTS`. The `api.go` file imports internal/db with a `dbpkg` alias to avoid shadowing the `db *sql.DB` parameter name.
+- **FTS5 full-text search**: Two FTS5 virtual tables provide full-text search: `docs_fts` indexes doc content (with auto-generated field tables and example events stripped), and `changelog_entries_fts` indexes changelog entry descriptions. Both use external content mode with porter stemming. `WritePackages` rebuilds all indexes automatically; callers using `WritePackage` directly must call `RebuildFTS`. The FTS schemas are hand-written in `fts.go` since the code generator cannot produce `CREATE VIRTUAL TABLE` syntax.
+- **Doc content stripping**: Before storing doc content for FTS, `stripFieldTables` removes auto-generated field tables (`| Field | Description | Type |` headers) and example event JSON blocks. These are redundant with the structured `fields` and `sample_events` tables and would otherwise pollute search results (e.g. searching "timeout" would match every package with a `*.timeout` field).
 - **WithDocContent callback**: The `DocReader` callback pattern lets callers control how doc content is read. `OSDocReader` is the production convenience function. Tests can close over `fstest.MapFS` instead.
 
 ### Adding a new table

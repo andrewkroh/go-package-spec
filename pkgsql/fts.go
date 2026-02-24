@@ -17,13 +17,39 @@ const docsFTS = `CREATE VIRTUAL TABLE IF NOT EXISTS docs_fts USING fts5(
   tokenize='porter unicode61'
 )`
 
-var ftsSchemas = []string{docsFTS}
+// changelogEntriesFTS is the FTS5 virtual table for full-text search over
+// changelog entry descriptions. Uses external content mode against the
+// changelog_entries table. This enables searching changelog prose like
+// "Fixed SSL handshake timeout when proxy is configured".
+const changelogEntriesFTS = `CREATE VIRTUAL TABLE IF NOT EXISTS changelog_entries_fts USING fts5(
+  description,
+  content=changelog_entries,
+  content_rowid=id,
+  tokenize='porter unicode61'
+)`
 
-// RebuildDocsFTS rebuilds the FTS5 full-text search index for the docs
-// table. WritePackages calls this automatically after all packages are
+var ftsSchemas = []string{docsFTS, changelogEntriesFTS}
+
+// RebuildFTS rebuilds all FTS5 full-text search indexes (docs and changelog
+// entries). WritePackages calls this automatically after all packages are
 // inserted. Callers using WritePackage directly must call this after all
 // inserts are complete.
+func RebuildFTS(ctx context.Context, db *sql.DB) error {
+	for _, stmt := range []string{
+		"INSERT INTO docs_fts(docs_fts) VALUES('rebuild')",
+		"INSERT INTO changelog_entries_fts(changelog_entries_fts) VALUES('rebuild')",
+	} {
+		if _, err := db.ExecContext(ctx, stmt); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// RebuildDocsFTS rebuilds the FTS5 full-text search index for the docs
+// table.
+//
+// Deprecated: Use [RebuildFTS] instead, which rebuilds all FTS indexes.
 func RebuildDocsFTS(ctx context.Context, db *sql.DB) error {
-	_, err := db.ExecContext(ctx, "INSERT INTO docs_fts(docs_fts) VALUES('rebuild')")
-	return err
+	return RebuildFTS(ctx, db)
 }

@@ -46,8 +46,9 @@ generator consumes.
   callback
 - SQLite loading — inserts packages into a SQLite database with a
   self-documenting schema (table/column comments preserved in `sqlite_master`)
-- FTS5 full-text search over package documentation (porter stemming,
-  external content mode)
+- FTS5 full-text search over package documentation and changelog entries
+  (porter stemming, external content mode, auto-generated field tables
+  stripped from doc content)
 
 ## Install
 
@@ -135,7 +136,7 @@ The public API is intentionally small:
 - `WithECSLookup` — option to enrich fields with ECS definitions during insert
 - `WithDocContent` — option to load doc file markdown content into the `docs` table
 - `OSDocReader` — convenience `DocReader` that reads from the OS filesystem
-- `RebuildDocsFTS` — rebuilds the FTS5 full-text search index (called
+- `RebuildFTS` — rebuilds all FTS5 full-text search indexes (called
   automatically by `WritePackages`; must be called manually after using
   `WritePackage` directly)
 

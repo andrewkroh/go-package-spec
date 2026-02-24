@@ -82,9 +82,9 @@ func WritePackages(ctx context.Context, db *sql.DB, pkgs []*pkgreader.Package, o
 		}
 	}
 
-	// Rebuild FTS5 index after all inserts.
-	if err := RebuildDocsFTS(ctx, db); err != nil {
-		return fmt.Errorf("rebuilding docs FTS index: %w", err)
+	// Rebuild FTS5 indexes after all inserts.
+	if err := RebuildFTS(ctx, db); err != nil {
+		return fmt.Errorf("rebuilding FTS indexes: %w", err)
 	}
 
 	return nil
@@ -92,8 +92,8 @@ func WritePackages(ctx context.Context, db *sql.DB, pkgs []*pkgreader.Package, o
 
 // WritePackage inserts a single package within a transaction. Tables must
 // already exist (call WritePackages, or execute TableSchemas() manually).
-// Callers using WritePackage directly must call RebuildDocsFTS after all
-// inserts are complete to populate the FTS5 search index.
+// Callers using WritePackage directly must call [RebuildFTS] after all
+// inserts are complete to populate the FTS5 search indexes.
 func WritePackage(ctx context.Context, db *sql.DB, pkg *pkgreader.Package, opts ...Option) error {
 	cfg := &writeConfig{}
 	for _, opt := range opts {
@@ -650,7 +650,7 @@ func writeDocs(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pk
 			if err != nil {
 				return fmt.Errorf("reading doc %s: %w", doc.Path(), err)
 			}
-			content = sql.NullString{String: string(data), Valid: true}
+			content = sql.NullString{String: stripFieldTables(string(data)), Valid: true}
 		}
 		_, err := q.InsertDocs(ctx, dbpkg.InsertDocsParams{
 			PackagesID:  pkgID,
