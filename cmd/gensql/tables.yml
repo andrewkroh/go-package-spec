@@ -678,6 +678,215 @@ tables:
         not_null: true
         comment: "referenced object type (e.g. visualization, search, index-pattern)"
 
+  security_rules:
+    comment: >-
+      Security detection rule attributes extracted from Kibana saved objects
+      of type security_rule. Has a 1:1 relationship with kibana_saved_objects.
+      Title and description are on the parent table.
+    extra_columns:
+      kibana_saved_objects_id:
+        type: INTEGER
+        not_null: true
+        fk: kibana_saved_objects
+        comment: "foreign key to kibana_saved_objects"
+      rule_id:
+        type: TEXT
+        not_null: true
+        comment: "unique rule identifier (attributes.rule_id)"
+      type:
+        type: TEXT
+        comment: "rule type: eql, query, new_terms, esql, machine_learning, threshold, threat_match"
+      severity:
+        type: TEXT
+        comment: "severity level: low, medium, high, critical"
+      risk_score:
+        type: REAL
+        comment: "numeric risk score (0-100)"
+      language:
+        type: TEXT
+        comment: "query language: kuery, eql, esql, lucene"
+      query:
+        type: TEXT
+        comment: "detection query text (EQL, KQL, ESQL, or Lucene)"
+      enabled:
+        type: BOOLEAN
+        comment: "whether the rule is enabled by default"
+      version:
+        type: INTEGER
+        comment: "rule version number"
+      license:
+        type: TEXT
+        comment: "rule license (e.g. Elastic License v2)"
+      interval:
+        type: TEXT
+        comment: "check interval (e.g. 5m)"
+      from_time:
+        type: TEXT
+        comment: "time range start for query (e.g. now-9m). Named from_time because FROM is reserved."
+      max_signals:
+        type: INTEGER
+        comment: "maximum alerts per execution"
+      building_block_type:
+        type: TEXT
+        comment: "building block type when rule is a building block"
+      rule_name_override:
+        type: TEXT
+        comment: "field name used to override the rule name in alerts"
+      timestamp_override:
+        type: TEXT
+        comment: "field name used to override @timestamp for rule execution"
+      setup:
+        type: TEXT
+        comment: "markdown setup instructions"
+      note:
+        type: TEXT
+        comment: "markdown investigation/triage guide"
+      author:
+        type: JSON
+        comment: "rule authors (JSON array of strings)"
+      false_positives:
+        type: JSON
+        comment: "known false positive scenarios (JSON array of strings)"
+      references:
+        type: JSON
+        comment: "external reference URLs (JSON array of strings)"
+      risk_score_mapping:
+        type: JSON
+        comment: "risk score mapping configuration (JSON array)"
+      severity_mapping:
+        type: JSON
+        comment: "severity mapping configuration (JSON array)"
+      threat_query:
+        type: TEXT
+        comment: "threat indicator query for threat_match rules"
+      threat_index:
+        type: JSON
+        comment: "threat indicator indices for threat_match rules (JSON array)"
+      threat_mapping:
+        type: JSON
+        comment: "threat indicator field mappings for threat_match rules (JSON array)"
+      threat_indicator_path:
+        type: TEXT
+        comment: "path to threat indicator field for threat_match rules"
+      anomaly_threshold:
+        type: INTEGER
+        comment: "anomaly score threshold for machine_learning rules"
+      machine_learning_job_id:
+        type: JSON
+        comment: "ML job identifier(s) for machine_learning rules (JSON string or array)"
+      new_terms_fields:
+        type: JSON
+        comment: "fields for new_terms rules (JSON array)"
+      new_terms_history_window_start:
+        type: TEXT
+        comment: "history window start for new_terms rules"
+      threshold:
+        type: JSON
+        comment: "threshold configuration for threshold rules (JSON object)"
+
+  security_rule_index_patterns:
+    comment: >-
+      Elasticsearch index patterns monitored by a security rule. Enables
+      queries like "which rules monitor logs-okta*?"
+    extra_columns:
+      security_rules_id:
+        type: INTEGER
+        not_null: true
+        fk: security_rules
+        comment: "foreign key to security_rules"
+      pattern:
+        type: TEXT
+        not_null: true
+        comment: "index pattern (e.g. logs-endpoint.events.*, endgame-*)"
+
+  security_rule_tags:
+    comment: >-
+      Tags assigned to a security rule. Tags use a structured convention like
+      "Domain: Endpoint", "OS: Windows", "Tactic: Defense Evasion",
+      "Data Source: Elastic Defend".
+    extra_columns:
+      security_rules_id:
+        type: INTEGER
+        not_null: true
+        fk: security_rules
+        comment: "foreign key to security_rules"
+      tag:
+        type: TEXT
+        not_null: true
+        comment: "tag value (e.g. 'Domain: Endpoint', 'Tactic: Defense Evasion')"
+
+  security_rule_threats:
+    comment: >-
+      MITRE ATT&CK threat mappings for security rules. Each row is one
+      tactic+technique pair. A tactic with 3 techniques produces 3 rows.
+      A tactic with no techniques produces 1 row with NULL technique columns.
+      Subtechniques are stored as JSON.
+    extra_columns:
+      security_rules_id:
+        type: INTEGER
+        not_null: true
+        fk: security_rules
+        comment: "foreign key to security_rules"
+      tactic_id:
+        type: TEXT
+        not_null: true
+        comment: "MITRE ATT&CK tactic ID (e.g. TA0005)"
+      tactic_name:
+        type: TEXT
+        not_null: true
+        comment: "MITRE ATT&CK tactic name (e.g. Defense Evasion)"
+      technique_id:
+        type: TEXT
+        comment: "MITRE ATT&CK technique ID (e.g. T1036)"
+      technique_name:
+        type: TEXT
+        comment: "MITRE ATT&CK technique name (e.g. Masquerading)"
+      subtechniques:
+        type: JSON
+        comment: "subtechnique array [{id, name, reference}] (JSON)"
+
+  security_rule_related_integrations:
+    comment: >-
+      Integrations related to a security rule. Enables queries like
+      "which rules relate to the okta integration?"
+    extra_columns:
+      security_rules_id:
+        type: INTEGER
+        not_null: true
+        fk: security_rules
+        comment: "foreign key to security_rules"
+      package:
+        type: TEXT
+        not_null: true
+        comment: "integration package name (e.g. endpoint, okta)"
+      integration:
+        type: TEXT
+        comment: "specific integration within the package"
+      version:
+        type: TEXT
+        comment: "required version range (e.g. ^8.2.0)"
+
+  security_rule_required_fields:
+    comment: >-
+      Fields required by a security rule. Enables queries like
+      "which rules depend on event.kind?"
+    extra_columns:
+      security_rules_id:
+        type: INTEGER
+        not_null: true
+        fk: security_rules
+        comment: "foreign key to security_rules"
+      name:
+        type: TEXT
+        not_null: true
+        comment: "field name (e.g. event.action, process.name)"
+      type:
+        type: TEXT
+        comment: "field type (e.g. keyword, long)"
+      ecs:
+        type: BOOLEAN
+        comment: "whether the field is from ECS"
+
   agent_templates:
     comment: >-
       Agent Handlebars template files (.yml.hbs) from agent/ directories.

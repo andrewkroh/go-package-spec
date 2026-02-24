@@ -28,16 +28,47 @@ const changelogEntriesFTS = `CREATE VIRTUAL TABLE IF NOT EXISTS changelog_entrie
   tokenize='porter unicode61'
 )`
 
-var ftsSchemas = []string{docsFTS, changelogEntriesFTS}
+// securityRulesFTSView is a view joining security_rules with
+// kibana_saved_objects to provide the content source for FTS5 indexing.
+// Title and description live on kibana_saved_objects while query, setup,
+// and note live on security_rules.
+const securityRulesFTSView = `CREATE VIEW IF NOT EXISTS security_rules_fts_content AS
+SELECT
+  sr.id AS id,
+  COALESCE(kso.title, '') AS title,
+  COALESCE(kso.description, '') AS description,
+  COALESCE(sr.query, '') AS query,
+  COALESCE(sr.setup, '') AS setup,
+  COALESCE(sr.note, '') AS note
+FROM security_rules sr
+JOIN kibana_saved_objects kso ON kso.id = sr.kibana_saved_objects_id`
 
-// RebuildFTS rebuilds all FTS5 full-text search indexes (docs and changelog
-// entries). WritePackages calls this automatically after all packages are
-// inserted. Callers using WritePackage directly must call this after all
-// inserts are complete.
+// securityRulesFTS is the FTS5 virtual table for full-text search over
+// security detection rules. Uses external content mode backed by the
+// security_rules_fts_content view. Indexes title, description, query,
+// setup guide, and investigation note.
+const securityRulesFTS = `CREATE VIRTUAL TABLE IF NOT EXISTS security_rules_fts USING fts5(
+  title,
+  description,
+  query,
+  setup,
+  note,
+  content=security_rules_fts_content,
+  content_rowid=id,
+  tokenize='porter unicode61'
+)`
+
+var ftsSchemas = []string{docsFTS, changelogEntriesFTS, securityRulesFTSView, securityRulesFTS}
+
+// RebuildFTS rebuilds all FTS5 full-text search indexes (docs, changelog
+// entries, and security rules). WritePackages calls this automatically after
+// all packages are inserted. Callers using WritePackage directly must call
+// this after all inserts are complete.
 func RebuildFTS(ctx context.Context, db *sql.DB) error {
 	for _, stmt := range []string{
 		"INSERT INTO docs_fts(docs_fts) VALUES('rebuild')",
 		"INSERT INTO changelog_entries_fts(changelog_entries_fts) VALUES('rebuild')",
+		"INSERT INTO security_rules_fts(security_rules_fts) VALUES('rebuild')",
 	} {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
 			return err

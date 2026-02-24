@@ -513,12 +513,18 @@ func writeContent(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, pathPrefix string) error {
 	for assetType, objects := range pkg.KibanaObjects {
 		for _, obj := range objects {
+			// Security rules use "name" instead of "title" in attributes.
+			title := obj.Attributes.Title
+			if title == "" && obj.Attributes.Extras != nil {
+				title, _ = obj.Attributes.Extras["name"].(string)
+			}
+
 			objID, err := q.InsertKibanaSavedObjects(ctx, dbpkg.InsertKibanaSavedObjectsParams{
 				PackagesID:           pkgID,
 				AssetType:            assetType,
 				ObjectID:             obj.ID,
 				ObjectType:           toNullString(obj.Type),
-				Title:                toNullString(obj.Attributes.Title),
+				Title:                toNullString(title),
 				Description:          toNullString(obj.Attributes.Description),
 				FilePath:             path.Join(pathPrefix, obj.Path()),
 				CoreMigrationVersion: toNullString(obj.CoreMigrationVersion),
@@ -541,9 +547,271 @@ func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pa
 					return fmt.Errorf("inserting kibana reference %s: %w", ref.ID, err)
 				}
 			}
+
+			if assetType == "security_rule" && obj.Attributes.Extras != nil {
+				if err := writeSecurityRule(ctx, q, obj.Attributes.Extras, objID); err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
+}
+
+func writeSecurityRule(ctx context.Context, q *dbpkg.Queries, extras map[string]any, ksoID int64) error {
+	ruleID, _ := extras["rule_id"].(string)
+	if ruleID == "" {
+		return nil
+	}
+
+	srID, err := q.InsertSecurityRules(ctx, dbpkg.InsertSecurityRulesParams{
+		KibanaSavedObjectsID:       ksoID,
+		RuleID:                     ruleID,
+		Type:                       toNullString(extrasString(extras, "type")),
+		Severity:                   toNullString(extrasString(extras, "severity")),
+		RiskScore:                  extrasFloat64(extras, "risk_score"),
+		Language:                   toNullString(extrasString(extras, "language")),
+		Query:                      toNullString(extrasString(extras, "query")),
+		Enabled:                    extrasBool(extras, "enabled"),
+		Version:                    extrasInt64(extras, "version"),
+		License:                    toNullString(extrasString(extras, "license")),
+		Interval:                   toNullString(extrasString(extras, "interval")),
+		FromTime:                   toNullString(extrasString(extras, "from")),
+		MaxSignals:                 extrasInt64(extras, "max_signals"),
+		BuildingBlockType:          toNullString(extrasString(extras, "building_block_type")),
+		RuleNameOverride:           toNullString(extrasString(extras, "rule_name_override")),
+		TimestampOverride:          toNullString(extrasString(extras, "timestamp_override")),
+		Setup:                      toNullString(extrasString(extras, "setup")),
+		Note:                       toNullString(extrasString(extras, "note")),
+		Author:                     extrasJSON(extras, "author"),
+		FalsePositives:             extrasJSON(extras, "false_positives"),
+		References:                 extrasJSON(extras, "references"),
+		RiskScoreMapping:           extrasJSON(extras, "risk_score_mapping"),
+		SeverityMapping:            extrasJSON(extras, "severity_mapping"),
+		ThreatQuery:                toNullString(extrasString(extras, "threat_query")),
+		ThreatIndex:                extrasJSON(extras, "threat_index"),
+		ThreatMapping:              extrasJSON(extras, "threat_mapping"),
+		ThreatIndicatorPath:        toNullString(extrasString(extras, "threat_indicator_path")),
+		AnomalyThreshold:           extrasInt64(extras, "anomaly_threshold"),
+		MachineLearningJobID:       extrasJSON(extras, "machine_learning_job_id"),
+		NewTermsFields:             extrasJSON(extras, "new_terms_fields"),
+		NewTermsHistoryWindowStart: toNullString(extrasString(extras, "history_window_start")),
+		Threshold:                  extrasJSON(extras, "threshold"),
+	})
+	if err != nil {
+		return fmt.Errorf("inserting security rule: %w", err)
+	}
+
+	// Insert index patterns.
+	if patterns, ok := extras["index"].([]any); ok {
+		for _, p := range patterns {
+			if s, ok := p.(string); ok {
+				_, err := q.InsertSecurityRuleIndexPatterns(ctx, dbpkg.InsertSecurityRuleIndexPatternsParams{
+					SecurityRulesID: srID,
+					Pattern:         s,
+				})
+				if err != nil {
+					return fmt.Errorf("inserting security rule index pattern: %w", err)
+				}
+			}
+		}
+	}
+
+	// Insert tags.
+	if tags, ok := extras["tags"].([]any); ok {
+		for _, t := range tags {
+			if s, ok := t.(string); ok {
+				_, err := q.InsertSecurityRuleTags(ctx, dbpkg.InsertSecurityRuleTagsParams{
+					SecurityRulesID: srID,
+					Tag:             s,
+				})
+				if err != nil {
+					return fmt.Errorf("inserting security rule tag: %w", err)
+				}
+			}
+		}
+	}
+
+	// Insert MITRE ATT&CK threat mappings.
+	if err := writeSecurityRuleThreats(ctx, q, extras, srID); err != nil {
+		return err
+	}
+
+	// Insert related integrations.
+	if integrations, ok := extras["related_integrations"].([]any); ok {
+		for _, item := range integrations {
+			m, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			pkg, _ := m["package"].(string)
+			if pkg == "" {
+				continue
+			}
+			integration, _ := m["integration"].(string)
+			version, _ := m["version"].(string)
+			_, err := q.InsertSecurityRuleRelatedIntegrations(ctx, dbpkg.InsertSecurityRuleRelatedIntegrationsParams{
+				SecurityRulesID: srID,
+				Package:         pkg,
+				Integration:     toNullString(integration),
+				Version:         toNullString(version),
+			})
+			if err != nil {
+				return fmt.Errorf("inserting security rule related integration: %w", err)
+			}
+		}
+	}
+
+	// Insert required fields.
+	if fields, ok := extras["required_fields"].([]any); ok {
+		for _, item := range fields {
+			m, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			name, _ := m["name"].(string)
+			if name == "" {
+				continue
+			}
+			typ, _ := m["type"].(string)
+			ecs, _ := m["ecs"].(bool)
+			_, err := q.InsertSecurityRuleRequiredFields(ctx, dbpkg.InsertSecurityRuleRequiredFieldsParams{
+				SecurityRulesID: srID,
+				Name:            name,
+				Type:            toNullString(typ),
+				Ecs:             sql.NullBool{Bool: ecs, Valid: true},
+			})
+			if err != nil {
+				return fmt.Errorf("inserting security rule required field: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// writeSecurityRuleThreats flattens the nested MITRE ATT&CK threat array.
+// Each tactic-technique pair becomes one row. A tactic with no techniques
+// produces one row with NULL technique columns.
+func writeSecurityRuleThreats(ctx context.Context, q *dbpkg.Queries, extras map[string]any, srID int64) error {
+	threats, ok := extras["threat"].([]any)
+	if !ok {
+		return nil
+	}
+
+	for _, item := range threats {
+		t, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		tactic, _ := t["tactic"].(map[string]any)
+		if tactic == nil {
+			continue
+		}
+		tacticID, _ := tactic["id"].(string)
+		tacticName, _ := tactic["name"].(string)
+		if tacticID == "" {
+			continue
+		}
+
+		techniques, _ := t["technique"].([]any)
+		if len(techniques) == 0 {
+			// Tactic with no techniques: one row with NULL technique columns.
+			_, err := q.InsertSecurityRuleThreats(ctx, dbpkg.InsertSecurityRuleThreatsParams{
+				SecurityRulesID: srID,
+				TacticID:        tacticID,
+				TacticName:      tacticName,
+			})
+			if err != nil {
+				return fmt.Errorf("inserting security rule threat: %w", err)
+			}
+			continue
+		}
+
+		for _, techItem := range techniques {
+			tech, ok := techItem.(map[string]any)
+			if !ok {
+				continue
+			}
+			techID, _ := tech["id"].(string)
+			techName, _ := tech["name"].(string)
+
+			var subtechniques any
+			if subs, ok := tech["subtechnique"].([]any); ok && len(subs) > 0 {
+				data, err := json.Marshal(subs)
+				if err == nil {
+					subtechniques = string(data)
+				}
+			}
+
+			_, err := q.InsertSecurityRuleThreats(ctx, dbpkg.InsertSecurityRuleThreatsParams{
+				SecurityRulesID: srID,
+				TacticID:        tacticID,
+				TacticName:      tacticName,
+				TechniqueID:     toNullString(techID),
+				TechniqueName:   toNullString(techName),
+				Subtechniques:   subtechniques,
+			})
+			if err != nil {
+				return fmt.Errorf("inserting security rule threat: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+// extrasString extracts a string value from a map, returning "" if not found.
+func extrasString(m map[string]any, key string) string {
+	v, _ := m[key].(string)
+	return v
+}
+
+// extrasFloat64 extracts a float64 value from a map as sql.NullFloat64.
+// JSON numbers unmarshal as float64.
+func extrasFloat64(m map[string]any, key string) sql.NullFloat64 {
+	v, ok := m[key].(float64)
+	if !ok {
+		return sql.NullFloat64{}
+	}
+	return sql.NullFloat64{Float64: v, Valid: true}
+}
+
+// extrasInt64 extracts a numeric value from a map as sql.NullInt64.
+// JSON numbers unmarshal as float64, so the conversion goes through float64.
+func extrasInt64(m map[string]any, key string) sql.NullInt64 {
+	v, ok := m[key].(float64)
+	if !ok {
+		return sql.NullInt64{}
+	}
+	return sql.NullInt64{Int64: int64(v), Valid: true}
+}
+
+// extrasBool extracts a bool value from a map as sql.NullBool.
+func extrasBool(m map[string]any, key string) sql.NullBool {
+	v, ok := m[key].(bool)
+	if !ok {
+		return sql.NullBool{}
+	}
+	return sql.NullBool{Bool: v, Valid: true}
+}
+
+// extrasJSON marshals a map value to a JSON string for storage in a JSON column.
+// Returns nil if the key is absent or the value is nil.
+func extrasJSON(m map[string]any, key string) any {
+	v, ok := m[key]
+	if !ok || v == nil {
+		return nil
+	}
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+	s := string(data)
+	if s == "null" {
+		return nil
+	}
+	return s
 }
 
 func writeInputPolicyTemplate(ctx context.Context, q *dbpkg.Queries, pt *pkgspec.InputPolicyTemplate, pkgID int64, pathPrefix string) error {

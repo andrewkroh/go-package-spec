@@ -36,6 +36,8 @@ generator consumes.
   and column
 - Ingest pipeline processor parsing with type detection
 - Kibana saved object loading with partial attribute decoding
+- Security detection rule extraction — rule metadata, MITRE ATT&CK mappings,
+  related integrations, required fields, index patterns, and tags
 - Git metadata enrichment (commit ID, changelog dates via blame)
 - Image metadata extraction (dimensions, byte sizes)
 - Documentation file discovery (README, docs, knowledge base) with optional
@@ -46,9 +48,9 @@ generator consumes.
   callback
 - SQLite loading — inserts packages into a SQLite database with a
   self-documenting schema (table/column comments preserved in `sqlite_master`)
-- FTS5 full-text search over package documentation and changelog entries
-  (porter stemming, external content mode, auto-generated field tables
-  stripped from doc content)
+- FTS5 full-text search over package documentation, changelog entries, and
+  security detection rules (porter stemming, external content mode,
+  auto-generated field tables stripped from doc content)
 
 ## Install
 
