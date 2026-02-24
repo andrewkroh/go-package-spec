@@ -1284,6 +1284,10 @@ func (q *Queries) InsertPolicyTemplateVars(ctx context.Context, arg InsertPolicy
 const insertPolicyTemplates = `-- name: InsertPolicyTemplates :one
 INSERT INTO policy_templates (
   packages_id,
+  dynamic_signal_types,
+  input,
+  policy_template_type,
+  template_path,
   file_path,
   file_line,
   file_column,
@@ -1321,12 +1325,20 @@ INSERT INTO policy_templates (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
+  ?,
   ?
 ) RETURNING id
 `
 
 type InsertPolicyTemplatesParams struct {
 	PackagesID                                      int64
+	DynamicSignalTypes                              sql.NullBool
+	Input                                           sql.NullString
+	PolicyTemplateType                              sql.NullString
+	TemplatePath                                    sql.NullString
 	FilePath                                        sql.NullString
 	FileLine                                        sql.NullInt64
 	FileColumn                                      sql.NullInt64
@@ -1350,6 +1362,10 @@ type InsertPolicyTemplatesParams struct {
 func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTemplatesParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, insertPolicyTemplates,
 		arg.PackagesID,
+		arg.DynamicSignalTypes,
+		arg.Input,
+		arg.PolicyTemplateType,
+		arg.TemplatePath,
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,

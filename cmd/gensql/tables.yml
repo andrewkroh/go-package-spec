@@ -73,7 +73,20 @@ tables:
   policy_templates:
     type: PolicyTemplate
     parent: packages
-    comment: "Policy templates offered by integration packages. Defines how an integration is configured in Fleet."
+    comment: "Policy templates offered by integration and input packages. Defines how a package is configured in Fleet."
+    extra_columns:
+      input:
+        type: TEXT
+        comment: "input type for input packages (e.g. cel, httpjson)"
+      template_path:
+        type: TEXT
+        comment: "path to agent template for input packages (e.g. input.yml.hbs)"
+      policy_template_type:
+        type: TEXT
+        comment: "data stream type for input packages (logs, metrics, synthetics, traces)"
+      dynamic_signal_types:
+        type: BOOLEAN
+        comment: "whether transforms and index templates are created based on pipeline config (input packages only)"
     exclude:
       - Categories
       - Icons

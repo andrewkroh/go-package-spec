@@ -504,6 +504,170 @@ policy_templates:
 	}
 }
 
+func TestWriteInputPackagePolicyTemplates(t *testing.T) {
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: test-input
+title: Test Input
+version: 1.0.0
+description: A test input package.
+format_version: 3.5.7
+type: input
+categories:
+  - custom
+conditions:
+  kibana:
+    version: ^8.0.0
+  elastic:
+    subscription: basic
+policy_templates:
+  - name: test-input-pt
+    type: logs
+    title: Test Input Policy
+    description: Collect data from an API.
+    input: httpjson
+    template_path: input.yml.hbs
+    vars:
+      - name: url
+        type: text
+        title: API URL
+        required: true
+        show_user: true
+        default: https://example.com/api
+      - name: interval
+        type: text
+        title: Interval
+        required: true
+        show_user: true
+        default: 1m
+owner:
+  github: elastic/integrations
+  type: elastic
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"agent/input/input.yml.hbs": {Data: []byte(`# placeholder`)},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Verify package type is input.
+	var pkgType string
+	err = db.QueryRowContext(ctx, "SELECT type FROM packages WHERE name = 'test-input'").Scan(&pkgType)
+	if err != nil {
+		t.Fatalf("querying package: %v", err)
+	}
+	if pkgType != "input" {
+		t.Errorf("expected type=input, got %s", pkgType)
+	}
+
+	// Verify policy template was inserted.
+	var ptCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM policy_templates").Scan(&ptCount)
+	if err != nil {
+		t.Fatalf("querying policy_templates: %v", err)
+	}
+	if ptCount != 1 {
+		t.Errorf("expected 1 policy template, got %d", ptCount)
+	}
+
+	// Verify input-specific fields.
+	var ptName, ptDesc string
+	var ptInput, ptTemplatePath, ptType sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT name, description, input, template_path, policy_template_type FROM policy_templates").
+		Scan(&ptName, &ptDesc, &ptInput, &ptTemplatePath, &ptType)
+	if err != nil {
+		t.Fatalf("querying policy template: %v", err)
+	}
+	if ptName != "test-input-pt" {
+		t.Errorf("expected name=test-input-pt, got %s", ptName)
+	}
+	if ptDesc != "Collect data from an API." {
+		t.Errorf("expected description='Collect data from an API.', got %s", ptDesc)
+	}
+	if !ptInput.Valid || ptInput.String != "httpjson" {
+		t.Errorf("expected input=httpjson, got %v", ptInput)
+	}
+	if !ptTemplatePath.Valid || ptTemplatePath.String != "input.yml.hbs" {
+		t.Errorf("expected template_path=input.yml.hbs, got %v", ptTemplatePath)
+	}
+	if !ptType.Valid || ptType.String != "logs" {
+		t.Errorf("expected policy_template_type=logs, got %v", ptType)
+	}
+
+	// Verify integration-only fields are NULL for input policy templates.
+	var ptMultiple sql.NullBool
+	var ptDataStreams sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT multiple, data_streams FROM policy_templates").
+		Scan(&ptMultiple, &ptDataStreams)
+	if err != nil {
+		t.Fatalf("querying integration-only fields: %v", err)
+	}
+	if ptMultiple.Valid {
+		t.Errorf("expected NULL multiple for input policy template, got %v", ptMultiple)
+	}
+	if ptDataStreams.Valid {
+		t.Errorf("expected NULL data_streams for input policy template, got %v", ptDataStreams)
+	}
+
+	// Verify policy template vars were inserted.
+	var varCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM policy_template_vars").Scan(&varCount)
+	if err != nil {
+		t.Fatalf("querying policy_template_vars: %v", err)
+	}
+	if varCount != 2 {
+		t.Errorf("expected 2 policy template vars, got %d", varCount)
+	}
+
+	// Verify var names via join.
+	var varName string
+	err = db.QueryRowContext(ctx, `
+		SELECT v.name
+		FROM policy_template_vars ptv
+		JOIN vars v ON v.id = ptv.var_id
+		JOIN policy_templates pt ON pt.id = ptv.policy_template_id
+		WHERE v.name = 'url'`).Scan(&varName)
+	if err != nil {
+		t.Fatalf("querying var join: %v", err)
+	}
+	if varName != "url" {
+		t.Errorf("expected var name=url, got %s", varName)
+	}
+
+	// Verify join to packages works.
+	var pkgName string
+	err = db.QueryRowContext(ctx, `
+		SELECT p.name
+		FROM policy_templates pt
+		JOIN packages p ON p.id = pt.packages_id
+		WHERE pt.name = 'test-input-pt'`).Scan(&pkgName)
+	if err != nil {
+		t.Fatalf("querying package join: %v", err)
+	}
+	if pkgName != "test-input" {
+		t.Errorf("expected test-input, got %s", pkgName)
+	}
+}
+
 func TestWriteContentPackage(t *testing.T) {
 	fsys := fstest.MapFS{
 		"manifest.yml": {Data: []byte(`

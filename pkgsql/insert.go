@@ -268,7 +268,7 @@ func mapPackageScreenshotsParams(v *pkgspec.Screenshot, parentID int64) db.Inser
 }
 
 // mapPolicyTemplatesParams converts a PolicyTemplate to db.InsertPolicyTemplatesParams.
-func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) db.InsertPolicyTemplatesParams {
+func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64, dynamicSignalTypes sql.NullBool, input sql.NullString, policyTemplateType sql.NullString, templatePath sql.NullString) db.InsertPolicyTemplatesParams {
 	return db.InsertPolicyTemplatesParams{
 		ConfigurationLinks:                              jsonNullString(v.ConfigurationLinks),
 		DataStreams:                                     jsonNullString(v.DataStreams),
@@ -281,13 +281,17 @@ func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64) db.Inse
 		DeploymentModesAgentlessTeam:                    toNullString(v.DeploymentModes.Agentless.Team),
 		DeploymentModesDefaultEnabled:                   toNullBool(v.DeploymentModes.Default.Enabled),
 		Description:                                     v.Description,
+		DynamicSignalTypes:                              dynamicSignalTypes,
 		FileColumn:                                      toNullInt64(v.Column()),
 		FileLine:                                        toNullInt64(v.Line()),
 		FilePath:                                        toNullString(v.FilePath()),
 		FipsCompatible:                                  toNullBool(v.FipsCompatible),
+		Input:                                           input,
 		Multiple:                                        toNullBool(v.Multiple),
 		Name:                                            v.Name,
 		PackagesID:                                      parentID,
+		PolicyTemplateType:                              policyTemplateType,
+		TemplatePath:                                    templatePath,
 		Title:                                           v.Title,
 	}
 }
