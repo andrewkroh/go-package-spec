@@ -3,6 +3,7 @@ package pkgsql_test
 import (
 	"context"
 	"database/sql"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,8 +35,8 @@ func TestTableSchemas(t *testing.T) {
 		t.Fatal("expected at least one table schema")
 	}
 	for _, s := range schemas {
-		if !strings.HasPrefix(s, "CREATE TABLE IF NOT EXISTS") {
-			t.Errorf("expected CREATE TABLE prefix, got: %s", s[:50])
+		if !strings.HasPrefix(s, "CREATE TABLE IF NOT EXISTS") && !strings.HasPrefix(s, "CREATE VIRTUAL TABLE IF NOT EXISTS") {
+			t.Errorf("expected CREATE TABLE or CREATE VIRTUAL TABLE prefix, got: %s", s[:50])
 		}
 	}
 }
@@ -43,6 +44,10 @@ func TestTableSchemas(t *testing.T) {
 func TestTableSchemasContainComments(t *testing.T) {
 	schemas := pkgsql.TableSchemas()
 	for _, s := range schemas {
+		// FTS5 virtual tables don't have inline comments.
+		if strings.HasPrefix(s, "CREATE VIRTUAL TABLE") {
+			continue
+		}
 		if !strings.Contains(s, "-- ") {
 			t.Errorf("expected inline comments in schema: %s", s[:50])
 		}
@@ -59,7 +64,8 @@ func TestSqliteMasterPreservesComments(t *testing.T) {
 		}
 	}
 
-	rows, err := db.QueryContext(ctx, "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+	// Only check regular tables (not FTS5 virtual tables or FTS5 internal tables).
+	rows, err := db.QueryContext(ctx, "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '%_fts%' ORDER BY name")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,6 +198,7 @@ streams:
       description: Log level.
 `)},
 		"data_stream/logs/sample_event.json": {Data: []byte(`{"@timestamp": "2024-01-01T00:00:00Z", "message": "test"}`)},
+		"docs/README.md":                     {Data: []byte("# Test Package\n")},
 	}
 
 	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
@@ -363,6 +370,21 @@ streams:
 	}
 	if ptScreenshotCount != 1 {
 		t.Errorf("expected 1 policy template screenshot, got %d", ptScreenshotCount)
+	}
+
+	// Verify docs row inserted with NULL content (no WithDocContent).
+	var docPath, docContentType string
+	var docContent sql.NullString
+	err = db.QueryRowContext(ctx, "SELECT file_path, content_type, content FROM docs WHERE file_path = 'docs/README.md'").
+		Scan(&docPath, &docContentType, &docContent)
+	if err != nil {
+		t.Fatalf("querying doc: %v", err)
+	}
+	if docContentType != "readme" {
+		t.Errorf("expected content_type=readme, got %s", docContentType)
+	}
+	if docContent.Valid {
+		t.Errorf("expected NULL content without WithDocContent, got %q", docContent.String)
 	}
 }
 
@@ -568,6 +590,118 @@ discovery:
 	}
 	if dfName != "event.category" {
 		t.Errorf("expected event.category, got %s", dfName)
+	}
+}
+
+func TestWritePackageWithDocContent(t *testing.T) {
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: doc-test
+title: Doc Test
+version: 1.0.0
+description: A package with docs.
+format_version: 3.5.7
+type: integration
+owner:
+  github: elastic/integrations
+  type: elastic
+policy_templates:
+  - name: default
+    title: Default
+    description: Default policy.
+    inputs:
+      - type: logfile
+        title: Log
+        description: Collect logs.
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"docs/README.md": {Data: []byte(`# Doc Test Package
+
+This package provides authentication monitoring and troubleshooting guidance.
+`)},
+		"docs/getting-started.md": {Data: []byte(`# Getting Started
+
+Follow these steps to configure authentication monitoring.
+`)},
+		"docs/knowledge_base/troubleshooting.md": {Data: []byte(`# Troubleshooting
+
+If you see a certificate error, check your TLS configuration.
+`)},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	// Use WithDocContent with a closure over fsys.
+	docReader := func(_, docPath string) ([]byte, error) {
+		return fs.ReadFile(fsys, docPath)
+	}
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg}, pkgsql.WithDocContent(docReader))
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Verify all 3 docs were inserted.
+	var docCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM docs").Scan(&docCount)
+	if err != nil {
+		t.Fatalf("querying docs: %v", err)
+	}
+	if docCount != 3 {
+		t.Errorf("expected 3 docs, got %d", docCount)
+	}
+
+	// Verify content is non-NULL.
+	var content sql.NullString
+	err = db.QueryRowContext(ctx, "SELECT content FROM docs WHERE file_path = 'docs/README.md'").Scan(&content)
+	if err != nil {
+		t.Fatalf("querying doc content: %v", err)
+	}
+	if !content.Valid {
+		t.Fatal("expected non-NULL content with WithDocContent")
+	}
+	if !strings.Contains(content.String, "authentication") {
+		t.Errorf("expected content to contain 'authentication', got %q", content.String)
+	}
+
+	// Verify FTS5 search finds the doc by keyword.
+	var ftsFilePath string
+	err = db.QueryRowContext(ctx,
+		"SELECT d.file_path FROM docs_fts JOIN docs d ON d.id = docs_fts.rowid WHERE docs_fts MATCH 'certificate'").
+		Scan(&ftsFilePath)
+	if err != nil {
+		t.Fatalf("FTS5 search: %v", err)
+	}
+	if ftsFilePath != "docs/knowledge_base/troubleshooting.md" {
+		t.Errorf("expected troubleshooting doc, got %s", ftsFilePath)
+	}
+
+	// Verify FTS5 join back to packages.
+	var pkgName string
+	err = db.QueryRowContext(ctx, `
+		SELECT p.name
+		FROM docs_fts
+		JOIN docs d ON d.id = docs_fts.rowid
+		JOIN packages p ON p.id = d.packages_id
+		WHERE docs_fts MATCH 'authentication'
+		LIMIT 1`).Scan(&pkgName)
+	if err != nil {
+		t.Fatalf("FTS5 package join: %v", err)
+	}
+	if pkgName != "doc-test" {
+		t.Errorf("expected doc-test, got %s", pkgName)
 	}
 }
 
@@ -797,10 +931,15 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 			t.Fatalf("reading package %s: %v", r.name, r.err)
 		}
 
-		if err := pkgsql.WritePackage(ctx, db, r.pkg); err != nil {
+		if err := pkgsql.WritePackage(ctx, db, r.pkg, pkgsql.WithDocContent(pkgsql.OSDocReader)); err != nil {
 			t.Fatalf("writing package %s: %v", r.name, r.err)
 		}
 		loaded++
+	}
+
+	// Rebuild FTS index after all individual writes.
+	if err := pkgsql.RebuildDocsFTS(ctx, db); err != nil {
+		t.Fatalf("rebuilding FTS index: %v", err)
 	}
 
 	t.Logf("loaded %d packages into %s", loaded, dbPath)

@@ -38,12 +38,16 @@ generator consumes.
 - Kibana saved object loading with partial attribute decoding
 - Git metadata enrichment (commit ID, changelog dates via blame)
 - Image metadata extraction (dimensions, byte sizes)
+- Documentation file discovery (README, docs, knowledge base) with optional
+  content loading
 - Agent Handlebars template loading
 - Field flattening — expands nested group hierarchies into dot-joined names
   with optional [ECS](https://github.com/andrewkroh/go-ecs) enrichment via
   callback
 - SQLite loading — inserts packages into a SQLite database with a
   self-documenting schema (table/column comments preserved in `sqlite_master`)
+- FTS5 full-text search over package documentation (porter stemming,
+  external content mode)
 
 ## Install
 
@@ -127,8 +131,13 @@ The public API is intentionally small:
 
 - `WritePackages` — creates tables and inserts multiple packages
 - `WritePackage` — inserts a single package (tables must already exist)
-- `TableSchemas` — returns the `CREATE TABLE` statements
+- `TableSchemas` — returns the `CREATE TABLE` / `CREATE VIRTUAL TABLE` statements
 - `WithECSLookup` — option to enrich fields with ECS definitions during insert
+- `WithDocContent` — option to load doc file markdown content into the `docs` table
+- `OSDocReader` — convenience `DocReader` that reads from the OS filesystem
+- `RebuildDocsFTS` — rebuilds the FTS5 full-text search index (called
+  automatically by `WritePackages`; must be called manually after using
+  `WritePackage` directly)
 
 `pkgsql` depends only on `database/sql` — bring your own SQLite driver.
 

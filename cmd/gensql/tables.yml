@@ -577,3 +577,25 @@ tables:
       replaced_by_variable:
         type: TEXT
         comment: "name of the variable that replaces the deprecated one"
+
+  docs:
+    comment: >-
+      Documentation files within packages.
+      Content is optionally populated when WithDocContent is used.
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      file_path:
+        type: TEXT
+        not_null: true
+        comment: "file path relative to the package root (e.g. docs/README.md)"
+      content_type:
+        type: TEXT
+        not_null: true
+        comment: "classification: readme, doc, or knowledge_base"
+      content:
+        type: TEXT
+        comment: "markdown content (NULL unless WithDocContent was used)"

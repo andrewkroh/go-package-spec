@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/andrewkroh/go-package-spec/pkgreader"
 	"github.com/andrewkroh/go-package-spec/pkgspec"
@@ -17,6 +19,7 @@ type Option func(*writeConfig)
 
 type writeConfig struct {
 	ecsLookup func(name string) *pkgspec.ECSFieldDefinition
+	docReader DocReader
 }
 
 // WithECSLookup provides a callback to resolve external ECS field definitions
@@ -29,20 +32,41 @@ func WithECSLookup(fn func(name string) *pkgspec.ECSFieldDefinition) Option {
 	}
 }
 
-// TableSchemas returns the CREATE TABLE statements for all tables in
-// dependency order. The statements include table and column comments
-// inside the body, which are preserved in sqlite_master when the tables
-// are created. This makes the database file self-documenting.
+// DocReader reads doc file content given a package path and doc-relative path.
+// It is called for each doc file to obtain markdown content for the docs table.
+type DocReader func(pkgPath, docPath string) ([]byte, error)
+
+// WithDocContent enables loading doc file content during SQL writing.
+// The provided DocReader is called for each doc file to obtain content.
+// Without this option, the docs table is populated with paths and
+// content_type only (content column is NULL).
+func WithDocContent(reader DocReader) Option {
+	return func(c *writeConfig) { c.docReader = reader }
+}
+
+// OSDocReader reads doc content from the OS filesystem by joining pkgPath
+// (the package directory) and docPath (the package-relative file path, e.g.
+// "docs/README.md") with filepath.Join.
+func OSDocReader(pkgPath, docPath string) ([]byte, error) {
+	return os.ReadFile(filepath.Join(pkgPath, docPath))
+}
+
+// TableSchemas returns the CREATE TABLE statements (and FTS5 virtual table
+// statements) for all tables in dependency order. The statements include
+// table and column comments inside the body, which are preserved in
+// sqlite_master when the tables are created. This makes the database file
+// self-documenting.
 func TableSchemas() []string {
-	return creates
+	return append(creates, ftsSchemas...)
 }
 
 // WritePackages creates tables (if not exist) and inserts each package
 // within its own transaction. If any package fails, the error includes
-// the package name.
+// the package name. After all packages are inserted, it rebuilds the
+// FTS5 full-text search index.
 func WritePackages(ctx context.Context, db *sql.DB, pkgs []*pkgreader.Package, opts ...Option) error {
-	// Create all tables.
-	for _, ddl := range creates {
+	// Create all tables (including FTS5 virtual tables).
+	for _, ddl := range TableSchemas() {
 		if _, err := db.ExecContext(ctx, ddl); err != nil {
 			return fmt.Errorf("creating tables: %w", err)
 		}
@@ -57,11 +81,19 @@ func WritePackages(ctx context.Context, db *sql.DB, pkgs []*pkgreader.Package, o
 			return fmt.Errorf("writing package %s: %w", name, err)
 		}
 	}
+
+	// Rebuild FTS5 index after all inserts.
+	if err := RebuildDocsFTS(ctx, db); err != nil {
+		return fmt.Errorf("rebuilding docs FTS index: %w", err)
+	}
+
 	return nil
 }
 
 // WritePackage inserts a single package within a transaction. Tables must
 // already exist (call WritePackages, or execute TableSchemas() manually).
+// Callers using WritePackage directly must call RebuildDocsFTS after all
+// inserts are complete to populate the FTS5 search index.
 func WritePackage(ctx context.Context, db *sql.DB, pkg *pkgreader.Package, opts ...Option) error {
 	cfg := &writeConfig{}
 	for _, opt := range opts {
@@ -213,6 +245,11 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 		if err := writeContent(ctx, q, pkg, pkgID); err != nil {
 			return err
 		}
+	}
+
+	// Insert docs.
+	if err := writeDocs(ctx, q, pkg, pkgID, cfg); err != nil {
+		return err
 	}
 
 	return nil
@@ -600,6 +637,29 @@ func writeImages(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, 
 		})
 		if err != nil {
 			return fmt.Errorf("inserting image %s: %w", img.Path(), err)
+		}
+	}
+	return nil
+}
+
+func writeDocs(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, cfg *writeConfig) error {
+	for _, doc := range pkg.Docs {
+		var content sql.NullString
+		if cfg.docReader != nil {
+			data, err := cfg.docReader(pkg.Path(), doc.FSPath())
+			if err != nil {
+				return fmt.Errorf("reading doc %s: %w", doc.Path(), err)
+			}
+			content = sql.NullString{String: string(data), Valid: true}
+		}
+		_, err := q.InsertDocs(ctx, dbpkg.InsertDocsParams{
+			PackagesID:  pkgID,
+			FilePath:    doc.Path(),
+			ContentType: string(doc.ContentType),
+			Content:     content,
+		})
+		if err != nil {
+			return fmt.Errorf("inserting doc %s: %w", doc.Path(), err)
 		}
 	}
 	return nil

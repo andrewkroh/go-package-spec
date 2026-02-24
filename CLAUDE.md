@@ -44,6 +44,7 @@ pkgreader/                        Package reader (loads from disk into pkgspec t
   reader.go                    Read() entry point, Package type, options
   decode.go                    YAML decoding helpers
   datastream.go                DataStream + FieldsFile + PipelineFile types
+  doc.go                       DocFile type + readDocs() for docs/ discovery
   test.go                      DataStreamTests, PipelineTestCase, InputPackageTests + loading
   transform.go                 TransformData type
   git.go                       Git commit + git blame for changelog dates
@@ -71,6 +72,7 @@ pkgsql/                        SQL interface for loading packages into SQLite
   tables.go                    Generated: unexported table constants + creates slice
   insert.go                    Generated: Type → db.InsertXParams param mapping
   api.go                       Hand-written: WritePackages/WritePackage/TableSchemas
+  fts.go                       Hand-written: FTS5 virtual table schema + RebuildDocsFTS
   api_test.go                  Hand-written: Integration tests
   doc.go                       Hand-written: go:generate directives
 ```
@@ -164,7 +166,9 @@ Both steps are automated via `go generate ./pkgsql/`.
 - **Comments inside CREATE TABLE body**: All documentation goes inside `(...)` so `sqlite_master.sql` preserves them — making the database file self-documenting.
 - **Processor as special case**: `Processor` has no standard struct tags; its table is defined via `extra_columns` only.
 - **No SQLite driver in pkgsql**: Only `database/sql`. Tests use `modernc.org/sqlite`.
-- **Internal db subpackage**: sqlc-generated types (`Queries`, `DBTX`, `InsertXParams` structs) live in `pkgsql/internal/db/` so the public API surface is just `WritePackages`, `WritePackage`, `TableSchemas`, `Option`, and `WithECSLookup`. The `api.go` file imports internal/db with a `dbpkg` alias to avoid shadowing the `db *sql.DB` parameter name.
+- **Internal db subpackage**: sqlc-generated types (`Queries`, `DBTX`, `InsertXParams` structs) live in `pkgsql/internal/db/` so the public API surface is just `WritePackages`, `WritePackage`, `TableSchemas`, `Option`, `WithECSLookup`, `WithDocContent`, `DocReader`, `OSDocReader`, and `RebuildDocsFTS`. The `api.go` file imports internal/db with a `dbpkg` alias to avoid shadowing the `db *sql.DB` parameter name.
+- **FTS5 full-text search**: The `docs` table stores doc file paths and optional markdown content. A companion `docs_fts` FTS5 virtual table (external content mode, porter stemming) provides full-text search. `WritePackages` rebuilds the index automatically; callers using `WritePackage` directly must call `RebuildDocsFTS`. The FTS5 schema is hand-written in `fts.go` since the code generator cannot produce `CREATE VIRTUAL TABLE` syntax.
+- **WithDocContent callback**: The `DocReader` callback pattern lets callers control how doc content is read. `OSDocReader` is the production convenience function. Tests can close over `fstest.MapFS` instead.
 
 ### Adding a new table
 
@@ -285,6 +289,7 @@ elasticsearch/                                    optional
 - Detects package type from `manifest.yml` `type` field
 - Options: `WithFS()`, `WithKnownFields()`, `WithGitMetadata()`, `WithTestConfigs()`
 - `Package.Manifest()` returns the common `*pkgspec.Manifest` for any package type
+- `Package.Docs` lists doc files from `docs/` (always populated, no option needed). Each `DocFile` has a `ContentType` (`readme`, `doc`, or `knowledge_base`) and `Path()`.
 - Transform and pipeline files always decoded with `knownFields=false` (contain arbitrary ES DSL)
 - Ingest pipelines loaded from `data_stream/<name>/elasticsearch/ingest_pipeline/*.yml`
 - Git operations require real filesystem path (shell out to `git`)
@@ -299,7 +304,7 @@ INTEGRATIONS_DIR=/path/to/integrations go test ./pkgreader/ -run TestReadAllPack
 - Generator tests: schema loading, type mapping, augmentation, naming
 - pkgspec tests: YAML unmarshaling with real 1password package (skipped if unavailable)
 - pkgreader tests: synthetic testdata packages + optional integration test against all real packages
-- pkgsql tests: round-trip insert + query using `modernc.org/sqlite` in-memory DB, verifies sqlite_master comments
+- pkgsql tests: round-trip insert + query using `modernc.org/sqlite` in-memory DB, verifies sqlite_master comments, FTS5 search
 
 ## Go practices
 
