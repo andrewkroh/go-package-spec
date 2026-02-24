@@ -624,6 +624,26 @@ policy_templates:
 		"docs/README.md": {Data: []byte(`# Doc Test Package
 
 This package provides authentication monitoring and troubleshooting guidance.
+
+**Exported fields**
+
+| Field | Description | Type |
+|---|---|---|
+| event.timeout | Timeout duration. | keyword |
+| nginx.access.remote_ip_list | Remote IP list. | keyword |
+
+An example event for ` + "`access`" + ` looks as following:
+
+` + "```json" + `
+{
+    "@timestamp": "2022-12-09T10:39:23.000Z",
+    "event.timeout": "30s"
+}
+` + "```" + `
+
+## Troubleshooting
+
+Check the timeout settings if connections fail.
 `)},
 		"docs/getting-started.md": {Data: []byte(`# Getting Started
 
@@ -663,7 +683,7 @@ If you see a certificate error, check your TLS configuration.
 		t.Errorf("expected 3 docs, got %d", docCount)
 	}
 
-	// Verify content is non-NULL.
+	// Verify content is non-NULL and field table was stripped.
 	var content sql.NullString
 	err = db.QueryRowContext(ctx, "SELECT content FROM docs WHERE file_path = 'docs/README.md'").Scan(&content)
 	if err != nil {
@@ -674,6 +694,31 @@ If you see a certificate error, check your TLS configuration.
 	}
 	if !strings.Contains(content.String, "authentication") {
 		t.Errorf("expected content to contain 'authentication', got %q", content.String)
+	}
+	if strings.Contains(content.String, "| Field | Description | Type |") {
+		t.Error("expected field table to be stripped from content")
+	}
+	if strings.Contains(content.String, "nginx.access.remote_ip_list") {
+		t.Error("expected field table rows to be stripped from content")
+	}
+	if strings.Contains(content.String, "\"event.timeout\": \"30s\"") {
+		t.Error("expected example event JSON to be stripped from content")
+	}
+	// The prose "Troubleshooting" section should be preserved.
+	if !strings.Contains(content.String, "Check the timeout settings") {
+		t.Error("expected prose after stripped sections to be preserved")
+	}
+
+	// Verify FTS5 does NOT match a field name that only appeared in the table.
+	var ftsFieldCount int
+	err = db.QueryRowContext(ctx,
+		"SELECT count(*) FROM docs_fts WHERE docs_fts MATCH 'nginx'").
+		Scan(&ftsFieldCount)
+	if err != nil {
+		t.Fatalf("FTS5 field search: %v", err)
+	}
+	if ftsFieldCount != 0 {
+		t.Error("expected FTS not to match field name 'nginx' from stripped table")
 	}
 
 	// Verify FTS5 search finds the doc by keyword.
@@ -702,6 +747,117 @@ If you see a certificate error, check your TLS configuration.
 	}
 	if pkgName != "doc-test" {
 		t.Errorf("expected doc-test, got %s", pkgName)
+	}
+}
+
+func TestChangelogEntriesFTS(t *testing.T) {
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: fts-changelog-test
+title: FTS Changelog Test
+version: 1.2.0
+description: A package with changelog entries.
+format_version: 3.5.7
+type: integration
+owner:
+  github: elastic/integrations
+  type: elastic
+policy_templates:
+  - name: default
+    title: Default
+    description: Default policy.
+    inputs:
+      - type: logfile
+        title: Log
+        description: Collect logs.
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.2.0
+  changes:
+    - description: Fixed SSL handshake timeout when proxy is configured.
+      type: bugfix
+      link: https://github.com/test/3
+    - description: Added dashboard for monitoring network traffic.
+      type: enhancement
+      link: https://github.com/test/4
+- version: 1.1.0
+  changes:
+    - description: Improved certificate validation error messages.
+      type: enhancement
+      link: https://github.com/test/2
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Verify FTS search finds changelog entries by keyword.
+	var desc, entryType string
+	err = db.QueryRowContext(ctx, `
+		SELECT ce.description, ce.type
+		FROM changelog_entries_fts
+		JOIN changelog_entries ce ON ce.id = changelog_entries_fts.rowid
+		WHERE changelog_entries_fts MATCH 'SSL timeout'
+		ORDER BY rank
+		LIMIT 1`).Scan(&desc, &entryType)
+	if err != nil {
+		t.Fatalf("FTS changelog search: %v", err)
+	}
+	if !strings.Contains(desc, "SSL handshake timeout") {
+		t.Errorf("expected SSL handshake timeout entry, got %q", desc)
+	}
+	if entryType != "bugfix" {
+		t.Errorf("expected type=bugfix, got %s", entryType)
+	}
+
+	// Verify join back to packages through changelogs.
+	var pkgName, version string
+	err = db.QueryRowContext(ctx, `
+		SELECT p.name, c.version
+		FROM changelog_entries_fts
+		JOIN changelog_entries ce ON ce.id = changelog_entries_fts.rowid
+		JOIN changelogs c ON c.id = ce.changelogs_id
+		JOIN packages p ON p.id = c.packages_id
+		WHERE changelog_entries_fts MATCH 'certificate'
+		LIMIT 1`).Scan(&pkgName, &version)
+	if err != nil {
+		t.Fatalf("FTS changelog package join: %v", err)
+	}
+	if pkgName != "fts-changelog-test" {
+		t.Errorf("expected fts-changelog-test, got %s", pkgName)
+	}
+	if version != "1.1.0" {
+		t.Errorf("expected version 1.1.0, got %s", version)
+	}
+
+	// Verify search for "dashboard" finds the enhancement entry.
+	var dashDesc string
+	err = db.QueryRowContext(ctx, `
+		SELECT ce.description
+		FROM changelog_entries_fts
+		JOIN changelog_entries ce ON ce.id = changelog_entries_fts.rowid
+		WHERE changelog_entries_fts MATCH 'dashboard'
+		LIMIT 1`).Scan(&dashDesc)
+	if err != nil {
+		t.Fatalf("FTS changelog dashboard search: %v", err)
+	}
+	if !strings.Contains(dashDesc, "dashboard") {
+		t.Errorf("expected dashboard entry, got %q", dashDesc)
 	}
 }
 
@@ -937,9 +1093,9 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 		loaded++
 	}
 
-	// Rebuild FTS index after all individual writes.
-	if err := pkgsql.RebuildDocsFTS(ctx, db); err != nil {
-		t.Fatalf("rebuilding FTS index: %v", err)
+	// Rebuild FTS indexes after all individual writes.
+	if err := pkgsql.RebuildFTS(ctx, db); err != nil {
+		t.Fatalf("rebuilding FTS indexes: %v", err)
 	}
 
 	t.Logf("loaded %d packages into %s", loaded, dbPath)
