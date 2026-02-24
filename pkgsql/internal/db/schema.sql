@@ -263,9 +263,13 @@ CREATE TABLE IF NOT EXISTS pipeline_tests (
 );
 
 CREATE TABLE IF NOT EXISTS policy_templates (
-  -- Policy templates offered by integration packages. Defines how an integration is configured in Fleet.
+  -- Policy templates offered by integration and input packages. Defines how a package is configured in Fleet.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  dynamic_signal_types BOOLEAN, -- whether transforms and index templates are created based on pipeline config (input packages only)
+  input TEXT, -- input type for input packages (e.g. cel, httpjson)
+  policy_template_type TEXT, -- data stream type for input packages (logs, metrics, synthetics, traces)
+  template_path TEXT, -- path to agent template for input packages (e.g. input.yml.hbs)
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number

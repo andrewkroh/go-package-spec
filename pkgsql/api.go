@@ -276,7 +276,13 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 	// Insert policy templates.
 	for i := range im.PolicyTemplates {
 		pt := &im.PolicyTemplates[i]
-		ptID, err := q.InsertPolicyTemplates(ctx, mapPolicyTemplatesParams(pt, pkgID))
+		ptID, err := q.InsertPolicyTemplates(ctx, mapPolicyTemplatesParams(
+			pt, pkgID,
+			sql.NullBool{},   // dynamic_signal_types
+			sql.NullString{}, // input
+			sql.NullString{}, // policy_template_type
+			sql.NullString{}, // template_path
+		))
 		if err != nil {
 			return fmt.Errorf("inserting policy template: %w", err)
 		}
@@ -423,6 +429,13 @@ func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, p
 		return fmt.Errorf("inserting input package vars: %w", err)
 	}
 
+	// Insert policy templates.
+	for i := range im.PolicyTemplates {
+		if err := writeInputPolicyTemplate(ctx, q, &im.PolicyTemplates[i], pkgID); err != nil {
+			return err
+		}
+	}
+
 	// Insert fields (flattened).
 	if err := writeFields(ctx, q, pkg.Fields, cfg, func(fieldID int64) error {
 		_, err := q.InsertPackageFields(ctx, dbpkg.InsertPackageFieldsParams{
@@ -502,6 +515,70 @@ func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pa
 			}
 		}
 	}
+	return nil
+}
+
+func writeInputPolicyTemplate(ctx context.Context, q *dbpkg.Queries, pt *pkgspec.InputPolicyTemplate, pkgID int64) error {
+	ptID, err := q.InsertPolicyTemplates(ctx, dbpkg.InsertPolicyTemplatesParams{
+		PackagesID:                                      pkgID,
+		ConfigurationLinks:                              jsonNullString(pt.ConfigurationLinks),
+		DeploymentModesAgentlessDivision:                toNullString(pt.DeploymentModes.Agentless.Division),
+		DeploymentModesAgentlessEnabled:                 toNullBool(pt.DeploymentModes.Agentless.Enabled),
+		DeploymentModesAgentlessIsDefault:               toNullBool(pt.DeploymentModes.Agentless.IsDefault),
+		DeploymentModesAgentlessOrganization:            toNullString(pt.DeploymentModes.Agentless.Organization),
+		DeploymentModesAgentlessResourcesRequestsCpu:    toNullString(pt.DeploymentModes.Agentless.Resources.Requests.CPU),
+		DeploymentModesAgentlessResourcesRequestsMemory: toNullString(pt.DeploymentModes.Agentless.Resources.Requests.Memory),
+		DeploymentModesAgentlessTeam:                    toNullString(pt.DeploymentModes.Agentless.Team),
+		DeploymentModesDefaultEnabled:                   toNullBool(pt.DeploymentModes.Default.Enabled),
+		Description:                                     pt.Description,
+		DynamicSignalTypes:                              toNullBool(pt.DynamicSignalTypes),
+		FipsCompatible:                                  toNullBool(pt.FipsCompatible),
+		Input:                                           toNullString(pt.Input),
+		Name:                                            pt.Name,
+		PolicyTemplateType:                              toNullString(string(pt.Type)),
+		TemplatePath:                                    toNullString(pt.TemplatePath),
+		Title:                                           pt.Title,
+	})
+	if err != nil {
+		return fmt.Errorf("inserting input policy template: %w", err)
+	}
+
+	// Insert policy template deprecation.
+	if isDeprecated(pt.Deprecated) {
+		p := deprecationParams(pt.Deprecated)
+		p.PolicyTemplatesID = sql.NullInt64{Int64: ptID, Valid: true}
+		if _, err := q.InsertDeprecations(ctx, p); err != nil {
+			return fmt.Errorf("inserting input policy template deprecation: %w", err)
+		}
+	}
+
+	// Insert policy template icons.
+	for i := range pt.Icons {
+		_, err := q.InsertPolicyTemplateIcons(ctx, mapPolicyTemplateIconsParams(&pt.Icons[i], ptID))
+		if err != nil {
+			return fmt.Errorf("inserting input policy template icon: %w", err)
+		}
+	}
+
+	// Insert policy template screenshots.
+	for i := range pt.Screenshots {
+		_, err := q.InsertPolicyTemplateScreenshots(ctx, mapPolicyTemplateScreenshotsParams(&pt.Screenshots[i], ptID))
+		if err != nil {
+			return fmt.Errorf("inserting input policy template screenshot: %w", err)
+		}
+	}
+
+	// Insert policy template vars.
+	if err := writeVars(ctx, q, pt.Vars, func(varID int64) error {
+		_, err := q.InsertPolicyTemplateVars(ctx, dbpkg.InsertPolicyTemplateVarsParams{
+			PolicyTemplateID: ptID,
+			VarID:            varID,
+		})
+		return err
+	}); err != nil {
+		return fmt.Errorf("inserting input policy template vars: %w", err)
+	}
+
 	return nil
 }
 

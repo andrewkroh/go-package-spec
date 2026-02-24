@@ -434,6 +434,10 @@ INSERT INTO pipeline_tests (
 -- name: InsertPolicyTemplates :one
 INSERT INTO policy_templates (
   packages_id,
+  dynamic_signal_types,
+  input,
+  policy_template_type,
+  template_path,
   file_path,
   file_line,
   file_column,
@@ -453,6 +457,10 @@ INSERT INTO policy_templates (
   name,
   title
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,

@@ -278,6 +278,10 @@ type PipelineTest struct {
 type PolicyTemplate struct {
 	ID                                              int64
 	PackagesID                                      int64
+	DynamicSignalTypes                              sql.NullBool
+	Input                                           sql.NullString
+	PolicyTemplateType                              sql.NullString
+	TemplatePath                                    sql.NullString
 	FilePath                                        sql.NullString
 	FileLine                                        sql.NullInt64
 	FileColumn                                      sql.NullInt64
