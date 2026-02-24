@@ -1,0 +1,38 @@
+name: Build SQLite Database
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - uses: actions/checkout@v6
+        with:
+          repository: elastic/integrations
+          path: integrations
+          fetch-depth: 1
+
+      - name: Build fleet-packages.sqlite
+        run: go test ./pkgsql/ -run TestBuildFleetPackagesDB -v -count=1
+        env:
+          INTEGRATIONS_DIR: ${{ github.workspace }}/integrations
+
+      - name: Compress database
+        run: gzip pkgsql/fleet-packages.sqlite
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fleet-packages-sqlite
+          path: pkgsql/fleet-packages.sqlite.gz
+          retention-days: 1
