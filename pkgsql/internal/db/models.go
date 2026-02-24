@@ -392,6 +392,80 @@ type SampleEvent struct {
 	Event         interface{}
 }
 
+type SecurityRule struct {
+	ID                         int64
+	AnomalyThreshold           sql.NullInt64
+	Author                     interface{}
+	BuildingBlockType          sql.NullString
+	Enabled                    sql.NullBool
+	FalsePositives             interface{}
+	FromTime                   sql.NullString
+	Interval                   sql.NullString
+	KibanaSavedObjectsID       int64
+	Language                   sql.NullString
+	License                    sql.NullString
+	MachineLearningJobID       interface{}
+	MaxSignals                 sql.NullInt64
+	NewTermsFields             interface{}
+	NewTermsHistoryWindowStart sql.NullString
+	Note                       sql.NullString
+	Query                      sql.NullString
+	References                 interface{}
+	RiskScore                  sql.NullFloat64
+	RiskScoreMapping           interface{}
+	RuleID                     string
+	RuleNameOverride           sql.NullString
+	Setup                      sql.NullString
+	Severity                   sql.NullString
+	SeverityMapping            interface{}
+	ThreatIndex                interface{}
+	ThreatIndicatorPath        sql.NullString
+	ThreatMapping              interface{}
+	ThreatQuery                sql.NullString
+	Threshold                  interface{}
+	TimestampOverride          sql.NullString
+	Type                       sql.NullString
+	Version                    sql.NullInt64
+}
+
+type SecurityRuleIndexPattern struct {
+	ID              int64
+	Pattern         string
+	SecurityRulesID int64
+}
+
+type SecurityRuleRelatedIntegration struct {
+	ID              int64
+	Integration     sql.NullString
+	Package         string
+	SecurityRulesID int64
+	Version         sql.NullString
+}
+
+type SecurityRuleRequiredField struct {
+	ID              int64
+	Ecs             sql.NullBool
+	Name            string
+	SecurityRulesID int64
+	Type            sql.NullString
+}
+
+type SecurityRuleTag struct {
+	ID              int64
+	SecurityRulesID int64
+	Tag             string
+}
+
+type SecurityRuleThreat struct {
+	ID              int64
+	SecurityRulesID int64
+	Subtechniques   interface{}
+	TacticID        string
+	TacticName      string
+	TechniqueID     sql.NullString
+	TechniqueName   sql.NullString
+}
+
 type StaticTest struct {
 	ID            int64
 	CaseName      string

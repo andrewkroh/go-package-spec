@@ -376,6 +376,86 @@ CREATE TABLE IF NOT EXISTS sample_events (
   event JSON NOT NULL -- sample event data (JSON)
 );
 
+CREATE TABLE IF NOT EXISTS security_rules (
+  -- Security detection rule attributes extracted from Kibana saved objects of type security_rule. Has a 1:1 relationship with kibana_saved_objects. Title and description are on the parent table.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  anomaly_threshold INTEGER, -- anomaly score threshold for machine_learning rules
+  author JSON, -- rule authors (JSON array of strings)
+  building_block_type TEXT, -- building block type when rule is a building block
+  enabled BOOLEAN, -- whether the rule is enabled by default
+  false_positives JSON, -- known false positive scenarios (JSON array of strings)
+  from_time TEXT, -- time range start for query (e.g. now-9m). Named from_time because FROM is reserved.
+  interval TEXT, -- check interval (e.g. 5m)
+  kibana_saved_objects_id INTEGER NOT NULL REFERENCES kibana_saved_objects(id), -- foreign key to kibana_saved_objects
+  language TEXT, -- query language: kuery, eql, esql, lucene
+  license TEXT, -- rule license (e.g. Elastic License v2)
+  machine_learning_job_id JSON, -- ML job identifier(s) for machine_learning rules (JSON string or array)
+  max_signals INTEGER, -- maximum alerts per execution
+  new_terms_fields JSON, -- fields for new_terms rules (JSON array)
+  new_terms_history_window_start TEXT, -- history window start for new_terms rules
+  note TEXT, -- markdown investigation/triage guide
+  "query" TEXT, -- detection query text (EQL, KQL, ESQL, or Lucene)
+  "references" JSON, -- external reference URLs (JSON array of strings)
+  risk_score REAL, -- numeric risk score (0-100)
+  risk_score_mapping JSON, -- risk score mapping configuration (JSON array)
+  rule_id TEXT NOT NULL, -- unique rule identifier (attributes.rule_id)
+  rule_name_override TEXT, -- field name used to override the rule name in alerts
+  setup TEXT, -- markdown setup instructions
+  severity TEXT, -- severity level: low, medium, high, critical
+  severity_mapping JSON, -- severity mapping configuration (JSON array)
+  threat_index JSON, -- threat indicator indices for threat_match rules (JSON array)
+  threat_indicator_path TEXT, -- path to threat indicator field for threat_match rules
+  threat_mapping JSON, -- threat indicator field mappings for threat_match rules (JSON array)
+  threat_query TEXT, -- threat indicator query for threat_match rules
+  threshold JSON, -- threshold configuration for threshold rules (JSON object)
+  timestamp_override TEXT, -- field name used to override @timestamp for rule execution
+  type TEXT, -- rule type: eql, query, new_terms, esql, machine_learning, threshold, threat_match
+  version INTEGER -- rule version number
+);
+
+CREATE TABLE IF NOT EXISTS security_rule_index_patterns (
+  -- Elasticsearch index patterns monitored by a security rule. Enables queries like "which rules monitor logs-okta*?"
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  pattern TEXT NOT NULL, -- index pattern (e.g. logs-endpoint.events.*, endgame-*)
+  security_rules_id INTEGER NOT NULL REFERENCES security_rules(id) -- foreign key to security_rules
+);
+
+CREATE TABLE IF NOT EXISTS security_rule_related_integrations (
+  -- Integrations related to a security rule. Enables queries like "which rules relate to the okta integration?"
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  integration TEXT, -- specific integration within the package
+  package TEXT NOT NULL, -- integration package name (e.g. endpoint, okta)
+  security_rules_id INTEGER NOT NULL REFERENCES security_rules(id), -- foreign key to security_rules
+  version TEXT -- required version range (e.g. ^8.2.0)
+);
+
+CREATE TABLE IF NOT EXISTS security_rule_required_fields (
+  -- Fields required by a security rule. Enables queries like "which rules depend on event.kind?"
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  ecs BOOLEAN, -- whether the field is from ECS
+  name TEXT NOT NULL, -- field name (e.g. event.action, process.name)
+  security_rules_id INTEGER NOT NULL REFERENCES security_rules(id), -- foreign key to security_rules
+  type TEXT -- field type (e.g. keyword, long)
+);
+
+CREATE TABLE IF NOT EXISTS security_rule_tags (
+  -- Tags assigned to a security rule. Tags use a structured convention like "Domain: Endpoint", "OS: Windows", "Tactic: Defense Evasion", "Data Source: Elastic Defend".
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  security_rules_id INTEGER NOT NULL REFERENCES security_rules(id), -- foreign key to security_rules
+  tag TEXT NOT NULL -- tag value (e.g. 'Domain: Endpoint', 'Tactic: Defense Evasion')
+);
+
+CREATE TABLE IF NOT EXISTS security_rule_threats (
+  -- MITRE ATT&CK threat mappings for security rules. Each row is one tactic+technique pair. A tactic with 3 techniques produces 3 rows. A tactic with no techniques produces 1 row with NULL technique columns. Subtechniques are stored as JSON.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  security_rules_id INTEGER NOT NULL REFERENCES security_rules(id), -- foreign key to security_rules
+  subtechniques JSON, -- subtechnique array [{id, name, reference}] (JSON)
+  tactic_id TEXT NOT NULL, -- MITRE ATT&CK tactic ID (e.g. TA0005)
+  tactic_name TEXT NOT NULL, -- MITRE ATT&CK tactic name (e.g. Defense Evasion)
+  technique_id TEXT, -- MITRE ATT&CK technique ID (e.g. T1036)
+  technique_name TEXT -- MITRE ATT&CK technique name (e.g. Masquerading)
+);
+
 CREATE TABLE IF NOT EXISTS static_tests (
   -- Static test cases for data streams.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier

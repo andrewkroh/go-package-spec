@@ -1551,6 +1551,302 @@ func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEvents
 	return id, err
 }
 
+const insertSecurityRuleIndexPatterns = `-- name: InsertSecurityRuleIndexPatterns :one
+INSERT INTO security_rule_index_patterns (
+  pattern,
+  security_rules_id
+) VALUES (
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSecurityRuleIndexPatternsParams struct {
+	Pattern         string
+	SecurityRulesID int64
+}
+
+func (q *Queries) InsertSecurityRuleIndexPatterns(ctx context.Context, arg InsertSecurityRuleIndexPatternsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSecurityRuleIndexPatterns, arg.Pattern, arg.SecurityRulesID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSecurityRuleRelatedIntegrations = `-- name: InsertSecurityRuleRelatedIntegrations :one
+INSERT INTO security_rule_related_integrations (
+  integration,
+  package,
+  security_rules_id,
+  version
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSecurityRuleRelatedIntegrationsParams struct {
+	Integration     sql.NullString
+	Package         string
+	SecurityRulesID int64
+	Version         sql.NullString
+}
+
+func (q *Queries) InsertSecurityRuleRelatedIntegrations(ctx context.Context, arg InsertSecurityRuleRelatedIntegrationsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSecurityRuleRelatedIntegrations,
+		arg.Integration,
+		arg.Package,
+		arg.SecurityRulesID,
+		arg.Version,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSecurityRuleRequiredFields = `-- name: InsertSecurityRuleRequiredFields :one
+INSERT INTO security_rule_required_fields (
+  ecs,
+  name,
+  security_rules_id,
+  type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSecurityRuleRequiredFieldsParams struct {
+	Ecs             sql.NullBool
+	Name            string
+	SecurityRulesID int64
+	Type            sql.NullString
+}
+
+func (q *Queries) InsertSecurityRuleRequiredFields(ctx context.Context, arg InsertSecurityRuleRequiredFieldsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSecurityRuleRequiredFields,
+		arg.Ecs,
+		arg.Name,
+		arg.SecurityRulesID,
+		arg.Type,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSecurityRuleTags = `-- name: InsertSecurityRuleTags :one
+INSERT INTO security_rule_tags (
+  security_rules_id,
+  tag
+) VALUES (
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSecurityRuleTagsParams struct {
+	SecurityRulesID int64
+	Tag             string
+}
+
+func (q *Queries) InsertSecurityRuleTags(ctx context.Context, arg InsertSecurityRuleTagsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSecurityRuleTags, arg.SecurityRulesID, arg.Tag)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSecurityRuleThreats = `-- name: InsertSecurityRuleThreats :one
+INSERT INTO security_rule_threats (
+  security_rules_id,
+  subtechniques,
+  tactic_id,
+  tactic_name,
+  technique_id,
+  technique_name
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSecurityRuleThreatsParams struct {
+	SecurityRulesID int64
+	Subtechniques   interface{}
+	TacticID        string
+	TacticName      string
+	TechniqueID     sql.NullString
+	TechniqueName   sql.NullString
+}
+
+func (q *Queries) InsertSecurityRuleThreats(ctx context.Context, arg InsertSecurityRuleThreatsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSecurityRuleThreats,
+		arg.SecurityRulesID,
+		arg.Subtechniques,
+		arg.TacticID,
+		arg.TacticName,
+		arg.TechniqueID,
+		arg.TechniqueName,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSecurityRules = `-- name: InsertSecurityRules :one
+INSERT INTO security_rules (
+  anomaly_threshold,
+  author,
+  building_block_type,
+  enabled,
+  false_positives,
+  from_time,
+  interval,
+  kibana_saved_objects_id,
+  language,
+  license,
+  machine_learning_job_id,
+  max_signals,
+  new_terms_fields,
+  new_terms_history_window_start,
+  note,
+  "query",
+  "references",
+  risk_score,
+  risk_score_mapping,
+  rule_id,
+  rule_name_override,
+  setup,
+  severity,
+  severity_mapping,
+  threat_index,
+  threat_indicator_path,
+  threat_mapping,
+  threat_query,
+  threshold,
+  timestamp_override,
+  type,
+  version
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSecurityRulesParams struct {
+	AnomalyThreshold           sql.NullInt64
+	Author                     interface{}
+	BuildingBlockType          sql.NullString
+	Enabled                    sql.NullBool
+	FalsePositives             interface{}
+	FromTime                   sql.NullString
+	Interval                   sql.NullString
+	KibanaSavedObjectsID       int64
+	Language                   sql.NullString
+	License                    sql.NullString
+	MachineLearningJobID       interface{}
+	MaxSignals                 sql.NullInt64
+	NewTermsFields             interface{}
+	NewTermsHistoryWindowStart sql.NullString
+	Note                       sql.NullString
+	Query                      sql.NullString
+	References                 interface{}
+	RiskScore                  sql.NullFloat64
+	RiskScoreMapping           interface{}
+	RuleID                     string
+	RuleNameOverride           sql.NullString
+	Setup                      sql.NullString
+	Severity                   sql.NullString
+	SeverityMapping            interface{}
+	ThreatIndex                interface{}
+	ThreatIndicatorPath        sql.NullString
+	ThreatMapping              interface{}
+	ThreatQuery                sql.NullString
+	Threshold                  interface{}
+	TimestampOverride          sql.NullString
+	Type                       sql.NullString
+	Version                    sql.NullInt64
+}
+
+func (q *Queries) InsertSecurityRules(ctx context.Context, arg InsertSecurityRulesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSecurityRules,
+		arg.AnomalyThreshold,
+		arg.Author,
+		arg.BuildingBlockType,
+		arg.Enabled,
+		arg.FalsePositives,
+		arg.FromTime,
+		arg.Interval,
+		arg.KibanaSavedObjectsID,
+		arg.Language,
+		arg.License,
+		arg.MachineLearningJobID,
+		arg.MaxSignals,
+		arg.NewTermsFields,
+		arg.NewTermsHistoryWindowStart,
+		arg.Note,
+		arg.Query,
+		arg.References,
+		arg.RiskScore,
+		arg.RiskScoreMapping,
+		arg.RuleID,
+		arg.RuleNameOverride,
+		arg.Setup,
+		arg.Severity,
+		arg.SeverityMapping,
+		arg.ThreatIndex,
+		arg.ThreatIndicatorPath,
+		arg.ThreatMapping,
+		arg.ThreatQuery,
+		arg.Threshold,
+		arg.TimestampOverride,
+		arg.Type,
+		arg.Version,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertStaticTests = `-- name: InsertStaticTests :one
 INSERT INTO static_tests (
   case_name,

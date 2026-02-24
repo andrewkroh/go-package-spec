@@ -35,8 +35,8 @@ func TestTableSchemas(t *testing.T) {
 		t.Fatal("expected at least one table schema")
 	}
 	for _, s := range schemas {
-		if !strings.HasPrefix(s, "CREATE TABLE IF NOT EXISTS") && !strings.HasPrefix(s, "CREATE VIRTUAL TABLE IF NOT EXISTS") {
-			t.Errorf("expected CREATE TABLE or CREATE VIRTUAL TABLE prefix, got: %s", s[:50])
+		if !strings.HasPrefix(s, "CREATE TABLE IF NOT EXISTS") && !strings.HasPrefix(s, "CREATE VIRTUAL TABLE IF NOT EXISTS") && !strings.HasPrefix(s, "CREATE VIEW IF NOT EXISTS") {
+			t.Errorf("expected CREATE TABLE, CREATE VIRTUAL TABLE, or CREATE VIEW prefix, got: %s", s[:50])
 		}
 	}
 }
@@ -44,8 +44,8 @@ func TestTableSchemas(t *testing.T) {
 func TestTableSchemasContainComments(t *testing.T) {
 	schemas := pkgsql.TableSchemas()
 	for _, s := range schemas {
-		// FTS5 virtual tables don't have inline comments.
-		if strings.HasPrefix(s, "CREATE VIRTUAL TABLE") {
+		// FTS5 virtual tables and views don't have inline comments.
+		if strings.HasPrefix(s, "CREATE VIRTUAL TABLE") || strings.HasPrefix(s, "CREATE VIEW") {
 			continue
 		}
 		if !strings.Contains(s, "-- ") {
@@ -1737,5 +1737,464 @@ policy_templates:
 	}
 	if joinContent != "input template content\n" {
 		t.Errorf("unexpected join content: %q", joinContent)
+	}
+}
+
+func TestWritePackageWithSecurityRules(t *testing.T) {
+	ruleJSON := `{
+  "id": "test-rule-id-1",
+  "type": "security-rule",
+  "attributes": {
+    "name": "Okta Suspicious Login Attempt",
+    "description": "Detects suspicious login attempts via Okta SSO.",
+    "rule_id": "okta-suspicious-login-001",
+    "type": "eql",
+    "severity": "high",
+    "risk_score": 73,
+    "language": "eql",
+    "query": "authentication where event.dataset == \"okta.system\" and event.action == \"user.session.start\" and event.outcome == \"failure\"",
+    "enabled": true,
+    "version": 5,
+    "license": "Elastic License v2",
+    "interval": "5m",
+    "from": "now-9m",
+    "max_signals": 100,
+    "timestamp_override": "event.ingested",
+    "setup": "## Setup\nRequires Okta integration.",
+    "note": "## Triage\nCheck the source IP address.",
+    "author": ["Elastic"],
+    "false_positives": ["Legitimate failed logins"],
+    "references": ["https://developer.okta.com/docs/reference/api/system-log/"],
+    "index": ["logs-okta.system-*", "filebeat-*"],
+    "tags": ["Domain: Cloud", "Data Source: Okta", "Tactic: Initial Access"],
+    "threat": [
+      {
+        "framework": "MITRE ATT&CK",
+        "tactic": {
+          "id": "TA0001",
+          "name": "Initial Access",
+          "reference": "https://attack.mitre.org/tactics/TA0001/"
+        },
+        "technique": [
+          {
+            "id": "T1078",
+            "name": "Valid Accounts",
+            "reference": "https://attack.mitre.org/techniques/T1078/",
+            "subtechnique": [
+              {
+                "id": "T1078.004",
+                "name": "Cloud Accounts",
+                "reference": "https://attack.mitre.org/techniques/T1078/004/"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "framework": "MITRE ATT&CK",
+        "tactic": {
+          "id": "TA0005",
+          "name": "Defense Evasion",
+          "reference": "https://attack.mitre.org/tactics/TA0005/"
+        },
+        "technique": []
+      }
+    ],
+    "related_integrations": [
+      {"package": "okta", "integration": "system", "version": "^2.0.0"}
+    ],
+    "required_fields": [
+      {"name": "event.action", "type": "keyword", "ecs": true},
+      {"name": "event.dataset", "type": "keyword", "ecs": true},
+      {"name": "event.outcome", "type": "keyword", "ecs": true}
+    ],
+    "risk_score_mapping": [],
+    "severity_mapping": []
+  },
+  "references": []
+}`
+
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: security-rule-test
+title: Security Rule Test
+version: 1.0.0
+description: A package with security rules.
+format_version: 3.5.7
+type: integration
+owner:
+  github: elastic/security-rules
+  type: elastic
+policy_templates:
+  - name: default
+    title: Default
+    description: Default policy.
+    inputs:
+      - type: logfile
+        title: Log
+        description: Collect logs.
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"kibana/security_rule/rule.json": {Data: []byte(ruleJSON)},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Verify security_rules has 1 row with correct fields.
+	var ruleID, ruleType, severity, language, query string
+	var riskScore float64
+	err = db.QueryRowContext(ctx,
+		"SELECT rule_id, type, severity, language, query, risk_score FROM security_rules").
+		Scan(&ruleID, &ruleType, &severity, &language, &query, &riskScore)
+	if err != nil {
+		t.Fatalf("querying security_rules: %v", err)
+	}
+	if ruleID != "okta-suspicious-login-001" {
+		t.Errorf("expected rule_id=okta-suspicious-login-001, got %s", ruleID)
+	}
+	if ruleType != "eql" {
+		t.Errorf("expected type=eql, got %s", ruleType)
+	}
+	if severity != "high" {
+		t.Errorf("expected severity=high, got %s", severity)
+	}
+	if riskScore != 73 {
+		t.Errorf("expected risk_score=73, got %f", riskScore)
+	}
+
+	// Verify enabled, version, interval, from_time, max_signals.
+	var enabled bool
+	var version, maxSignals int
+	var interval, fromTime string
+	err = db.QueryRowContext(ctx,
+		"SELECT enabled, version, interval, from_time, max_signals FROM security_rules").
+		Scan(&enabled, &version, &interval, &fromTime, &maxSignals)
+	if err != nil {
+		t.Fatalf("querying security_rules scalars: %v", err)
+	}
+	if !enabled {
+		t.Error("expected enabled=true")
+	}
+	if version != 5 {
+		t.Errorf("expected version=5, got %d", version)
+	}
+	if interval != "5m" {
+		t.Errorf("expected interval=5m, got %s", interval)
+	}
+	if fromTime != "now-9m" {
+		t.Errorf("expected from_time=now-9m, got %s", fromTime)
+	}
+	if maxSignals != 100 {
+		t.Errorf("expected max_signals=100, got %d", maxSignals)
+	}
+
+	// Verify setup and note.
+	var setup, note string
+	err = db.QueryRowContext(ctx, "SELECT setup, note FROM security_rules").
+		Scan(&setup, &note)
+	if err != nil {
+		t.Fatalf("querying setup/note: %v", err)
+	}
+	if !strings.Contains(setup, "Requires Okta") {
+		t.Errorf("expected setup to contain 'Requires Okta', got %s", setup)
+	}
+	if !strings.Contains(note, "source IP") {
+		t.Errorf("expected note to contain 'source IP', got %s", note)
+	}
+
+	// Verify security_rule_index_patterns has 2 rows.
+	var patternCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM security_rule_index_patterns").Scan(&patternCount)
+	if err != nil {
+		t.Fatalf("querying index patterns: %v", err)
+	}
+	if patternCount != 2 {
+		t.Errorf("expected 2 index patterns, got %d", patternCount)
+	}
+
+	// Verify security_rule_tags has 3 rows.
+	var tagCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM security_rule_tags").Scan(&tagCount)
+	if err != nil {
+		t.Fatalf("querying tags: %v", err)
+	}
+	if tagCount != 3 {
+		t.Errorf("expected 3 tags, got %d", tagCount)
+	}
+
+	// Verify security_rule_threats: 2 rows (1 technique + 1 tactic-only).
+	var threatCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM security_rule_threats").Scan(&threatCount)
+	if err != nil {
+		t.Fatalf("querying threats: %v", err)
+	}
+	if threatCount != 2 {
+		t.Errorf("expected 2 threat rows, got %d", threatCount)
+	}
+
+	// Verify the technique row has correct values.
+	var tacticID, tacticName string
+	var techID, techName sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT tactic_id, tactic_name, technique_id, technique_name FROM security_rule_threats WHERE technique_id IS NOT NULL").
+		Scan(&tacticID, &tacticName, &techID, &techName)
+	if err != nil {
+		t.Fatalf("querying technique row: %v", err)
+	}
+	if tacticID != "TA0001" {
+		t.Errorf("expected tactic_id=TA0001, got %s", tacticID)
+	}
+	if tacticName != "Initial Access" {
+		t.Errorf("expected tactic_name=Initial Access, got %s", tacticName)
+	}
+	if !techID.Valid || techID.String != "T1078" {
+		t.Errorf("expected technique_id=T1078, got %v", techID)
+	}
+
+	// Verify the tactic-only row (Defense Evasion with empty technique list).
+	var tactOnlyID string
+	var tactOnlyTechID sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT tactic_id, technique_id FROM security_rule_threats WHERE tactic_id = 'TA0005'").
+		Scan(&tactOnlyID, &tactOnlyTechID)
+	if err != nil {
+		t.Fatalf("querying tactic-only row: %v", err)
+	}
+	if tactOnlyTechID.Valid {
+		t.Errorf("expected NULL technique_id for tactic-only row, got %s", tactOnlyTechID.String)
+	}
+
+	// Verify subtechniques JSON on the T1078 row.
+	var subtechniques sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT subtechniques FROM security_rule_threats WHERE technique_id = 'T1078'").
+		Scan(&subtechniques)
+	if err != nil {
+		t.Fatalf("querying subtechniques: %v", err)
+	}
+	if !subtechniques.Valid {
+		t.Fatal("expected non-NULL subtechniques")
+	}
+	if !strings.Contains(subtechniques.String, "T1078.004") {
+		t.Errorf("expected subtechniques to contain T1078.004, got %s", subtechniques.String)
+	}
+
+	// Verify security_rule_related_integrations has 1 row.
+	var riPkg, riVersion string
+	var riIntegration sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT package, integration, version FROM security_rule_related_integrations").
+		Scan(&riPkg, &riIntegration, &riVersion)
+	if err != nil {
+		t.Fatalf("querying related integrations: %v", err)
+	}
+	if riPkg != "okta" {
+		t.Errorf("expected package=okta, got %s", riPkg)
+	}
+	if !riIntegration.Valid || riIntegration.String != "system" {
+		t.Errorf("expected integration=system, got %v", riIntegration)
+	}
+	if riVersion != "^2.0.0" {
+		t.Errorf("expected version=^2.0.0, got %s", riVersion)
+	}
+
+	// Verify security_rule_required_fields has 3 rows.
+	var rfCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM security_rule_required_fields").Scan(&rfCount)
+	if err != nil {
+		t.Fatalf("querying required fields: %v", err)
+	}
+	if rfCount != 3 {
+		t.Errorf("expected 3 required fields, got %d", rfCount)
+	}
+
+	// Verify a specific required field.
+	var rfName, rfType string
+	var rfECS bool
+	err = db.QueryRowContext(ctx,
+		"SELECT name, type, ecs FROM security_rule_required_fields WHERE name = 'event.action'").
+		Scan(&rfName, &rfType, &rfECS)
+	if err != nil {
+		t.Fatalf("querying required field event.action: %v", err)
+	}
+	if rfType != "keyword" {
+		t.Errorf("expected type=keyword, got %s", rfType)
+	}
+	if !rfECS {
+		t.Error("expected ecs=true for event.action")
+	}
+
+	// Verify join from security_rules to kibana_saved_objects.
+	var ksoTitle string
+	err = db.QueryRowContext(ctx, `
+		SELECT kso.title
+		FROM security_rules sr
+		JOIN kibana_saved_objects kso ON kso.id = sr.kibana_saved_objects_id`).
+		Scan(&ksoTitle)
+	if err != nil {
+		t.Fatalf("querying security_rules->kibana_saved_objects join: %v", err)
+	}
+	if ksoTitle != "Okta Suspicious Login Attempt" {
+		t.Errorf("expected title=Okta Suspicious Login Attempt, got %s", ksoTitle)
+	}
+}
+
+func TestSecurityRulesFTS(t *testing.T) {
+	ruleJSON := `{
+  "id": "fts-test-rule-1",
+  "type": "security-rule",
+  "attributes": {
+    "title": "Log4Shell Remote Code Execution",
+    "description": "Detects exploitation of the Log4Shell vulnerability CVE-2021-44228.",
+    "rule_id": "log4shell-rce-001",
+    "type": "query",
+    "severity": "critical",
+    "risk_score": 99,
+    "language": "kuery",
+    "query": "process.command_line : *jndi:ldap* or process.command_line : *jndi:rmi*",
+    "enabled": true,
+    "version": 1,
+    "setup": "## Setup\nDeploy Elastic Defend to collect process events.",
+    "note": "## Investigation Guide\nCheck for JNDI lookup patterns in process arguments."
+  },
+  "references": []
+}`
+
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: fts-security-test
+title: FTS Security Test
+version: 1.0.0
+description: Package for FTS test.
+format_version: 3.5.7
+type: integration
+owner:
+  github: elastic/security-rules
+  type: elastic
+policy_templates:
+  - name: default
+    title: Default
+    description: Default policy.
+    inputs:
+      - type: logfile
+        title: Log
+        description: Collect logs.
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"kibana/security_rule/rule.json": {Data: []byte(ruleJSON)},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Search for Log4Shell in title.
+	var ftsTitle string
+	err = db.QueryRowContext(ctx, `
+		SELECT kso.title
+		FROM security_rules_fts
+		JOIN security_rules sr ON sr.id = security_rules_fts.rowid
+		JOIN kibana_saved_objects kso ON kso.id = sr.kibana_saved_objects_id
+		WHERE security_rules_fts MATCH 'Log4Shell'`).
+		Scan(&ftsTitle)
+	if err != nil {
+		t.Fatalf("FTS search for Log4Shell: %v", err)
+	}
+	if ftsTitle != "Log4Shell Remote Code Execution" {
+		t.Errorf("expected Log4Shell title, got %s", ftsTitle)
+	}
+
+	// Search for term in query column.
+	err = db.QueryRowContext(ctx, `
+		SELECT kso.title
+		FROM security_rules_fts
+		JOIN security_rules sr ON sr.id = security_rules_fts.rowid
+		JOIN kibana_saved_objects kso ON kso.id = sr.kibana_saved_objects_id
+		WHERE security_rules_fts MATCH 'jndi'`).
+		Scan(&ftsTitle)
+	if err != nil {
+		t.Fatalf("FTS search for jndi: %v", err)
+	}
+	if ftsTitle != "Log4Shell Remote Code Execution" {
+		t.Errorf("expected Log4Shell title from query match, got %s", ftsTitle)
+	}
+
+	// Search for term in setup column.
+	err = db.QueryRowContext(ctx, `
+		SELECT kso.title
+		FROM security_rules_fts
+		JOIN security_rules sr ON sr.id = security_rules_fts.rowid
+		JOIN kibana_saved_objects kso ON kso.id = sr.kibana_saved_objects_id
+		WHERE security_rules_fts MATCH 'setup:Defend'`).
+		Scan(&ftsTitle)
+	if err != nil {
+		t.Fatalf("FTS search for Defend in setup: %v", err)
+	}
+	if ftsTitle != "Log4Shell Remote Code Execution" {
+		t.Errorf("expected Log4Shell title from setup match, got %s", ftsTitle)
+	}
+
+	// Search for term in note column.
+	err = db.QueryRowContext(ctx, `
+		SELECT kso.title
+		FROM security_rules_fts
+		JOIN security_rules sr ON sr.id = security_rules_fts.rowid
+		JOIN kibana_saved_objects kso ON kso.id = sr.kibana_saved_objects_id
+		WHERE security_rules_fts MATCH 'note:JNDI'`).
+		Scan(&ftsTitle)
+	if err != nil {
+		t.Fatalf("FTS search for JNDI in note: %v", err)
+	}
+	if ftsTitle != "Log4Shell Remote Code Execution" {
+		t.Errorf("expected Log4Shell title from note match, got %s", ftsTitle)
+	}
+
+	// Verify join from FTS to packages.
+	var pkgName string
+	err = db.QueryRowContext(ctx, `
+		SELECT p.name
+		FROM security_rules_fts
+		JOIN security_rules sr ON sr.id = security_rules_fts.rowid
+		JOIN kibana_saved_objects kso ON kso.id = sr.kibana_saved_objects_id
+		JOIN packages p ON p.id = kso.packages_id
+		WHERE security_rules_fts MATCH 'Log4Shell'`).
+		Scan(&pkgName)
+	if err != nil {
+		t.Fatalf("FTS to packages join: %v", err)
+	}
+	if pkgName != "fts-security-test" {
+		t.Errorf("expected fts-security-test, got %s", pkgName)
 	}
 }

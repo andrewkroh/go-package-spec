@@ -614,6 +614,136 @@ INSERT INTO sample_events (
   ?
 ) RETURNING id;
 
+-- name: InsertSecurityRules :one
+INSERT INTO security_rules (
+  anomaly_threshold,
+  author,
+  building_block_type,
+  enabled,
+  false_positives,
+  from_time,
+  interval,
+  kibana_saved_objects_id,
+  language,
+  license,
+  machine_learning_job_id,
+  max_signals,
+  new_terms_fields,
+  new_terms_history_window_start,
+  note,
+  "query",
+  "references",
+  risk_score,
+  risk_score_mapping,
+  rule_id,
+  rule_name_override,
+  setup,
+  severity,
+  severity_mapping,
+  threat_index,
+  threat_indicator_path,
+  threat_mapping,
+  threat_query,
+  threshold,
+  timestamp_override,
+  type,
+  version
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSecurityRuleIndexPatterns :one
+INSERT INTO security_rule_index_patterns (
+  pattern,
+  security_rules_id
+) VALUES (
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSecurityRuleRelatedIntegrations :one
+INSERT INTO security_rule_related_integrations (
+  integration,
+  package,
+  security_rules_id,
+  version
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSecurityRuleRequiredFields :one
+INSERT INTO security_rule_required_fields (
+  ecs,
+  name,
+  security_rules_id,
+  type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSecurityRuleTags :one
+INSERT INTO security_rule_tags (
+  security_rules_id,
+  tag
+) VALUES (
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSecurityRuleThreats :one
+INSERT INTO security_rule_threats (
+  security_rules_id,
+  subtechniques,
+  tactic_id,
+  tactic_name,
+  technique_id,
+  technique_name
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertStaticTests :one
 INSERT INTO static_tests (
   case_name,
