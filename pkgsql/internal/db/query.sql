@@ -88,6 +88,7 @@ INSERT INTO fields (
 -- name: InsertPackages :one
 INSERT INTO packages (
   agent_privileges_root,
+  commit_id,
   conditions_elastic_subscription,
   conditions_kibana_version,
   dir_name,
@@ -106,6 +107,7 @@ INSERT INTO packages (
   type,
   version
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,

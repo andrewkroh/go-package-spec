@@ -157,6 +157,7 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 	pkgID, err := q.InsertPackages(ctx, mapPackagesParams(
 		m,
 		agentPrivilegesRoot,
+		toNullString(pkg.Commit),
 		conditionsElasticSubscription,
 		conditionsKibanaVersion,
 		dirName,

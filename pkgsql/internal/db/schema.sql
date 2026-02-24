@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS packages (
   -- Fleet packages (integration, input, or content). Each row is one package version.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   agent_privileges_root BOOLEAN, -- whether collection requires root privileges in the agent
+  commit_id TEXT, -- git HEAD commit ID (populated when WithGitMetadata is used)
   conditions_elastic_subscription TEXT, -- required Elastic subscription level
   conditions_kibana_version TEXT, -- required Kibana version range
   dir_name TEXT NOT NULL UNIQUE, -- directory name of the package

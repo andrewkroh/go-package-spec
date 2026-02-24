@@ -23,6 +23,9 @@ tables:
       policy_templates_behavior:
         type: TEXT
         comment: "behavior when multiple policy templates are defined (all, combined_policy, individual_policies)"
+      commit_id:
+        type: TEXT
+        comment: "git HEAD commit ID (populated when WithGitMetadata is used)"
     inline:
       - Owner
       - Source

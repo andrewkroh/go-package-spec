@@ -1099,4 +1099,17 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 	}
 
 	t.Logf("loaded %d packages into %s", loaded, dbPath)
+
+	// Verify commit_id is populated (WithGitMetadata was used).
+	var commitID sql.NullString
+	err = db.QueryRowContext(ctx, "SELECT commit_id FROM packages LIMIT 1").Scan(&commitID)
+	if err != nil {
+		t.Fatalf("querying commit_id: %v", err)
+	}
+	if !commitID.Valid {
+		t.Fatal("expected non-NULL commit_id with WithGitMetadata")
+	}
+	if len(commitID.String) != 40 {
+		t.Errorf("expected 40-char hex SHA commit_id, got %q (len=%d)", commitID.String, len(commitID.String))
+	}
 }
