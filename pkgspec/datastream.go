@@ -64,6 +64,8 @@ type DataStreamManifest struct {
 	Title string `json:"title" yaml:"title"`
 	// Type of data stream
 	Type DataStreamType `json:"type,omitempty" yaml:"type,omitempty"`
+	// GithubOwner is the GitHub team owner from CODEOWNERS, populated when WithCodeowners is used.
+	GithubOwner string `json:"github_owner,omitempty" yaml:"-"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for DataStreamManifest.

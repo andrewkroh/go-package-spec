@@ -178,8 +178,10 @@ INSERT INTO data_streams (
   ilm_policy,
   "release",
   title,
-  type
+  type,
+  github_owner
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -220,6 +222,7 @@ type InsertDataStreamsParams struct {
 	Release                       sql.NullString
 	Title                         string
 	Type                          sql.NullString
+	GithubOwner                   sql.NullString
 }
 
 func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsParams) (int64, error) {
@@ -242,6 +245,7 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 		arg.Release,
 		arg.Title,
 		arg.Type,
+		arg.GithubOwner,
 	)
 	var id int64
 	err := row.Scan(&id)

@@ -101,6 +101,7 @@ type config struct {
 	testConfigs    bool
 	pathPrefix     string // prefix prepended to all FileMetadata file paths
 	packagePath    string // original OS path, needed for git operations
+	codeownersPath string // path to CODEOWNERS file for data stream ownership
 }
 
 // WithFS provides a custom filesystem for reading package files. When set,
@@ -165,6 +166,16 @@ func WithGitMetadata() Option {
 func WithPathPrefix(prefix string) Option {
 	return func(c *config) {
 		c.pathPrefix = prefix
+	}
+}
+
+// WithCodeowners provides a path to a CODEOWNERS file for enriching data
+// stream manifests with their GitHub team owner. This is useful when the
+// CODEOWNERS file assigns per-data-stream ownership that is more granular
+// than the package-level owner.
+func WithCodeowners(path string) Option {
+	return func(c *config) {
+		c.codeownersPath = path
 	}
 }
 
@@ -416,6 +427,21 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 		if len(pkg.Changelog) > 0 {
 			if err := annotateChangelogDates(pkg.Changelog, cfg.packagePath, "changelog.yml"); err != nil {
 				return nil, fmt.Errorf("annotating changelog dates: %w", err)
+			}
+		}
+	}
+
+	// CODEOWNERS enrichment.
+	if cfg.codeownersPath != "" && len(pkg.DataStreams) > 0 {
+		cf, err := loadCodeowners(cfg.codeownersPath)
+		if err != nil {
+			return nil, fmt.Errorf("loading CODEOWNERS: %w", err)
+		}
+		dirName := path.Base(cfg.packagePath)
+		for dsName, ds := range pkg.DataStreams {
+			dsPath := "/packages/" + dirName + "/data_stream/" + dsName
+			if owner := cf.matchOwner(dsPath); owner != "" {
+				ds.Manifest.GithubOwner = owner
 			}
 		}
 	}
