@@ -3,3 +3,6 @@
 *.sqlite-wal
 *.sqlite-shm
 
+# IDE
+.idea/
+*.iml

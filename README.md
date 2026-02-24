@@ -142,6 +142,28 @@ The public API is intentionally small:
 
 `pkgsql` depends only on `database/sql` — bring your own SQLite driver.
 
+### Pre-built database
+
+A pre-built SQLite database containing all
+[elastic/integrations](https://github.com/elastic/integrations) package
+metadata is built daily via GitHub Actions. Downloading artifacts requires
+GitHub authentication (even for public repos).
+
+```sh
+# Requires: gh auth login
+gh run download --repo andrewkroh/go-package-spec \
+  --name fleet-packages-sqlite \
+  --dir .
+
+gunzip fleet-packages.sqlite.gz
+```
+
+The artifact is a gzipped SQLite file (~15 MB compressed) that is recreated
+daily. The database contains metadata from
+[elastic/integrations](https://github.com/elastic/integrations), which is
+licensed under the [Elastic License 2.0](https://github.com/elastic/integrations/blob/main/LICENSE.txt)
+and is not covered by this project's Apache 2.0 license.
+
 ## Versioning
 
 This project uses independent [semantic versioning](https://semver.org) for
