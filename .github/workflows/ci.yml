@@ -17,6 +17,21 @@ jobs:
         with:
           go-version: stable
 
+      - name: Detect spec version
+        id: spec
+        run: |
+          VERSION=$(grep -oP 'SpecVersion = "\K[^"]+' pkgspec/version.go)
+          echo "version=$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout package-spec-schema
+        uses: actions/checkout@v6
+        with:
+          repository: andrewkroh/package-spec-schema
+          path: package-spec-schema
+          sparse-checkout: ${{ steps.spec.outputs.version }}/jsonschema
+          sparse-checkout-cone-mode: true
+
       - name: go vet
         run: go vet ./...
 
@@ -34,6 +49,22 @@ jobs:
         run: |
           go mod tidy
           git diff --exit-code go.mod go.sum
+
+      - name: go generate (pkgspec)
+        run: |
+          VERSION=${{ steps.spec.outputs.version }}
+          go run ./cmd/generate/ \
+            -schema-dir package-spec-schema/$VERSION/jsonschema \
+            -augment cmd/generate/augment.yml \
+            -filemap cmd/generate/filemap.yml \
+            -output pkgspec \
+            -package pkgspec
+          git diff --exit-code -- pkgspec/
+
+      - name: go generate (pkgsql)
+        run: |
+          go generate ./pkgsql/
+          git diff --exit-code -- pkgsql/
 
       - name: go test
         run: go test ./...
