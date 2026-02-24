@@ -1,0 +1,5 @@
+# SQLite databases and companion files (WAL mode)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
