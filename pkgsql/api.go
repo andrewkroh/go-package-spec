@@ -398,6 +398,11 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 		}
 	}
 
+	// Insert Kibana saved objects.
+	if err := writeKibanaObjects(ctx, q, pkg, pkgID); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -456,6 +461,47 @@ func writeContent(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 		}
 	}
 
+	// Insert Kibana saved objects.
+	if err := writeKibanaObjects(ctx, q, pkg, pkgID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64) error {
+	for assetType, objects := range pkg.KibanaObjects {
+		for _, obj := range objects {
+			objID, err := q.InsertKibanaSavedObjects(ctx, dbpkg.InsertKibanaSavedObjectsParams{
+				PackagesID:           pkgID,
+				AssetType:            assetType,
+				ObjectID:             obj.ID,
+				ObjectType:           toNullString(obj.Type),
+				Title:                toNullString(obj.Attributes.Title),
+				Description:          toNullString(obj.Attributes.Description),
+				FilePath:             obj.Path(),
+				CoreMigrationVersion: toNullString(obj.CoreMigrationVersion),
+				TypeMigrationVersion: toNullString(obj.TypeMigrationVersion),
+				Managed:              toNullBool(obj.Managed),
+				ReferenceCount:       int64(len(obj.References)),
+			})
+			if err != nil {
+				return fmt.Errorf("inserting kibana saved object %s: %w", obj.ID, err)
+			}
+
+			for _, ref := range obj.References {
+				_, err := q.InsertKibanaReferences(ctx, dbpkg.InsertKibanaReferencesParams{
+					KibanaSavedObjectsID: objID,
+					RefID:                ref.ID,
+					RefName:              ref.Name,
+					RefType:              ref.Type,
+				})
+				if err != nil {
+					return fmt.Errorf("inserting kibana reference %s: %w", ref.ID, err)
+				}
+			}
+		}
+	}
 	return nil
 }
 

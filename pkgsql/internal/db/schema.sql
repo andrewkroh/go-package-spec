@@ -184,6 +184,31 @@ CREATE TABLE IF NOT EXISTS ingest_processors (
   file_column INTEGER -- source file column number
 );
 
+CREATE TABLE IF NOT EXISTS kibana_saved_objects (
+  -- Kibana saved objects (dashboards, visualizations, security rules, etc.) from the kibana/ directory. Each row is one JSON file.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  asset_type TEXT NOT NULL, -- asset type directory name (e.g. dashboard, visualization, security_rule)
+  core_migration_version TEXT, -- core Kibana migration version
+  description TEXT, -- description from attributes
+  file_path TEXT NOT NULL, -- file path relative to the package root
+  managed BOOLEAN, -- whether the object is managed by Kibana
+  object_id TEXT NOT NULL, -- unique identifier of the saved object
+  object_type TEXT, -- object type from JSON (e.g. dashboard, visualization, search)
+  packages_id INTEGER NOT NULL REFERENCES packages(id), -- foreign key to packages
+  reference_count INTEGER NOT NULL, -- number of references to other saved objects
+  title TEXT, -- human-readable title from attributes
+  type_migration_version TEXT -- type-specific migration version
+);
+
+CREATE TABLE IF NOT EXISTS kibana_references (
+  -- References between Kibana saved objects. Each row is one reference from a saved object to another, enabling dependency graph queries.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  kibana_saved_objects_id INTEGER NOT NULL REFERENCES kibana_saved_objects(id), -- foreign key to kibana_saved_objects
+  ref_id TEXT NOT NULL, -- referenced object identifier
+  ref_name TEXT NOT NULL, -- reference name (e.g. panel_0, kibanaSavedObjectMeta.searchSourceJSON)
+  ref_type TEXT NOT NULL -- referenced object type (e.g. visualization, search, index-pattern)
+);
+
 CREATE TABLE IF NOT EXISTS package_categories (
   -- Categories assigned to a package.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier

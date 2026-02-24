@@ -684,6 +684,100 @@ func (q *Queries) InsertIngestProcessors(ctx context.Context, arg InsertIngestPr
 	return id, err
 }
 
+const insertKibanaReferences = `-- name: InsertKibanaReferences :one
+INSERT INTO kibana_references (
+  kibana_saved_objects_id,
+  ref_id,
+  ref_name,
+  ref_type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertKibanaReferencesParams struct {
+	KibanaSavedObjectsID int64
+	RefID                string
+	RefName              string
+	RefType              string
+}
+
+func (q *Queries) InsertKibanaReferences(ctx context.Context, arg InsertKibanaReferencesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertKibanaReferences,
+		arg.KibanaSavedObjectsID,
+		arg.RefID,
+		arg.RefName,
+		arg.RefType,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertKibanaSavedObjects = `-- name: InsertKibanaSavedObjects :one
+INSERT INTO kibana_saved_objects (
+  asset_type,
+  core_migration_version,
+  description,
+  file_path,
+  managed,
+  object_id,
+  object_type,
+  packages_id,
+  reference_count,
+  title,
+  type_migration_version
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertKibanaSavedObjectsParams struct {
+	AssetType            string
+	CoreMigrationVersion sql.NullString
+	Description          sql.NullString
+	FilePath             string
+	Managed              sql.NullBool
+	ObjectID             string
+	ObjectType           sql.NullString
+	PackagesID           int64
+	ReferenceCount       int64
+	Title                sql.NullString
+	TypeMigrationVersion sql.NullString
+}
+
+func (q *Queries) InsertKibanaSavedObjects(ctx context.Context, arg InsertKibanaSavedObjectsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertKibanaSavedObjects,
+		arg.AssetType,
+		arg.CoreMigrationVersion,
+		arg.Description,
+		arg.FilePath,
+		arg.Managed,
+		arg.ObjectID,
+		arg.ObjectType,
+		arg.PackagesID,
+		arg.ReferenceCount,
+		arg.Title,
+		arg.TypeMigrationVersion,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertPackageCategories = `-- name: InsertPackageCategories :one
 INSERT INTO package_categories (
   category,

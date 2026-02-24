@@ -310,6 +310,46 @@ INSERT INTO ingest_processors (
   ?
 ) RETURNING id;
 
+-- name: InsertKibanaSavedObjects :one
+INSERT INTO kibana_saved_objects (
+  asset_type,
+  core_migration_version,
+  description,
+  file_path,
+  managed,
+  object_id,
+  object_type,
+  packages_id,
+  reference_count,
+  title,
+  type_migration_version
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertKibanaReferences :one
+INSERT INTO kibana_references (
+  kibana_saved_objects_id,
+  ref_id,
+  ref_name,
+  ref_type
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertPackageCategories :one
 INSERT INTO package_categories (
   category,
