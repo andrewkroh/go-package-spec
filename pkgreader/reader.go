@@ -39,6 +39,7 @@ type Package struct {
 	KibanaObjects  map[string][]*KibanaSavedObject // type:integration and type:content only, keyed by asset type
 	AgentTemplates map[string]*AgentTemplate       // type:integration and type:input only, nil unless WithAgentTemplates used
 	Images         map[string]*ImageFile           // nil unless WithImageMetadata used
+	Docs           []*DocFile                      // documentation files from docs/
 
 	TestConfig      *pkgspec.TestConfig      // type:integration only, nil unless WithTestConfigs used
 	InputTestConfig *pkgspec.InputTestConfig // type:input only, nil unless WithTestConfigs used
@@ -264,6 +265,13 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 		pkg.Images = images
 	}
 
+	// Read documentation file metadata.
+	docs, err := readDocs(cfg.fsys, root)
+	if err != nil {
+		return nil, fmt.Errorf("reading docs: %w", err)
+	}
+	pkg.Docs = docs
+
 	// Type-specific components.
 	switch pkgType {
 	case "integration":
@@ -416,6 +424,9 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 	if cfg.pathPrefix != "" {
 		pkgspec.PrefixFileMetadata(cfg.pathPrefix, pkg.manifest)
 		pkgspec.PrefixFileMetadata(cfg.pathPrefix, pkg)
+		for _, d := range pkg.Docs {
+			d.path = path.Join(cfg.pathPrefix, d.path)
+		}
 	}
 
 	return pkg, nil

@@ -335,6 +335,39 @@ func (q *Queries) InsertDiscoveryFields(ctx context.Context, arg InsertDiscovery
 	return id, err
 }
 
+const insertDocs = `-- name: InsertDocs :one
+INSERT INTO docs (
+  content,
+  content_type,
+  file_path,
+  packages_id
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertDocsParams struct {
+	Content     sql.NullString
+	ContentType string
+	FilePath    string
+	PackagesID  int64
+}
+
+func (q *Queries) InsertDocs(ctx context.Context, arg InsertDocsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertDocs,
+		arg.Content,
+		arg.ContentType,
+		arg.FilePath,
+		arg.PackagesID,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertFields = `-- name: InsertFields :one
 INSERT INTO fields (
   file_path,

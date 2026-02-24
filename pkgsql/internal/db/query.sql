@@ -238,6 +238,19 @@ INSERT INTO discovery_fields (
   ?
 ) RETURNING id;
 
+-- name: InsertDocs :one
+INSERT INTO docs (
+  content,
+  content_type,
+  file_path,
+  packages_id
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertImages :one
 INSERT INTO images (
   byte_size,

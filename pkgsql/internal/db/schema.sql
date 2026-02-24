@@ -138,6 +138,15 @@ CREATE TABLE IF NOT EXISTS discovery_fields (
   packages_id INTEGER NOT NULL REFERENCES packages(id) -- foreign key to packages
 );
 
+CREATE TABLE IF NOT EXISTS docs (
+  -- Documentation files within packages. Content is optionally populated when WithDocContent is used.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  content TEXT, -- markdown content (NULL unless WithDocContent was used)
+  content_type TEXT NOT NULL, -- classification: readme, doc, or knowledge_base
+  file_path TEXT NOT NULL, -- file path relative to the package root (e.g. docs/README.md)
+  packages_id INTEGER NOT NULL REFERENCES packages(id) -- foreign key to packages
+);
+
 CREATE TABLE IF NOT EXISTS images (
   -- Image files within packages (img/ directory). Join with icon/screenshot tables on src to correlate declared metadata with actual image properties.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier

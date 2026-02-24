@@ -89,6 +89,14 @@ type DiscoveryField struct {
 	PackagesID int64
 }
 
+type Doc struct {
+	ID          int64
+	Content     sql.NullString
+	ContentType string
+	FilePath    string
+	PackagesID  int64
+}
+
 type Field struct {
 	ID                    int64
 	FilePath              sql.NullString
