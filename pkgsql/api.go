@@ -127,6 +127,18 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 	// Derive dir_name from path.
 	dirName := path.Base(pkg.Path())
 
+	// Derive the path prefix from the manifest's FileMetadata path.
+	// When WithPathPrefix was used (e.g. "packages/aws"), the manifest
+	// file_path is "packages/aws/manifest.yml" and the prefix is
+	// "packages/aws". Without it, the prefix is empty.
+	var pathPrefix string
+	if fp := m.FilePath(); fp != "" {
+		pathPrefix = path.Dir(fp)
+		if pathPrefix == "." {
+			pathPrefix = ""
+		}
+	}
+
 	// Extract type-specific fields for the packages table.
 	var (
 		conditionsKibanaVersion        sql.NullString
@@ -235,11 +247,11 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 	// Package type-specific data.
 	switch m.Type {
 	case pkgspec.ManifestTypeIntegration:
-		if err := writeIntegration(ctx, q, pkg, pkgID, cfg); err != nil {
+		if err := writeIntegration(ctx, q, pkg, pkgID, pathPrefix, cfg); err != nil {
 			return err
 		}
 	case pkgspec.ManifestTypeInput:
-		if err := writeInput(ctx, q, pkg, pkgID, cfg); err != nil {
+		if err := writeInput(ctx, q, pkg, pkgID, pathPrefix, cfg); err != nil {
 			return err
 		}
 	case pkgspec.ManifestTypeContent:
@@ -256,7 +268,7 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 	return nil
 }
 
-func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, cfg *writeConfig) error {
+func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, pathPrefix string, cfg *writeConfig) error {
 	im := pkg.IntegrationManifest()
 	if im == nil {
 		return nil
@@ -337,7 +349,13 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 		// Insert inputs.
 		for j := range pt.Inputs {
 			inp := &pt.Inputs[j]
-			inpID, err := q.InsertPolicyTemplateInputs(ctx, mapPolicyTemplateInputsParams(inp, ptID))
+			p := mapPolicyTemplateInputsParams(inp, ptID)
+			// Resolve template_path to fully-qualified path for
+			// easy joins to agent_templates.file_path.
+			if inp.TemplatePath != "" {
+				p.TemplatePath = toNullString(path.Join(pathPrefix, "agent", "input", inp.TemplatePath))
+			}
+			inpID, err := q.InsertPolicyTemplateInputs(ctx, p)
 			if err != nil {
 				return fmt.Errorf("inserting policy template input: %w", err)
 			}
@@ -366,7 +384,7 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 
 	// Insert data streams.
 	for dsName, ds := range pkg.DataStreams {
-		if err := writeDataStream(ctx, q, dsName, ds, pkgID, cfg); err != nil {
+		if err := writeDataStream(ctx, q, dsName, ds, pkgID, pathPrefix, cfg); err != nil {
 			return fmt.Errorf("data stream %s: %w", dsName, err)
 		}
 	}
@@ -409,10 +427,15 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 		return err
 	}
 
+	// Insert package-level agent templates.
+	if err := writeAgentTemplates(ctx, q, pkg.AgentTemplates, pkgID, sql.NullInt64{}, pathPrefix); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, cfg *writeConfig) error {
+func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pkgID int64, pathPrefix string, cfg *writeConfig) error {
 	im := pkg.InputManifest()
 	if im == nil {
 		return nil
@@ -431,7 +454,7 @@ func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, p
 
 	// Insert policy templates.
 	for i := range im.PolicyTemplates {
-		if err := writeInputPolicyTemplate(ctx, q, &im.PolicyTemplates[i], pkgID); err != nil {
+		if err := writeInputPolicyTemplate(ctx, q, &im.PolicyTemplates[i], pkgID, pathPrefix); err != nil {
 			return err
 		}
 	}
@@ -452,6 +475,11 @@ func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, p
 		if err := writeInputTests(ctx, q, pkg.InputTests, pkgID); err != nil {
 			return fmt.Errorf("inserting input tests: %w", err)
 		}
+	}
+
+	// Insert package-level agent templates.
+	if err := writeAgentTemplates(ctx, q, pkg.AgentTemplates, pkgID, sql.NullInt64{}, pathPrefix); err != nil {
+		return err
 	}
 
 	return nil
@@ -518,7 +546,14 @@ func writeKibanaObjects(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pa
 	return nil
 }
 
-func writeInputPolicyTemplate(ctx context.Context, q *dbpkg.Queries, pt *pkgspec.InputPolicyTemplate, pkgID int64) error {
+func writeInputPolicyTemplate(ctx context.Context, q *dbpkg.Queries, pt *pkgspec.InputPolicyTemplate, pkgID int64, pathPrefix string) error {
+	// Resolve template_path to fully-qualified path for
+	// easy joins to agent_templates.file_path.
+	var resolvedTemplatePath sql.NullString
+	if pt.TemplatePath != "" {
+		resolvedTemplatePath = toNullString(path.Join(pathPrefix, "agent", "input", pt.TemplatePath))
+	}
+
 	ptID, err := q.InsertPolicyTemplates(ctx, dbpkg.InsertPolicyTemplatesParams{
 		PackagesID:                                      pkgID,
 		ConfigurationLinks:                              jsonNullString(pt.ConfigurationLinks),
@@ -536,7 +571,7 @@ func writeInputPolicyTemplate(ctx context.Context, q *dbpkg.Queries, pt *pkgspec
 		Input:                                           toNullString(pt.Input),
 		Name:                                            pt.Name,
 		PolicyTemplateType:                              toNullString(string(pt.Type)),
-		TemplatePath:                                    toNullString(pt.TemplatePath),
+		TemplatePath:                                    resolvedTemplatePath,
 		Title:                                           pt.Title,
 	})
 	if err != nil {
@@ -582,7 +617,7 @@ func writeInputPolicyTemplate(ctx context.Context, q *dbpkg.Queries, pt *pkgspec
 	return nil
 }
 
-func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *pkgreader.DataStream, pkgID int64, cfg *writeConfig) error {
+func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *pkgreader.DataStream, pkgID int64, pathPrefix string, cfg *writeConfig) error {
 	dsID, err := q.InsertDataStreams(ctx, mapDataStreamsParams(&ds.Manifest, pkgID, dsName))
 	if err != nil {
 		return fmt.Errorf("inserting data stream: %w", err)
@@ -611,7 +646,15 @@ func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *p
 	// Insert streams.
 	for i := range ds.Manifest.Streams {
 		stream := &ds.Manifest.Streams[i]
-		streamID, err := q.InsertStreams(ctx, mapStreamsParams(stream, dsID))
+		p := mapStreamsParams(stream, dsID)
+		// Resolve template_path to fully-qualified path for
+		// easy joins to agent_templates.file_path.
+		templatePath := stream.TemplatePath
+		if templatePath == "" {
+			templatePath = "stream.yml.hbs"
+		}
+		p.TemplatePath = toNullString(path.Join(pathPrefix, "data_stream", dsName, "agent", "stream", templatePath))
+		streamID, err := q.InsertStreams(ctx, p)
 		if err != nil {
 			return fmt.Errorf("inserting stream: %w", err)
 		}
@@ -670,6 +713,11 @@ func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *p
 		if err := writeDataStreamTests(ctx, q, ds.Tests, dsID); err != nil {
 			return fmt.Errorf("inserting tests: %w", err)
 		}
+	}
+
+	// Insert data stream agent templates.
+	if err := writeAgentTemplates(ctx, q, ds.AgentTemplates, pkgID, sql.NullInt64{Int64: dsID, Valid: true}, pathPrefix); err != nil {
+		return err
 	}
 
 	return nil
@@ -921,6 +969,22 @@ func writeInputTests(ctx context.Context, q *dbpkg.Queries, tests *pkgreader.Inp
 		}
 	}
 
+	return nil
+}
+
+func writeAgentTemplates(ctx context.Context, q *dbpkg.Queries, templates map[string]*pkgreader.AgentTemplate, pkgID int64, dsID sql.NullInt64, pathPrefix string) error {
+	for _, tmpl := range templates {
+		filePath := path.Join(pathPrefix, tmpl.Path())
+		_, err := q.InsertAgentTemplates(ctx, dbpkg.InsertAgentTemplatesParams{
+			PackagesID:    pkgID,
+			DataStreamsID: dsID,
+			FilePath:      filePath,
+			Content:       tmpl.Content,
+		})
+		if err != nil {
+			return fmt.Errorf("inserting agent template %s: %w", filePath, err)
+		}
+	}
 	return nil
 }
 

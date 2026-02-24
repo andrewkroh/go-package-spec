@@ -10,6 +10,39 @@ import (
 	"database/sql"
 )
 
+const insertAgentTemplates = `-- name: InsertAgentTemplates :one
+INSERT INTO agent_templates (
+  content,
+  data_streams_id,
+  file_path,
+  packages_id
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertAgentTemplatesParams struct {
+	Content       string
+	DataStreamsID sql.NullInt64
+	FilePath      string
+	PackagesID    int64
+}
+
+func (q *Queries) InsertAgentTemplates(ctx context.Context, arg InsertAgentTemplatesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertAgentTemplates,
+		arg.Content,
+		arg.DataStreamsID,
+		arg.FilePath,
+		arg.PackagesID,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertBuildManifests = `-- name: InsertBuildManifests :one
 INSERT INTO build_manifests (
   packages_id,

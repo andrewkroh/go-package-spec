@@ -605,8 +605,8 @@ owner:
 	if !ptInput.Valid || ptInput.String != "httpjson" {
 		t.Errorf("expected input=httpjson, got %v", ptInput)
 	}
-	if !ptTemplatePath.Valid || ptTemplatePath.String != "input.yml.hbs" {
-		t.Errorf("expected template_path=input.yml.hbs, got %v", ptTemplatePath)
+	if !ptTemplatePath.Valid || ptTemplatePath.String != "agent/input/input.yml.hbs" {
+		t.Errorf("expected template_path=agent/input/input.yml.hbs, got %v", ptTemplatePath)
 	}
 	if !ptType.Valid || ptType.String != "logs" {
 		t.Errorf("expected policy_template_type=logs, got %v", ptType)
@@ -1456,5 +1456,286 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 	}
 	if !githubOwner.Valid || githubOwner.String == "" {
 		t.Error("expected non-NULL github_owner for aws/cloudtrail with WithCodeowners")
+	}
+}
+
+func TestWritePackageWithAgentTemplates(t *testing.T) {
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: test-agent-tpl
+title: Test Agent Templates
+version: 1.0.0
+description: Test agent template persistence.
+format_version: 3.5.7
+type: integration
+owner:
+  github: elastic/integrations
+  type: elastic
+policy_templates:
+  - name: test-policy
+    title: Test Policy
+    description: A test policy.
+    inputs:
+      - type: logfile
+        title: Log File
+        description: Collect log files.
+        template_path: custom-input.yml.hbs
+      - type: httpjson
+        title: HTTP JSON
+        description: Collect via HTTP JSON.
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"data_stream/logs/manifest.yml": {Data: []byte(`
+title: Log Events
+type: logs
+streams:
+  - input: logfile
+    title: Log stream with custom template
+    description: Collect logs via custom template.
+    template_path: custom.yml.hbs
+  - input: httpjson
+    title: HTTP JSON stream with default template
+    description: Collect via HTTP JSON with default template.
+`)},
+		"data_stream/logs/fields/base-fields.yml": {Data: []byte(`
+- name: message
+  type: text
+  description: Log message.
+`)},
+		"data_stream/logs/agent/stream/custom.yml.hbs": {Data: []byte("custom ds template content\n")},
+		"data_stream/logs/agent/stream/stream.yml.hbs": {Data: []byte("default ds template content\n")},
+		"agent/input/custom-input.yml.hbs":             {Data: []byte("custom input stream template\n")},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys), pkgreader.WithAgentTemplates())
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Verify agent_templates has 3 rows (2 data stream + 1 package-level).
+	var atCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM agent_templates").Scan(&atCount)
+	if err != nil {
+		t.Fatalf("querying agent_templates count: %v", err)
+	}
+	if atCount != 3 {
+		t.Errorf("expected 3 agent templates, got %d", atCount)
+	}
+
+	// Verify data stream templates have non-NULL data_streams_id.
+	var dsTemplateCount int
+	err = db.QueryRowContext(ctx,
+		"SELECT count(*) FROM agent_templates WHERE data_streams_id IS NOT NULL").
+		Scan(&dsTemplateCount)
+	if err != nil {
+		t.Fatalf("querying ds templates: %v", err)
+	}
+	if dsTemplateCount != 2 {
+		t.Errorf("expected 2 data stream templates, got %d", dsTemplateCount)
+	}
+
+	// Verify package-level template has NULL data_streams_id.
+	var pkgTemplateCount int
+	err = db.QueryRowContext(ctx,
+		"SELECT count(*) FROM agent_templates WHERE data_streams_id IS NULL").
+		Scan(&pkgTemplateCount)
+	if err != nil {
+		t.Fatalf("querying pkg templates: %v", err)
+	}
+	if pkgTemplateCount != 1 {
+		t.Errorf("expected 1 package-level template, got %d", pkgTemplateCount)
+	}
+
+	// Verify template content is stored correctly.
+	var content string
+	err = db.QueryRowContext(ctx,
+		"SELECT content FROM agent_templates WHERE file_path = 'data_stream/logs/agent/stream/custom.yml.hbs'").
+		Scan(&content)
+	if err != nil {
+		t.Fatalf("querying template content: %v", err)
+	}
+	if content != "custom ds template content\n" {
+		t.Errorf("unexpected content: %q", content)
+	}
+
+	// Verify streams.template_path is resolved to full path (custom template).
+	var streamTP sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT template_path FROM streams WHERE input = 'logfile'").
+		Scan(&streamTP)
+	if err != nil {
+		t.Fatalf("querying stream template_path: %v", err)
+	}
+	if !streamTP.Valid || streamTP.String != "data_stream/logs/agent/stream/custom.yml.hbs" {
+		t.Errorf("expected resolved template_path=data_stream/logs/agent/stream/custom.yml.hbs, got %v", streamTP)
+	}
+
+	// Verify stream default: second stream has no template_path in manifest,
+	// should default to stream.yml.hbs resolved path.
+	var defaultTP sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT template_path FROM streams WHERE input = 'httpjson'").
+		Scan(&defaultTP)
+	if err != nil {
+		t.Fatalf("querying default stream template_path: %v", err)
+	}
+	if !defaultTP.Valid || defaultTP.String != "data_stream/logs/agent/stream/stream.yml.hbs" {
+		t.Errorf("expected resolved template_path=data_stream/logs/agent/stream/stream.yml.hbs, got %v", defaultTP)
+	}
+
+	// Verify join from streams to agent_templates works.
+	var joinContent string
+	err = db.QueryRowContext(ctx, `
+		SELECT at.content FROM streams s
+		JOIN agent_templates at ON at.file_path = s.template_path
+		WHERE s.input = 'logfile'`).
+		Scan(&joinContent)
+	if err != nil {
+		t.Fatalf("querying streams->agent_templates join: %v", err)
+	}
+	if joinContent != "custom ds template content\n" {
+		t.Errorf("unexpected join content: %q", joinContent)
+	}
+
+	// Verify policy_template_inputs.template_path is resolved.
+	var inputTP sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT template_path FROM policy_template_inputs WHERE type = 'logfile'").
+		Scan(&inputTP)
+	if err != nil {
+		t.Fatalf("querying input template_path: %v", err)
+	}
+	if !inputTP.Valid || inputTP.String != "agent/input/custom-input.yml.hbs" {
+		t.Errorf("expected resolved template_path=agent/input/custom-input.yml.hbs, got %v", inputTP)
+	}
+
+	// Verify policy_template_inputs with no template_path is NULL.
+	var noTP sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT template_path FROM policy_template_inputs WHERE type = 'httpjson'").
+		Scan(&noTP)
+	if err != nil {
+		t.Fatalf("querying no-template input: %v", err)
+	}
+	if noTP.Valid {
+		t.Errorf("expected NULL template_path for httpjson input, got %v", noTP)
+	}
+
+	// Verify join from policy_template_inputs to agent_templates works.
+	var inputJoinContent string
+	err = db.QueryRowContext(ctx, `
+		SELECT at.content FROM policy_template_inputs pti
+		JOIN agent_templates at ON at.file_path = pti.template_path
+		WHERE pti.type = 'logfile'`).
+		Scan(&inputJoinContent)
+	if err != nil {
+		t.Fatalf("querying policy_template_inputs->agent_templates join: %v", err)
+	}
+	if inputJoinContent != "custom input stream template\n" {
+		t.Errorf("unexpected join content: %q", inputJoinContent)
+	}
+}
+
+func TestWriteInputPackageAgentTemplates(t *testing.T) {
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: test-input-tpl
+title: Test Input Templates
+version: 1.0.0
+description: Test input package agent templates.
+format_version: 3.5.7
+type: input
+owner:
+  github: elastic/integrations
+  type: elastic
+policy_templates:
+  - name: test-input-pt
+    type: logs
+    title: Test Input Policy
+    description: Collect data.
+    input: httpjson
+    template_path: input.yml.hbs
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"agent/input/input.yml.hbs": {Data: []byte("input template content\n")},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys), pkgreader.WithAgentTemplates())
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Verify agent_templates has 1 row.
+	var atCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM agent_templates").Scan(&atCount)
+	if err != nil {
+		t.Fatalf("querying agent_templates count: %v", err)
+	}
+	if atCount != 1 {
+		t.Errorf("expected 1 agent template, got %d", atCount)
+	}
+
+	// Verify template is package-level (no data stream).
+	var dsID sql.NullInt64
+	err = db.QueryRowContext(ctx,
+		"SELECT data_streams_id FROM agent_templates").Scan(&dsID)
+	if err != nil {
+		t.Fatalf("querying ds id: %v", err)
+	}
+	if dsID.Valid {
+		t.Errorf("expected NULL data_streams_id, got %v", dsID)
+	}
+
+	// Verify policy_templates.template_path is resolved.
+	var ptTP sql.NullString
+	err = db.QueryRowContext(ctx,
+		"SELECT template_path FROM policy_templates").Scan(&ptTP)
+	if err != nil {
+		t.Fatalf("querying policy template path: %v", err)
+	}
+	if !ptTP.Valid || ptTP.String != "agent/input/input.yml.hbs" {
+		t.Errorf("expected template_path=agent/input/input.yml.hbs, got %v", ptTP)
+	}
+
+	// Verify join from policy_templates to agent_templates.
+	var joinContent string
+	err = db.QueryRowContext(ctx, `
+		SELECT at.content FROM policy_templates pt
+		JOIN agent_templates at ON at.file_path = pt.template_path
+		WHERE pt.name = 'test-input-pt'`).
+		Scan(&joinContent)
+	if err != nil {
+		t.Fatalf("querying policy_templates->agent_templates join: %v", err)
+	}
+	if joinContent != "input template content\n" {
+		t.Errorf("unexpected join content: %q", joinContent)
 	}
 }

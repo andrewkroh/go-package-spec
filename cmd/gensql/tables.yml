@@ -80,7 +80,10 @@ tables:
         comment: "input type for input packages (e.g. cel, httpjson)"
       template_path:
         type: TEXT
-        comment: "path to agent template for input packages (e.g. input.yml.hbs)"
+        comment: >-
+          Resolved file path to the agent template relative to the package
+          root (e.g. agent/input/input.yml.hbs). Only set for input packages.
+          Joinable directly to agent_templates.file_path.
       policy_template_type:
         type: TEXT
         comment: "data stream type for input packages (logs, metrics, synthetics, traces)"
@@ -130,6 +133,12 @@ tables:
     type: PolicyTemplateInput
     parent: policy_templates
     comment: "Inputs defined within a policy template."
+    columns:
+      template_path:
+        comment: >-
+          Resolved file path to the agent template relative to the package
+          root (e.g. agent/input/httpjson.yml.hbs). NULL when not
+          specified. Joinable directly to agent_templates.file_path.
     exclude:
       - Vars
       - RequiredVars
@@ -175,6 +184,13 @@ tables:
     type: DataStreamStream
     parent: data_streams
     comment: "Streams offered by a data stream."
+    columns:
+      template_path:
+        comment: >-
+          Resolved file path to the agent template relative to the package
+          root (e.g. data_stream/logs/agent/stream/stream.yml.hbs). Defaults
+          to stream.yml.hbs when not specified in the manifest. Joinable
+          directly to agent_templates.file_path.
     exclude:
       - Vars
       - VarGroups
@@ -661,6 +677,30 @@ tables:
         type: TEXT
         not_null: true
         comment: "referenced object type (e.g. visualization, search, index-pattern)"
+
+  agent_templates:
+    comment: >-
+      Agent Handlebars template files (.yml.hbs) from agent/ directories.
+      Each row is one template file with its raw content. Referenced by
+      streams, policy_templates, and policy_template_inputs via template_path.
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      data_streams_id:
+        type: INTEGER
+        fk: data_streams
+        comment: "foreign key to data_streams (set for data stream templates, NULL for package-level)"
+      file_path:
+        type: TEXT
+        not_null: true
+        comment: "file path relative to the package root (e.g. data_stream/logs/agent/stream/stream.yml.hbs)"
+      content:
+        type: TEXT
+        not_null: true
+        comment: "raw Handlebars template content"
 
   docs:
     comment: >-
