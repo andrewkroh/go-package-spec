@@ -581,6 +581,74 @@ tables:
         type: TEXT
         comment: "name of the variable that replaces the deprecated one"
 
+  kibana_saved_objects:
+    comment: >-
+      Kibana saved objects (dashboards, visualizations, security rules, etc.)
+      from the kibana/ directory. Each row is one JSON file.
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        not_null: true
+        fk: packages
+        comment: "foreign key to packages"
+      asset_type:
+        type: TEXT
+        not_null: true
+        comment: "asset type directory name (e.g. dashboard, visualization, security_rule)"
+      object_id:
+        type: TEXT
+        not_null: true
+        comment: "unique identifier of the saved object"
+      object_type:
+        type: TEXT
+        comment: "object type from JSON (e.g. dashboard, visualization, search)"
+      title:
+        type: TEXT
+        comment: "human-readable title from attributes"
+      description:
+        type: TEXT
+        comment: "description from attributes"
+      file_path:
+        type: TEXT
+        not_null: true
+        comment: "file path relative to the package root"
+      core_migration_version:
+        type: TEXT
+        comment: "core Kibana migration version"
+      type_migration_version:
+        type: TEXT
+        comment: "type-specific migration version"
+      managed:
+        type: BOOLEAN
+        comment: "whether the object is managed by Kibana"
+      reference_count:
+        type: INTEGER
+        not_null: true
+        comment: "number of references to other saved objects"
+
+  kibana_references:
+    comment: >-
+      References between Kibana saved objects. Each row is one reference from
+      a saved object to another, enabling dependency graph queries.
+    extra_columns:
+      kibana_saved_objects_id:
+        type: INTEGER
+        not_null: true
+        fk: kibana_saved_objects
+        comment: "foreign key to kibana_saved_objects"
+      ref_id:
+        type: TEXT
+        not_null: true
+        comment: "referenced object identifier"
+      ref_name:
+        type: TEXT
+        not_null: true
+        comment: "reference name (e.g. panel_0, kibanaSavedObjectMeta.searchSourceJSON)"
+      ref_type:
+        type: TEXT
+        not_null: true
+        comment: "referenced object type (e.g. visualization, search, index-pattern)"
+
   docs:
     comment: >-
       Documentation files within packages.

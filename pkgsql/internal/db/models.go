@@ -175,6 +175,29 @@ type IngestProcessor struct {
 	FileColumn        sql.NullInt64
 }
 
+type KibanaReference struct {
+	ID                   int64
+	KibanaSavedObjectsID int64
+	RefID                string
+	RefName              string
+	RefType              string
+}
+
+type KibanaSavedObject struct {
+	ID                   int64
+	AssetType            string
+	CoreMigrationVersion sql.NullString
+	Description          sql.NullString
+	FilePath             string
+	Managed              sql.NullBool
+	ObjectID             string
+	ObjectType           sql.NullString
+	PackagesID           int64
+	ReferenceCount       int64
+	Title                sql.NullString
+	TypeMigrationVersion sql.NullString
+}
+
 type Package struct {
 	ID                             int64
 	AgentPrivilegesRoot            sql.NullBool

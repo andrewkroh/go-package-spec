@@ -861,6 +861,171 @@ policy_templates:
 	}
 }
 
+func TestWritePackageWithKibanaObjects(t *testing.T) {
+	dashboardJSON := `{
+  "id": "overview-dash-1",
+  "type": "dashboard",
+  "attributes": {
+    "title": "Overview Dashboard",
+    "description": "Main overview of all events."
+  },
+  "references": [
+    {
+      "id": "vis-1",
+      "name": "panel_0",
+      "type": "visualization"
+    }
+  ],
+  "coreMigrationVersion": "8.8.0",
+  "typeMigrationVersion": "8.9.0",
+  "managed": true
+}`
+	visualizationJSON := `{
+  "id": "vis-1",
+  "type": "visualization",
+  "attributes": {
+    "title": "Event Count"
+  },
+  "references": []
+}`
+
+	fsys := fstest.MapFS{
+		"manifest.yml": {Data: []byte(`
+name: kibana-test
+title: Kibana Test
+version: 1.0.0
+description: A package with Kibana objects.
+format_version: 3.5.7
+type: integration
+owner:
+  github: elastic/integrations
+  type: elastic
+policy_templates:
+  - name: default
+    title: Default
+    description: Default policy.
+    inputs:
+      - type: logfile
+        title: Log
+        description: Collect logs.
+`)},
+		"changelog.yml": {Data: []byte(`
+- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://github.com/test/1
+`)},
+		"kibana/dashboard/overview.json":  {Data: []byte(dashboardJSON)},
+		"kibana/visualization/vis-1.json": {Data: []byte(visualizationJSON)},
+	}
+
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
+	if err != nil {
+		t.Fatalf("reading package: %v", err)
+	}
+
+	db := newTestDB(t)
+	ctx := context.Background()
+
+	err = pkgsql.WritePackages(ctx, db, []*pkgreader.Package{pkg})
+	if err != nil {
+		t.Fatalf("writing packages: %v", err)
+	}
+
+	// Verify kibana_saved_objects has 2 rows.
+	var objCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM kibana_saved_objects").Scan(&objCount)
+	if err != nil {
+		t.Fatalf("querying kibana_saved_objects: %v", err)
+	}
+	if objCount != 2 {
+		t.Errorf("expected 2 kibana saved objects, got %d", objCount)
+	}
+
+	// Verify dashboard row.
+	var assetType, objectID, title string
+	var refCount int
+	err = db.QueryRowContext(ctx,
+		"SELECT asset_type, object_id, title, reference_count FROM kibana_saved_objects WHERE object_id = 'overview-dash-1'").
+		Scan(&assetType, &objectID, &title, &refCount)
+	if err != nil {
+		t.Fatalf("querying dashboard: %v", err)
+	}
+	if assetType != "dashboard" {
+		t.Errorf("expected asset_type=dashboard, got %s", assetType)
+	}
+	if title != "Overview Dashboard" {
+		t.Errorf("expected title=Overview Dashboard, got %s", title)
+	}
+	if refCount != 1 {
+		t.Errorf("expected reference_count=1, got %d", refCount)
+	}
+
+	// Verify migration versions and managed flag on dashboard.
+	var coreMigVer, typeMigVer sql.NullString
+	var managed sql.NullBool
+	err = db.QueryRowContext(ctx,
+		"SELECT core_migration_version, type_migration_version, managed FROM kibana_saved_objects WHERE object_id = 'overview-dash-1'").
+		Scan(&coreMigVer, &typeMigVer, &managed)
+	if err != nil {
+		t.Fatalf("querying migration versions: %v", err)
+	}
+	if !coreMigVer.Valid || coreMigVer.String != "8.8.0" {
+		t.Errorf("expected core_migration_version=8.8.0, got %v", coreMigVer)
+	}
+	if !typeMigVer.Valid || typeMigVer.String != "8.9.0" {
+		t.Errorf("expected type_migration_version=8.9.0, got %v", typeMigVer)
+	}
+	if !managed.Valid || !managed.Bool {
+		t.Errorf("expected managed=true, got %v", managed)
+	}
+
+	// Verify kibana_references has 1 row.
+	var refID, refName, refType string
+	err = db.QueryRowContext(ctx,
+		"SELECT ref_id, ref_name, ref_type FROM kibana_references").
+		Scan(&refID, &refName, &refType)
+	if err != nil {
+		t.Fatalf("querying kibana_references: %v", err)
+	}
+	if refID != "vis-1" {
+		t.Errorf("expected ref_id=vis-1, got %s", refID)
+	}
+	if refName != "panel_0" {
+		t.Errorf("expected ref_name=panel_0, got %s", refName)
+	}
+	if refType != "visualization" {
+		t.Errorf("expected ref_type=visualization, got %s", refType)
+	}
+
+	// Verify join to packages works.
+	var pkgName string
+	err = db.QueryRowContext(ctx, `
+		SELECT p.name
+		FROM kibana_saved_objects kso
+		JOIN packages p ON p.id = kso.packages_id
+		WHERE kso.object_id = 'overview-dash-1'`).Scan(&pkgName)
+	if err != nil {
+		t.Fatalf("querying package join: %v", err)
+	}
+	if pkgName != "kibana-test" {
+		t.Errorf("expected kibana-test, got %s", pkgName)
+	}
+
+	// Verify visualization has no references.
+	var visRefCount int
+	err = db.QueryRowContext(ctx,
+		"SELECT reference_count FROM kibana_saved_objects WHERE object_id = 'vis-1'").
+		Scan(&visRefCount)
+	if err != nil {
+		t.Fatalf("querying visualization: %v", err)
+	}
+	if visRefCount != 0 {
+		t.Errorf("expected reference_count=0 for visualization, got %d", visRefCount)
+	}
+}
+
 func TestSystemTestVarsNullable(t *testing.T) {
 	fsys := fstest.MapFS{
 		"manifest.yml": {Data: []byte(`
