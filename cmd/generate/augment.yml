@@ -137,6 +137,14 @@ types:
         json: "date,omitempty"
         yaml: "-"
 
+  DataStreamManifest:
+    extra_fields:
+      - name: GithubOwner
+        type: string
+        doc: "GithubOwner is the GitHub team owner from CODEOWNERS, populated when WithCodeowners is used."
+        json: "github_owner,omitempty"
+        yaml: "-"
+
   BuildManifestDependenciesECS:
     name: BuildDependenciesECS
     fields:

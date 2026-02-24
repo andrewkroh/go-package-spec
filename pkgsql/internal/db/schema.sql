@@ -122,7 +122,8 @@ CREATE TABLE IF NOT EXISTS data_streams (
   ilm_policy TEXT, -- The name of an existing ILM (Index Lifecycle Management) policy
   "release" TEXT, -- Stability of data stream.
   title TEXT NOT NULL, -- Title of data stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
-  type TEXT -- Type of data stream
+  type TEXT, -- Type of data stream
+  github_owner TEXT -- GithubOwner is the GitHub team owner from CODEOWNERS, populated when WithCodeowners is used.
 );
 
 CREATE TABLE IF NOT EXISTS data_stream_fields (

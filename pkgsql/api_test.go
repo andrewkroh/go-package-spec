@@ -1031,12 +1031,14 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 		}
 	}
 
+	codeownersPath := filepath.Join(dir, ".github", "CODEOWNERS")
 	opts := []pkgreader.Option{
 		pkgreader.WithKnownFields(),
 		pkgreader.WithGitMetadata(),
 		pkgreader.WithImageMetadata(),
 		pkgreader.WithTestConfigs(),
 		pkgreader.WithAgentTemplates(),
+		pkgreader.WithCodeowners(codeownersPath),
 	}
 
 	// Read packages in parallel, write to DB sequentially.
@@ -1111,5 +1113,19 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 	}
 	if len(commitID.String) != 40 {
 		t.Errorf("expected 40-char hex SHA commit_id, got %q (len=%d)", commitID.String, len(commitID.String))
+	}
+
+	// Verify github_owner is populated for a data stream with CODEOWNERS entry.
+	var githubOwner sql.NullString
+	err = db.QueryRowContext(ctx, `
+		SELECT ds.github_owner
+		FROM data_streams ds
+		JOIN packages p ON p.id = ds.packages_id
+		WHERE p.name = 'aws' AND ds.dir_name = 'cloudtrail'`).Scan(&githubOwner)
+	if err != nil {
+		t.Fatalf("querying github_owner: %v", err)
+	}
+	if !githubOwner.Valid || githubOwner.String == "" {
+		t.Error("expected non-NULL github_owner for aws/cloudtrail with WithCodeowners")
 	}
 }

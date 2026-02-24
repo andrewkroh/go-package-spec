@@ -200,8 +200,10 @@ INSERT INTO data_streams (
   ilm_policy,
   "release",
   title,
-  type
+  type,
+  github_owner
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
