@@ -224,6 +224,19 @@ INSERT INTO data_streams (
   ?
 ) RETURNING id;
 
+-- name: InsertAgentTemplates :one
+INSERT INTO agent_templates (
+  content,
+  data_streams_id,
+  file_path,
+  packages_id
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertDataStreamFields :one
 INSERT INTO data_stream_fields (
   data_stream_id,

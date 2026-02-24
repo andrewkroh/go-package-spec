@@ -126,6 +126,15 @@ CREATE TABLE IF NOT EXISTS data_streams (
   github_owner TEXT -- GithubOwner is the GitHub team owner from CODEOWNERS, populated when WithCodeowners is used.
 );
 
+CREATE TABLE IF NOT EXISTS agent_templates (
+  -- Agent Handlebars template files (.yml.hbs) from agent/ directories. Each row is one template file with its raw content. Referenced by streams, policy_templates, and policy_template_inputs via template_path.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  content TEXT NOT NULL, -- raw Handlebars template content
+  data_streams_id INTEGER REFERENCES data_streams(id), -- foreign key to data_streams (set for data stream templates, NULL for package-level)
+  file_path TEXT NOT NULL, -- file path relative to the package root (e.g. data_stream/logs/agent/stream/stream.yml.hbs)
+  packages_id INTEGER NOT NULL REFERENCES packages(id) -- foreign key to packages
+);
+
 CREATE TABLE IF NOT EXISTS data_stream_fields (
   -- Join table linking fields to data streams.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
@@ -269,7 +278,7 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   dynamic_signal_types BOOLEAN, -- whether transforms and index templates are created based on pipeline config (input packages only)
   input TEXT, -- input type for input packages (e.g. cel, httpjson)
   policy_template_type TEXT, -- data stream type for input packages (logs, metrics, synthetics, traces)
-  template_path TEXT, -- path to agent template for input packages (e.g. input.yml.hbs)
+  template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. agent/input/input.yml.hbs). Only set for input packages. Joinable directly to agent_templates.file_path.
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
@@ -317,7 +326,7 @@ CREATE TABLE IF NOT EXISTS policy_template_inputs (
   hide_in_var_group_options JSON, -- HideInVarGroupOptions filters out specific var_group options for this input.
   input_group TEXT, -- Name of the input group
   multi BOOLEAN, -- Can input be defined multiple times
-  template_path TEXT, -- Path of the config template for the input.
+  template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. agent/input/httpjson.yml.hbs). NULL when not specified. Joinable directly to agent_templates.file_path.
   title TEXT NOT NULL, -- Title of input.
   type TEXT NOT NULL -- Type of input.
 );
@@ -389,7 +398,7 @@ CREATE TABLE IF NOT EXISTS streams (
   description TEXT NOT NULL, -- Description of the stream. It should describe what is being collected and with what collector, following the structure "Collect X from Y with X".
   enabled BOOLEAN, -- Is stream enabled?
   input TEXT NOT NULL, -- Input
-  template_path TEXT, -- Path to Elasticsearch index template for stream.
+  template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. data_stream/logs/agent/stream/stream.yml.hbs). Defaults to stream.yml.hbs when not specified in the manifest. Joinable directly to agent_templates.file_path.
   title TEXT NOT NULL -- Title of the stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
 );
 

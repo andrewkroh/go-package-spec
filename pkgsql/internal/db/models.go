@@ -8,6 +8,14 @@ import (
 	"database/sql"
 )
 
+type AgentTemplate struct {
+	ID            int64
+	Content       string
+	DataStreamsID sql.NullInt64
+	FilePath      string
+	PackagesID    int64
+}
+
 type BuildManifest struct {
 	ID                            int64
 	PackagesID                    int64
