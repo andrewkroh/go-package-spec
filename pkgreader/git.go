@@ -116,11 +116,16 @@ func gitBlameTimestamps(dir, filePath string) (map[int]time.Time, error) {
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	scanErr := scanner.Err()
+
+	// Always call Wait to reap the child process and avoid zombies.
+	waitErr := cmd.Wait()
+
+	if scanErr != nil {
+		return nil, fmt.Errorf("git blame %s: scan: %w", filePath, scanErr)
 	}
-	if err := cmd.Wait(); err != nil {
-		return nil, fmt.Errorf("git blame %s: %w", filePath, err)
+	if waitErr != nil {
+		return nil, fmt.Errorf("git blame %s: %w", filePath, waitErr)
 	}
 
 	return result, nil
