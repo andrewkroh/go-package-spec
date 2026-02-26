@@ -76,11 +76,3 @@ func RebuildFTS(ctx context.Context, db *sql.DB) error {
 	}
 	return nil
 }
-
-// RebuildDocsFTS rebuilds the FTS5 full-text search index for the docs
-// table.
-//
-// Deprecated: Use [RebuildFTS] instead, which rebuilds all FTS indexes.
-func RebuildDocsFTS(ctx context.Context, db *sql.DB) error {
-	return RebuildFTS(ctx, db)
-}

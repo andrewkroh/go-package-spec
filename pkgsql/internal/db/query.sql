@@ -201,7 +201,7 @@ INSERT INTO data_streams (
   "release",
   title,
   type,
-  github_owner
+  github_code_owner
 ) VALUES (
   ?,
   ?,

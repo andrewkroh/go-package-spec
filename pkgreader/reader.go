@@ -441,7 +441,7 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 		for dsName, ds := range pkg.DataStreams {
 			dsPath := "/packages/" + dirName + "/data_stream/" + dsName
 			if owner := cf.matchOwner(dsPath); owner != "" {
-				ds.Manifest.GithubOwner = owner
+				ds.Manifest.GithubCodeOwner = owner
 			}
 		}
 	}
