@@ -67,7 +67,7 @@ type DataStream struct {
 	Release                       sql.NullString
 	Title                         string
 	Type                          sql.NullString
-	GithubOwner                   sql.NullString
+	GithubCodeOwner               sql.NullString
 }
 
 type DataStreamField struct {

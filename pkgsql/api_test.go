@@ -1444,18 +1444,18 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 		t.Errorf("expected 40-char hex SHA commit_id, got %q (len=%d)", commitID.String, len(commitID.String))
 	}
 
-	// Verify github_owner is populated for a data stream with CODEOWNERS entry.
-	var githubOwner sql.NullString
+	// Verify github_code_owner is populated for a data stream with CODEOWNERS entry.
+	var githubCodeOwner sql.NullString
 	err = db.QueryRowContext(ctx, `
-		SELECT ds.github_owner
+		SELECT ds.github_code_owner
 		FROM data_streams ds
 		JOIN packages p ON p.id = ds.packages_id
-		WHERE p.name = 'aws' AND ds.dir_name = 'cloudtrail'`).Scan(&githubOwner)
+		WHERE p.name = 'aws' AND ds.dir_name = 'cloudtrail'`).Scan(&githubCodeOwner)
 	if err != nil {
-		t.Fatalf("querying github_owner: %v", err)
+		t.Fatalf("querying github_code_owner: %v", err)
 	}
-	if !githubOwner.Valid || githubOwner.String == "" {
-		t.Error("expected non-NULL github_owner for aws/cloudtrail with WithCodeowners")
+	if !githubCodeOwner.Valid || githubCodeOwner.String == "" {
+		t.Error("expected non-NULL github_code_owner for aws/cloudtrail with WithCodeowners")
 	}
 }
 

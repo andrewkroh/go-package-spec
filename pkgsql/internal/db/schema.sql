@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS data_streams (
   "release" TEXT, -- Stability of data stream.
   title TEXT NOT NULL, -- Title of data stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
   type TEXT, -- Type of data stream
-  github_owner TEXT -- GithubOwner is the GitHub team owner from CODEOWNERS, populated when WithCodeowners is used.
+  github_code_owner TEXT -- GithubCodeOwner is the GitHub team code owner from CODEOWNERS, populated when WithCodeowners is used.
 );
 
 CREATE TABLE IF NOT EXISTS agent_templates (

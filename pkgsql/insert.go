@@ -222,7 +222,7 @@ func mapDataStreamsParams(v *pkgspec.DataStreamManifest, parentID int64, dirName
 		FileColumn:                    toNullInt64(v.Column()),
 		FileLine:                      toNullInt64(v.Line()),
 		FilePath:                      toNullString(v.FilePath()),
-		GithubOwner:                   toNullString(v.GithubOwner),
+		GithubCodeOwner:               toNullString(v.GithubCodeOwner),
 		Hidden:                        toNullBool(v.Hidden),
 		IlmPolicy:                     toNullString(v.ILMPolicy),
 		PackagesID:                    parentID,
