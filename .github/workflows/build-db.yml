@@ -31,7 +31,7 @@ jobs:
       - name: Compress database
         run: gzip pkgsql/fleet-packages.sqlite
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: fleet-packages-sqlite
           path: pkgsql/fleet-packages.sqlite.gz
