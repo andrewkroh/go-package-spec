@@ -155,6 +155,9 @@ type Field struct {
 	// JsonPointer is the RFC 6901 JSON Pointer to this field's location in the original fields file
 	// (e.g. /0/fields/1). Set by pkgreader after parsing.
 	JsonPointer string `json:"json_pointer,omitempty" yaml:"-"`
+	// Extras captures YAML attributes not defined in the package-spec schema (e.g. default_field,
+	// footnote, norms, title). These are non-canonical and excluded from JSON serialization.
+	Extras map[string]any `json:"-" yaml:",inline"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for Field.
