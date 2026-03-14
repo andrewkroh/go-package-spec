@@ -323,12 +323,16 @@ CREATE TABLE IF NOT EXISTS policy_template_inputs (
   policy_templates_id INTEGER NOT NULL REFERENCES policy_templates(id), -- foreign key to policy_templates
   deployment_modes JSON, -- List of deployment modes that this input is compatible with. If not specified, the input is compatible with all deployment modes.
   description TEXT NOT NULL, -- Longer description of input.
+  dynamic_signal_types BOOLEAN, -- DynamicSignalTypes
   hide_in_var_group_options JSON, -- HideInVarGroupOptions filters out specific var_group options for this input.
   input_group TEXT, -- Name of the input group
+  migrate_from TEXT, -- MigrateFrom
   multi BOOLEAN, -- Can input be defined multiple times
+  package TEXT, -- Package
   template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. agent/input/httpjson.yml.hbs). NULL when not specified. Joinable directly to agent_templates.file_path.
+  template_paths JSON, -- TemplatePaths
   title TEXT NOT NULL, -- Title of input.
-  type TEXT NOT NULL -- Type of input.
+  type TEXT -- Type of input.
 );
 
 CREATE TABLE IF NOT EXISTS policy_template_screenshots (
@@ -352,6 +356,8 @@ CREATE TABLE IF NOT EXISTS policy_tests (
   file_column INTEGER, -- source file column number
   data_stream JSON, -- Configuration for the data stream.
   input TEXT, -- The input of the package to test.
+  policy_api_format TEXT, -- PolicyAPIFormat
+  requires JSON, -- Package dependencies required for this test with exact versions.
   skip_link TEXT NOT NULL, -- Link to issue with more details about skipped test or to track re-enabling skipped test.
   skip_reason TEXT NOT NULL, -- Short explanation for why test has been skipped.
   vars JSON -- Variables used to configure settings defined in the package manifest.
@@ -464,6 +470,7 @@ CREATE TABLE IF NOT EXISTS static_tests (
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
+  requires JSON, -- Package dependencies required for this test with exact versions.
   skip_link TEXT NOT NULL, -- Link to issue with more details about skipped test or to track re-enabling skipped test.
   skip_reason TEXT NOT NULL -- Short explanation for why test has been skipped.
 );
@@ -476,9 +483,13 @@ CREATE TABLE IF NOT EXISTS streams (
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
   description TEXT NOT NULL, -- Description of the stream. It should describe what is being collected and with what collector, following the structure "Collect X from Y with X".
+  dynamic_signal_types BOOLEAN, -- DynamicSignalTypes
   enabled BOOLEAN, -- Is stream enabled?
-  input TEXT NOT NULL, -- Input
+  input TEXT, -- Input
+  migrate_from TEXT, -- MigrateFrom
+  package TEXT, -- Package
   template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. data_stream/logs/agent/stream/stream.yml.hbs). Defaults to stream.yml.hbs when not specified in the manifest. Joinable directly to agent_templates.file_path.
+  template_paths JSON, -- TemplatePaths
   title TEXT NOT NULL -- Title of the stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
 );
 
@@ -502,6 +513,9 @@ CREATE TABLE IF NOT EXISTS system_tests (
   agent_runtime TEXT, -- Runtime to run the Elastic Agent process
   agent_user TEXT, -- User that runs the Elastic Agent process
   data_stream JSON, -- JSON-encoded DataStream
+  deployer TEXT, -- Deployer
+  policy_api_format TEXT, -- PolicyAPIFormat
+  requires JSON, -- Package dependencies required for this test with exact versions.
   skip_link TEXT NOT NULL, -- Link to issue with more details about skipped test or to track re-enabling skipped test.
   skip_reason TEXT NOT NULL, -- Short explanation for why test has been skipped.
   skip_ignored_fields JSON, -- If listed here, elastic-package system tests will not fail if values for the specified field names can't be indexed for any incoming documents. This should only be used if the failure is related to...

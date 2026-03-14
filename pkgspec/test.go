@@ -188,8 +188,11 @@ type PolicyTestConfig struct {
 	// Configuration for the data stream.
 	DataStream *PolicyTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
 	// The input of the package to test.
-	Input string   `json:"input,omitempty" yaml:"input,omitempty"`
-	Skip  TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Input           string          `json:"input,omitempty" yaml:"input,omitempty"`
+	PolicyAPIFormat PolicyAPIFormat `json:"policy_api_format,omitempty" yaml:"policy_api_format,omitempty"`
+	// Package dependencies required for this test with exact versions.
+	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
+	Skip     TestSkip         `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// Variables used to configure settings defined in the package manifest.
 	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -238,9 +241,11 @@ func (v PolicyTestDataStream) MarshalJSON() ([]byte, error) {
 
 // StaticTestConfig holds configuration for a static test case (test-*-config.yml).
 type StaticTestConfig struct {
-	FileMetadata         `json:"-" yaml:"-"`
-	Skip                 TestSkip       `json:"skip,omitempty" yaml:"skip,omitempty"`
-	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
+	FileMetadata `json:"-" yaml:"-"`
+	// Package dependencies required for this test with exact versions.
+	Requires             []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
+	Skip                 TestSkip         `json:"skip,omitempty" yaml:"skip,omitempty"`
+	AdditionalProperties map[string]any   `json:"-" yaml:",inline"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for StaticTestConfig.
@@ -413,9 +418,13 @@ const (
 type SystemTestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// Configuration overrides for the Elastic Agent
-	Agent      SystemTestAgent       `json:"agent,omitempty" yaml:"agent,omitempty"`
-	DataStream *SystemTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	Skip       TestSkip              `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Agent           SystemTestAgent       `json:"agent,omitempty" yaml:"agent,omitempty"`
+	DataStream      *SystemTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	Deployer        Deployer              `json:"deployer,omitempty" yaml:"deployer,omitempty"`
+	PolicyAPIFormat PolicyAPIFormat       `json:"policy_api_format,omitempty" yaml:"policy_api_format,omitempty"`
+	// Package dependencies required for this test with exact versions.
+	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
+	Skip     TestSkip         `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// If listed here, elastic-package system tests will not fail if values for the specified field
 	// names can't be indexed for any incoming documents. This should only be used if the failure is
 	// related to the test environment and wouldn't happen in production. Mitigate the issue via mapping
@@ -496,8 +505,10 @@ func (v SystemTestDataStream) MarshalJSON() ([]byte, error) {
 // TestCategoryConfig controls parallelism and skip for a test category.
 type TestCategoryConfig struct {
 	// Tests defined can be run in parallel (default true).
-	Parallel *bool    `json:"parallel,omitempty" yaml:"parallel,omitempty"`
-	Skip     TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Parallel *bool `json:"parallel,omitempty" yaml:"parallel,omitempty"`
+	// Package dependencies required for these tests with exact versions.
+	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
+	Skip     TestSkip         `json:"skip,omitempty" yaml:"skip,omitempty"`
 }
 
 // TestConfig holds the package-level test configuration for integration packages

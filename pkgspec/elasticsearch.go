@@ -149,7 +149,10 @@ type IndexTemplatePipeline struct {
 
 // IndexTemplateSettings settings section of index template
 type IndexTemplateSettings struct {
-	Analysis       IndexAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
-	Index          IndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
-	NumberOfShards int           `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	Analysis           IndexAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
+	AutoExpandReplicas string        `json:"auto_expand_replicas,omitempty" yaml:"auto_expand_replicas,omitempty"`
+	Index              IndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
+	MaxResultWindow    int           `json:"max_result_window,omitempty" yaml:"max_result_window,omitempty"`
+	NumberOfShards     int           `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	RefreshInterval    string        `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
 }
