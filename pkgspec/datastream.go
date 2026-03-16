@@ -114,13 +114,16 @@ type DataStreamStream struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// Description of the stream. It should describe what is being collected and with what collector,
 	// following the structure "Collect X from Y with X".
-	Description string `json:"description" yaml:"description"`
+	Description        string `json:"description" yaml:"description"`
+	DynamicSignalTypes *bool  `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
 	// Is stream enabled?
-	Enabled      *bool        `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Input        string       `json:"input" yaml:"input"`
-	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
-	// Path to Elasticsearch index template for stream.
-	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	Enabled       *bool        `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Input         string       `json:"input,omitempty" yaml:"input,omitempty"`
+	MigrateFrom   string       `json:"migrate_from,omitempty" yaml:"migrate_from,omitempty"`
+	Package       string       `json:"package,omitempty" yaml:"package,omitempty"`
+	RequiredVars  RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
+	TemplatePath  string       `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	TemplatePaths []string     `json:"template_paths,omitempty" yaml:"template_paths,omitempty"`
 	// Title of the stream. It should include the source of the data that is being collected, and the
 	// kind of data collected such as logs or metrics. Words should be uppercased.
 	Title     string     `json:"title" yaml:"title"`

@@ -313,13 +313,17 @@ func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int6
 	return db.InsertPolicyTemplateInputsParams{
 		DeploymentModes:       jsonNullString(v.DeploymentModes),
 		Description:           v.Description,
+		DynamicSignalTypes:    toNullBool(v.DynamicSignalTypes),
 		HideInVarGroupOptions: jsonNullString(v.HideInVarGroupOptions),
 		InputGroup:            toNullString(string(v.InputGroup)),
+		MigrateFrom:           toNullString(v.MigrateFrom),
 		Multi:                 toNullBool(v.Multi),
+		Package:               toNullString(v.Package),
 		PolicyTemplatesID:     parentID,
 		TemplatePath:          toNullString(v.TemplatePath),
+		TemplatePaths:         jsonNullString(v.TemplatePaths),
 		Title:                 v.Title,
-		Type:                  v.Type,
+		Type:                  toNullString(v.Type),
 	}
 }
 
@@ -337,15 +341,17 @@ func mapPolicyTemplateScreenshotsParams(v *pkgspec.Screenshot, parentID int64) d
 // mapPolicyTestsParams converts a PolicyTestConfig to db.InsertPolicyTestsParams.
 func mapPolicyTestsParams(v *pkgspec.PolicyTestConfig, caseName string) db.InsertPolicyTestsParams {
 	return db.InsertPolicyTestsParams{
-		CaseName:   caseName,
-		DataStream: jsonNullString(v.DataStream),
-		FileColumn: toNullInt64(v.Column()),
-		FileLine:   toNullInt64(v.Line()),
-		FilePath:   toNullString(v.FilePath()),
-		Input:      toNullString(v.Input),
-		SkipLink:   v.Skip.Link,
-		SkipReason: v.Skip.Reason,
-		Vars:       jsonNullString(v.Vars),
+		CaseName:        caseName,
+		DataStream:      jsonNullString(v.DataStream),
+		FileColumn:      toNullInt64(v.Column()),
+		FileLine:        toNullInt64(v.Line()),
+		FilePath:        toNullString(v.FilePath()),
+		Input:           toNullString(v.Input),
+		PolicyApiFormat: toNullString(string(v.PolicyAPIFormat)),
+		Requires:        jsonNullString(v.Requires),
+		SkipLink:        v.Skip.Link,
+		SkipReason:      v.Skip.Reason,
+		Vars:            jsonNullString(v.Vars),
 	}
 }
 
@@ -369,6 +375,7 @@ func mapStaticTestsParams(v *pkgspec.StaticTestConfig, caseName string) db.Inser
 		FileColumn: toNullInt64(v.Column()),
 		FileLine:   toNullInt64(v.Line()),
 		FilePath:   toNullString(v.FilePath()),
+		Requires:   jsonNullString(v.Requires),
 		SkipLink:   v.Skip.Link,
 		SkipReason: v.Skip.Reason,
 	}
@@ -377,15 +384,19 @@ func mapStaticTestsParams(v *pkgspec.StaticTestConfig, caseName string) db.Inser
 // mapStreamsParams converts a DataStreamStream to db.InsertStreamsParams.
 func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) db.InsertStreamsParams {
 	return db.InsertStreamsParams{
-		DataStreamsID: parentID,
-		Description:   v.Description,
-		Enabled:       toNullBool(v.Enabled),
-		FileColumn:    toNullInt64(v.Column()),
-		FileLine:      toNullInt64(v.Line()),
-		FilePath:      toNullString(v.FilePath()),
-		Input:         v.Input,
-		TemplatePath:  toNullString(v.TemplatePath),
-		Title:         v.Title,
+		DataStreamsID:      parentID,
+		Description:        v.Description,
+		DynamicSignalTypes: toNullBool(v.DynamicSignalTypes),
+		Enabled:            toNullBool(v.Enabled),
+		FileColumn:         toNullInt64(v.Column()),
+		FileLine:           toNullInt64(v.Line()),
+		FilePath:           toNullString(v.FilePath()),
+		Input:              toNullString(v.Input),
+		MigrateFrom:        toNullString(v.MigrateFrom),
+		Package:            toNullString(v.Package),
+		TemplatePath:       toNullString(v.TemplatePath),
+		TemplatePaths:      jsonNullString(v.TemplatePaths),
+		Title:              v.Title,
 	}
 }
 
@@ -404,9 +415,12 @@ func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.Inser
 		AgentUser:                       toNullString(v.Agent.User),
 		CaseName:                        caseName,
 		DataStream:                      jsonNullString(v.DataStream),
+		Deployer:                        toNullString(string(v.Deployer)),
 		FileColumn:                      toNullInt64(v.Column()),
 		FileLine:                        toNullInt64(v.Line()),
 		FilePath:                        toNullString(v.FilePath()),
+		PolicyApiFormat:                 toNullString(string(v.PolicyAPIFormat)),
+		Requires:                        jsonNullString(v.Requires),
 		SkipIgnoredFields:               jsonNullString(v.SkipIgnoredFields),
 		SkipLink:                        v.Skip.Link,
 		SkipReason:                      v.Skip.Reason,

@@ -293,6 +293,7 @@ type IntegrationManifest struct {
 	// combined policy. The default value is `all`, where the combined policy template is available
 	// along with the individual policies.
 	PolicyTemplatesBehavior string     `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
+	Requires                Requires   `json:"requires,omitempty" yaml:"requires,omitempty"`
 	VarGroups               []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	Vars                    []Var      `json:"vars,omitempty" yaml:"vars,omitempty"`
 }

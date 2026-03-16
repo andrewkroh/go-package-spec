@@ -1207,13 +1207,21 @@ INSERT INTO policy_template_inputs (
   policy_templates_id,
   deployment_modes,
   description,
+  dynamic_signal_types,
   hide_in_var_group_options,
   input_group,
+  migrate_from,
   multi,
+  package,
   template_path,
+  template_paths,
   title,
   type
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -1230,12 +1238,16 @@ type InsertPolicyTemplateInputsParams struct {
 	PolicyTemplatesID     int64
 	DeploymentModes       interface{}
 	Description           string
+	DynamicSignalTypes    sql.NullBool
 	HideInVarGroupOptions interface{}
 	InputGroup            sql.NullString
+	MigrateFrom           sql.NullString
 	Multi                 sql.NullBool
+	Package               sql.NullString
 	TemplatePath          sql.NullString
+	TemplatePaths         interface{}
 	Title                 string
-	Type                  string
+	Type                  sql.NullString
 }
 
 func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPolicyTemplateInputsParams) (int64, error) {
@@ -1243,10 +1255,14 @@ func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPoli
 		arg.PolicyTemplatesID,
 		arg.DeploymentModes,
 		arg.Description,
+		arg.DynamicSignalTypes,
 		arg.HideInVarGroupOptions,
 		arg.InputGroup,
+		arg.MigrateFrom,
 		arg.Multi,
+		arg.Package,
 		arg.TemplatePath,
+		arg.TemplatePaths,
 		arg.Title,
 		arg.Type,
 	)
@@ -1433,10 +1449,14 @@ INSERT INTO policy_tests (
   file_column,
   data_stream,
   input,
+  policy_api_format,
+  requires,
   skip_link,
   skip_reason,
   vars
 ) VALUES (
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -1452,17 +1472,19 @@ INSERT INTO policy_tests (
 `
 
 type InsertPolicyTestsParams struct {
-	CaseName      string
-	DataStreamsID sql.NullInt64
-	PackagesID    sql.NullInt64
-	FilePath      sql.NullString
-	FileLine      sql.NullInt64
-	FileColumn    sql.NullInt64
-	DataStream    interface{}
-	Input         sql.NullString
-	SkipLink      string
-	SkipReason    string
-	Vars          interface{}
+	CaseName        string
+	DataStreamsID   sql.NullInt64
+	PackagesID      sql.NullInt64
+	FilePath        sql.NullString
+	FileLine        sql.NullInt64
+	FileColumn      sql.NullInt64
+	DataStream      interface{}
+	Input           sql.NullString
+	PolicyApiFormat sql.NullString
+	Requires        interface{}
+	SkipLink        string
+	SkipReason      string
+	Vars            interface{}
 }
 
 func (q *Queries) InsertPolicyTests(ctx context.Context, arg InsertPolicyTestsParams) (int64, error) {
@@ -1475,6 +1497,8 @@ func (q *Queries) InsertPolicyTests(ctx context.Context, arg InsertPolicyTestsPa
 		arg.FileColumn,
 		arg.DataStream,
 		arg.Input,
+		arg.PolicyApiFormat,
+		arg.Requires,
 		arg.SkipLink,
 		arg.SkipReason,
 		arg.Vars,
@@ -1854,9 +1878,11 @@ INSERT INTO static_tests (
   file_path,
   file_line,
   file_column,
+  requires,
   skip_link,
   skip_reason
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -1873,6 +1899,7 @@ type InsertStaticTestsParams struct {
 	FilePath      sql.NullString
 	FileLine      sql.NullInt64
 	FileColumn    sql.NullInt64
+	Requires      interface{}
 	SkipLink      string
 	SkipReason    string
 }
@@ -1884,6 +1911,7 @@ func (q *Queries) InsertStaticTests(ctx context.Context, arg InsertStaticTestsPa
 		arg.FilePath,
 		arg.FileLine,
 		arg.FileColumn,
+		arg.Requires,
 		arg.SkipLink,
 		arg.SkipReason,
 	)
@@ -1921,11 +1949,19 @@ INSERT INTO streams (
   file_line,
   file_column,
   description,
+  dynamic_signal_types,
   enabled,
   input,
+  migrate_from,
+  package,
   template_path,
+  template_paths,
   title
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -1939,15 +1975,19 @@ INSERT INTO streams (
 `
 
 type InsertStreamsParams struct {
-	DataStreamsID int64
-	FilePath      sql.NullString
-	FileLine      sql.NullInt64
-	FileColumn    sql.NullInt64
-	Description   string
-	Enabled       sql.NullBool
-	Input         string
-	TemplatePath  sql.NullString
-	Title         string
+	DataStreamsID      int64
+	FilePath           sql.NullString
+	FileLine           sql.NullInt64
+	FileColumn         sql.NullInt64
+	Description        string
+	DynamicSignalTypes sql.NullBool
+	Enabled            sql.NullBool
+	Input              sql.NullString
+	MigrateFrom        sql.NullString
+	Package            sql.NullString
+	TemplatePath       sql.NullString
+	TemplatePaths      interface{}
+	Title              string
 }
 
 func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (int64, error) {
@@ -1957,9 +1997,13 @@ func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (i
 		arg.FileLine,
 		arg.FileColumn,
 		arg.Description,
+		arg.DynamicSignalTypes,
 		arg.Enabled,
 		arg.Input,
+		arg.MigrateFrom,
+		arg.Package,
 		arg.TemplatePath,
+		arg.TemplatePaths,
 		arg.Title,
 	)
 	var id int64
@@ -1986,12 +2030,18 @@ INSERT INTO system_tests (
   agent_runtime,
   agent_user,
   data_stream,
+  deployer,
+  policy_api_format,
+  requires,
   skip_link,
   skip_reason,
   skip_ignored_fields,
   vars,
   wait_for_data_timeout
 ) VALUES (
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -2035,6 +2085,9 @@ type InsertSystemTestsParams struct {
 	AgentRuntime                    sql.NullString
 	AgentUser                       sql.NullString
 	DataStream                      interface{}
+	Deployer                        sql.NullString
+	PolicyApiFormat                 sql.NullString
+	Requires                        interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}
@@ -2061,6 +2114,9 @@ func (q *Queries) InsertSystemTests(ctx context.Context, arg InsertSystemTestsPa
 		arg.AgentRuntime,
 		arg.AgentUser,
 		arg.DataStream,
+		arg.Deployer,
+		arg.PolicyApiFormat,
+		arg.Requires,
 		arg.SkipLink,
 		arg.SkipReason,
 		arg.SkipIgnoredFields,

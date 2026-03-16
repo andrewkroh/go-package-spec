@@ -116,22 +116,20 @@ type InputPolicyTemplate struct {
 	DeploymentModes    DeploymentModes     `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
 	Deprecated         Deprecated          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Longer description of policy template.
-	Description string `json:"description" yaml:"description"`
-	// When enabled, decides the transforms and index templates that need to be created depending on the
-	// pipelines specified in the configuration.
+	Description        string `json:"description" yaml:"description"`
 	DynamicSignalTypes *bool  `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
 	FipsCompatible     *bool  `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
 	Icons              []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
 	Input              string `json:"input" yaml:"input"`
 	// Name of policy template.
-	Name        string       `json:"name" yaml:"name"`
-	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	// Path to Elasticsearch index template for stream.
-	TemplatePath string `json:"template_path" yaml:"template_path"`
+	Name          string       `json:"name" yaml:"name"`
+	Screenshots   []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	TemplatePath  string       `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	TemplatePaths []string     `json:"template_paths,omitempty" yaml:"template_paths,omitempty"`
 	// Title of policy template.
 	Title string `json:"title" yaml:"title"`
 	// Type of data stream
-	Type InputPolicyTemplateType `json:"type" yaml:"type"`
+	Type InputPolicyTemplateType `json:"type,omitempty" yaml:"type,omitempty"`
 	Vars []Var                   `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
@@ -144,6 +142,7 @@ const (
 	InputPolicyTemplateTypeLogs       InputPolicyTemplateType = "logs"
 	InputPolicyTemplateTypeSynthetics InputPolicyTemplateType = "synthetics"
 	InputPolicyTemplateTypeTraces     InputPolicyTemplateType = "traces"
+	InputPolicyTemplateTypeProfiles   InputPolicyTemplateType = "profiles"
 )
 
 type PolicyTemplate struct {
@@ -188,20 +187,23 @@ type PolicyTemplateInput struct {
 	DeploymentModes []PolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
 	Deprecated      Deprecated                          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Longer description of input.
-	Description string `json:"description" yaml:"description"`
+	Description        string `json:"description" yaml:"description"`
+	DynamicSignalTypes *bool  `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
 	// HideInVarGroupOptions filters out specific var_group options for this input.
 	HideInVarGroupOptions map[string][]string `json:"hide_in_var_group_options,omitempty" yaml:"hide_in_var_group_options,omitempty"`
 	// Name of the input group
-	InputGroup PolicyTemplateInputGroup `json:"input_group,omitempty" yaml:"input_group,omitempty"`
+	InputGroup  PolicyTemplateInputGroup `json:"input_group,omitempty" yaml:"input_group,omitempty"`
+	MigrateFrom string                   `json:"migrate_from,omitempty" yaml:"migrate_from,omitempty"`
 	// Can input be defined multiple times
-	Multi        *bool        `json:"multi,omitempty" yaml:"multi,omitempty"`
-	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
-	// Path of the config template for the input.
-	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	Multi         *bool        `json:"multi,omitempty" yaml:"multi,omitempty"`
+	Package       string       `json:"package,omitempty" yaml:"package,omitempty"`
+	RequiredVars  RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
+	TemplatePath  string       `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	TemplatePaths []string     `json:"template_paths,omitempty" yaml:"template_paths,omitempty"`
 	// Title of input.
 	Title string `json:"title" yaml:"title"`
 	// Type of input.
-	Type string `json:"type" yaml:"type"`
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 	Vars []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
