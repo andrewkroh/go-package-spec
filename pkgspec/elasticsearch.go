@@ -3,12 +3,25 @@
 package pkgspec
 
 type DynamicTemplateMapping struct {
-	DefaultMetric any       `json:"default_metric,omitempty" yaml:"default_metric,omitempty"`
-	IgnoreAbove   int       `json:"ignore_above,omitempty" yaml:"ignore_above,omitempty"`
-	Index         *bool     `json:"index,omitempty" yaml:"index,omitempty"`
-	Metrics       any       `json:"metrics,omitempty" yaml:"metrics,omitempty"`
-	ScalingFactor int       `json:"scaling_factor,omitempty" yaml:"scaling_factor,omitempty"`
-	Type          FieldType `json:"type,omitempty" yaml:"type,omitempty"`
+	DefaultMetric any `json:"default_metric,omitempty" yaml:"default_metric,omitempty"`
+	// Strings longer than the ignore_above setting will not be indexed or stored. For arrays of
+	// strings, ignore_above will be applied for each array element separately and string elements
+	// longer than ignore_above will not be indexed or stored. Fleet honors this for `keyword` and
+	// `wildcard` types. Defaults to 1024.
+	IgnoreAbove int `json:"ignore_above,omitempty" yaml:"ignore_above,omitempty"`
+	// The index option controls whether field values are indexed. Fields that are not indexed are
+	// typically not queryable.
+	Index   *bool `json:"index,omitempty" yaml:"index,omitempty"`
+	Metrics any   `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+	// The scaling factor to use when encoding values. Values will be multiplied by this factor at index
+	// time and rounded to the closest long value. For instance, a scaled_float with a scaling_factor of
+	// 10 would internally store 2.34 as 23 and all search-time operations (queries, aggregations,
+	// sorting) will behave as if the document had a value of 2.3. High values of scaling_factor improve
+	// accuracy but also increase space requirements. Only valid for 'type: scaled_float'.
+	ScalingFactor int `json:"scaling_factor,omitempty" yaml:"scaling_factor,omitempty"`
+	// Datatype of field. If the type is set to object, a dynamic mapping is created. In this case, if
+	// the name doesn't contain any wildcard, the wildcard is added as the last segment of the path.
+	Type FieldType `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
 type DynamicTemplateValue struct {
@@ -149,7 +162,8 @@ type IndexTemplatePipeline struct {
 
 // IndexTemplateSettings settings section of index template
 type IndexTemplateSettings struct {
-	Analysis       IndexAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
-	Index          IndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
-	NumberOfShards int           `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	Analysis IndexAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
+	Index    IndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
+	// Number of primary shards that the data stream should have.
+	NumberOfShards int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
 }

@@ -14,7 +14,8 @@ type RequiredVars struct{}
 type Var struct {
 	FileMetadata `json:"-" yaml:"-"`
 	// Default is the default value for the variable.
-	Default    any        `json:"default,omitempty" yaml:"default,omitempty"`
+	Default any `json:"default,omitempty" yaml:"default,omitempty"`
+	// Information on deprecation of a package or an individual feature.
 	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Short description of variable.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`

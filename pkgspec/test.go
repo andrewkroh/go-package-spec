@@ -90,7 +90,8 @@ type PipelineTestConfig struct {
 	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
 	// NumericKeywordFields lists keyword type fields allowed to have a numeric value.
 	NumericKeywordFields []string `json:"numeric_keyword_fields,omitempty" yaml:"numeric_keyword_fields,omitempty"`
-	Skip                 TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	// If this test should be skipped, more information about why it was skipped.
+	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// StringNumberFields lists numeric type fields allowed to have a string value if parseable as a
 	// number.
 	StringNumberFields []string `json:"string_number_fields,omitempty" yaml:"string_number_fields,omitempty"`
@@ -188,8 +189,9 @@ type PolicyTestConfig struct {
 	// Configuration for the data stream.
 	DataStream *PolicyTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
 	// The input of the package to test.
-	Input string   `json:"input,omitempty" yaml:"input,omitempty"`
-	Skip  TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Input string `json:"input,omitempty" yaml:"input,omitempty"`
+	// If this test should be skipped, more information about why it was skipped.
+	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// Variables used to configure settings defined in the package manifest.
 	Vars TestVars `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -238,7 +240,8 @@ func (v PolicyTestDataStream) MarshalJSON() ([]byte, error) {
 
 // StaticTestConfig holds configuration for a static test case (test-*-config.yml).
 type StaticTestConfig struct {
-	FileMetadata         `json:"-" yaml:"-"`
+	FileMetadata `json:"-" yaml:"-"`
+	// If this test should be skipped, more information about why it was skipped.
 	Skip                 TestSkip       `json:"skip,omitempty" yaml:"skip,omitempty"`
 	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
 }
@@ -415,7 +418,8 @@ type SystemTestConfig struct {
 	// Configuration overrides for the Elastic Agent
 	Agent      SystemTestAgent       `json:"agent,omitempty" yaml:"agent,omitempty"`
 	DataStream *SystemTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	Skip       TestSkip              `json:"skip,omitempty" yaml:"skip,omitempty"`
+	// If this test should be skipped, more information about why it was skipped.
+	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// If listed here, elastic-package system tests will not fail if values for the specified field
 	// names can't be indexed for any incoming documents. This should only be used if the failure is
 	// related to the test environment and wouldn't happen in production. Mitigate the issue via mapping
@@ -496,8 +500,9 @@ func (v SystemTestDataStream) MarshalJSON() ([]byte, error) {
 // TestCategoryConfig controls parallelism and skip for a test category.
 type TestCategoryConfig struct {
 	// Tests defined can be run in parallel (default true).
-	Parallel *bool    `json:"parallel,omitempty" yaml:"parallel,omitempty"`
-	Skip     TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
+	Parallel *bool `json:"parallel,omitempty" yaml:"parallel,omitempty"`
+	// If this test should be skipped, more information about why it was skipped.
+	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 }
 
 // TestConfig holds the package-level test configuration for integration packages
