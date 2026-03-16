@@ -307,6 +307,8 @@ type IntegrationManifest struct {
 	// combined policy. The default value is `all`, where the combined policy template is available
 	// along with the individual policies.
 	PolicyTemplatesBehavior string `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
+	// Dependencies that this package requires to function properly.
+	Requires Requires `json:"requires,omitempty" yaml:"requires,omitempty"`
 	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
 	// that option's vars array are shown. The selected option name is stored in the policy. Additional
 	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector

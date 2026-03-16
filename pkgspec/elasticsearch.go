@@ -163,7 +163,23 @@ type IndexTemplatePipeline struct {
 // IndexTemplateSettings settings section of index template
 type IndexTemplateSettings struct {
 	Analysis IndexAnalysis `json:"analysis,omitempty" yaml:"analysis,omitempty"`
-	Index    IndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
+	// Auto-expand the number of replicas based on the number of data nodes in the cluster.
+	//
+	// Set to a dash delimited lower and upper bound (e.g. 0-5) or use `all` for the upper bound (e.g.
+	// 0-all). Defaults to false (i.e. disabled).
+	AutoExpandReplicas string        `json:"auto_expand_replicas,omitempty" yaml:"auto_expand_replicas,omitempty"`
+	Index              IndexSettings `json:"index,omitempty" yaml:"index,omitempty"`
+	// The maximum value of `from + size` for searches to this index. Defaults to 10000.
+	//
+	// Search requests take heap memory and time proportional to `from + size` and this limits that
+	// memory.
+	MaxResultWindow int `json:"max_result_window,omitempty" yaml:"max_result_window,omitempty"`
 	// Number of primary shards that the data stream should have.
 	NumberOfShards int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	// How often to perform a refresh operation, which makes recent changes to the index visible to
+	// search. The value defaults to `1s` in Elastic Stack and `5s` in Serverless. In Serverless, `5s`
+	// is also the minimum value that can be set.
+	//
+	// Can be set to `-1` to disable refresh.
+	RefreshInterval string `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
 }
