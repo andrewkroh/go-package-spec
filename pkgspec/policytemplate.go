@@ -122,7 +122,8 @@ type InputPolicyTemplate struct {
 	// Longer description of policy template.
 	Description string `json:"description" yaml:"description"`
 	// When enabled, decides the transforms and index templates that need to be created depending on the
-	// pipelines specified in the configuration.
+	// pipelines specified in the configuration. This field is only allowed when the input type is
+	// 'otelcol'.
 	DynamicSignalTypes *bool `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
 	// Indicate if this package is capable of satisfying FIPS requirements. Set to false if it uses any
 	// input that cannot be configured to use FIPS cryptography.
@@ -134,12 +135,15 @@ type InputPolicyTemplate struct {
 	Name string `json:"name" yaml:"name"`
 	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	// Path to Elasticsearch index template for stream.
-	TemplatePath string `json:"template_path" yaml:"template_path"`
+	// Path of the config template.
+	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	// Paths of the config templates. Templates are rendered and merged sequentially; later templates
+	// override earlier ones for conflicting keys.
+	TemplatePaths []string `json:"template_paths,omitempty" yaml:"template_paths,omitempty"`
 	// Title of policy template.
 	Title string `json:"title" yaml:"title"`
 	// Type of data stream
-	Type InputPolicyTemplateType `json:"type" yaml:"type"`
+	Type InputPolicyTemplateType `json:"type,omitempty" yaml:"type,omitempty"`
 	// Input variables.
 	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -153,6 +157,7 @@ const (
 	InputPolicyTemplateTypeLogs       InputPolicyTemplateType = "logs"
 	InputPolicyTemplateTypeSynthetics InputPolicyTemplateType = "synthetics"
 	InputPolicyTemplateTypeTraces     InputPolicyTemplateType = "traces"
+	InputPolicyTemplateTypeProfiles   InputPolicyTemplateType = "profiles"
 )
 
 type PolicyTemplate struct {
@@ -209,20 +214,34 @@ type PolicyTemplateInput struct {
 	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Longer description of input.
 	Description string `json:"description" yaml:"description"`
+	// When enabled, decides the transforms and index templates that need to be created depending on the
+	// pipelines specified in the configuration. This field is only allowed when the input type is
+	// 'otelcol'.
+	DynamicSignalTypes *bool `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
 	// HideInVarGroupOptions filters out specific var_group options for this input.
 	HideInVarGroupOptions map[string][]string `json:"hide_in_var_group_options,omitempty" yaml:"hide_in_var_group_options,omitempty"`
 	// Name of the input group
 	InputGroup PolicyTemplateInputGroup `json:"input_group,omitempty" yaml:"input_group,omitempty"`
+	// Previous input type to migrate configuration from. This allows Fleet to automatically migrate the
+	// policy configuration when replacing one input implementation with an equivalent one. This field
+	// should only be used for inputs that don't need agent's state persistence.
+	MigrateFrom string `json:"migrate_from,omitempty" yaml:"migrate_from,omitempty"`
 	// Can input be defined multiple times
 	Multi *bool `json:"multi,omitempty" yaml:"multi,omitempty"`
+	// Reference to an input package. When specified, configuration is inherited from the referenced
+	// package. The package must be listed in the manifest's requires section.
+	Package string `json:"package,omitempty" yaml:"package,omitempty"`
 	// Required conditional variables for the package.
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
-	// Path of the config template for the input.
+	// Path of the config template.
 	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	// Paths of the config templates. Templates are rendered and merged sequentially; later templates
+	// override earlier ones for conflicting keys.
+	TemplatePaths []string `json:"template_paths,omitempty" yaml:"template_paths,omitempty"`
 	// Title of input.
 	Title string `json:"title" yaml:"title"`
 	// Type of input.
-	Type string `json:"type" yaml:"type"`
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 	// Input variables.
 	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }

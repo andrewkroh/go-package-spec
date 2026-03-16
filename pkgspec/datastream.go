@@ -122,13 +122,27 @@ type DataStreamStream struct {
 	// Description of the stream. It should describe what is being collected and with what collector,
 	// following the structure "Collect X from Y with X".
 	Description string `json:"description" yaml:"description"`
+	// When enabled, decides the transforms and index templates that need to be created depending on the
+	// pipelines specified in the configuration. This field is only allowed when the input type is
+	// 'otelcol'.
+	DynamicSignalTypes *bool `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
 	// Is stream enabled?
 	Enabled *bool  `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Input   string `json:"input" yaml:"input"`
+	Input   string `json:"input,omitempty" yaml:"input,omitempty"`
+	// Previous input type to migrate configuration from. This allows Fleet to automatically migrate the
+	// policy configuration when replacing one input implementation with an equivalent one. This field
+	// should only be used for inputs that don't need agent's state persistence.
+	MigrateFrom string `json:"migrate_from,omitempty" yaml:"migrate_from,omitempty"`
+	// Reference to an input package. When specified, configuration is inherited from the referenced
+	// package. The package must be listed in the manifest's requires section.
+	Package string `json:"package,omitempty" yaml:"package,omitempty"`
 	// Required conditional variables for the package.
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
-	// Path to Elasticsearch index template for stream.
+	// Path of the config template.
 	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
+	// Paths of the config templates. Templates are rendered and merged sequentially; later templates
+	// override earlier ones for conflicting keys.
+	TemplatePaths []string `json:"template_paths,omitempty" yaml:"template_paths,omitempty"`
 	// Title of the stream. It should include the source of the data that is being collected, and the
 	// kind of data collected such as logs or metrics. Words should be uppercased.
 	Title string `json:"title" yaml:"title"`

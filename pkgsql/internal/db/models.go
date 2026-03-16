@@ -331,12 +331,16 @@ type PolicyTemplateInput struct {
 	PolicyTemplatesID     int64
 	DeploymentModes       interface{}
 	Description           string
+	DynamicSignalTypes    sql.NullBool
 	HideInVarGroupOptions interface{}
 	InputGroup            sql.NullString
+	MigrateFrom           sql.NullString
 	Multi                 sql.NullBool
+	Package               sql.NullString
 	TemplatePath          sql.NullString
+	TemplatePaths         interface{}
 	Title                 string
-	Type                  string
+	Type                  sql.NullString
 }
 
 type PolicyTemplateInputVar struct {
@@ -361,18 +365,20 @@ type PolicyTemplateVar struct {
 }
 
 type PolicyTest struct {
-	ID            int64
-	CaseName      string
-	DataStreamsID sql.NullInt64
-	PackagesID    sql.NullInt64
-	FilePath      sql.NullString
-	FileLine      sql.NullInt64
-	FileColumn    sql.NullInt64
-	DataStream    interface{}
-	Input         sql.NullString
-	SkipLink      string
-	SkipReason    string
-	Vars          interface{}
+	ID              int64
+	CaseName        string
+	DataStreamsID   sql.NullInt64
+	PackagesID      sql.NullInt64
+	FilePath        sql.NullString
+	FileLine        sql.NullInt64
+	FileColumn      sql.NullInt64
+	DataStream      interface{}
+	Input           sql.NullString
+	PolicyApiFormat sql.NullString
+	Requires        interface{}
+	SkipLink        string
+	SkipReason      string
+	Vars            interface{}
 }
 
 type RoutingRule struct {
@@ -473,21 +479,26 @@ type StaticTest struct {
 	FilePath      sql.NullString
 	FileLine      sql.NullInt64
 	FileColumn    sql.NullInt64
+	Requires      interface{}
 	SkipLink      string
 	SkipReason    string
 }
 
 type Stream struct {
-	ID            int64
-	DataStreamsID int64
-	FilePath      sql.NullString
-	FileLine      sql.NullInt64
-	FileColumn    sql.NullInt64
-	Description   string
-	Enabled       sql.NullBool
-	Input         string
-	TemplatePath  sql.NullString
-	Title         string
+	ID                 int64
+	DataStreamsID      int64
+	FilePath           sql.NullString
+	FileLine           sql.NullInt64
+	FileColumn         sql.NullInt64
+	Description        string
+	DynamicSignalTypes sql.NullBool
+	Enabled            sql.NullBool
+	Input              sql.NullString
+	MigrateFrom        sql.NullString
+	Package            sql.NullString
+	TemplatePath       sql.NullString
+	TemplatePaths      interface{}
+	Title              string
 }
 
 type StreamVar struct {
@@ -515,6 +526,9 @@ type SystemTest struct {
 	AgentRuntime                    sql.NullString
 	AgentUser                       sql.NullString
 	DataStream                      interface{}
+	Deployer                        sql.NullString
+	PolicyApiFormat                 sql.NullString
+	Requires                        interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}

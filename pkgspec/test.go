@@ -190,6 +190,19 @@ type PolicyTestConfig struct {
 	DataStream *PolicyTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
 	// The input of the package to test.
 	Input string `json:"input,omitempty" yaml:"input,omitempty"`
+	// Tests can create policies using the Fleet APIs with different formats. The "legacy" format
+	// requires to send variables with hints about their type, and defaults are not managed
+	// automatically.
+	//
+	// The newer, "simplified" format has better format support for variables and don't allow to include
+	// hints, it also uses defaults automatically, and requires explicit enablement or disablement of
+	// inputs and streams.
+	//
+	// In most cases tests should not set this value. The main use case is to set it to "legacy" for
+	// cases that cannot be fully supported with the newer "simplified" format.
+	PolicyAPIFormat PolicyAPIFormat `json:"policy_api_format,omitempty" yaml:"policy_api_format,omitempty"`
+	// Package dependencies required for this test with exact versions.
+	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
 	// If this test should be skipped, more information about why it was skipped.
 	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// Variables used to configure settings defined in the package manifest.
@@ -241,6 +254,8 @@ func (v PolicyTestDataStream) MarshalJSON() ([]byte, error) {
 // StaticTestConfig holds configuration for a static test case (test-*-config.yml).
 type StaticTestConfig struct {
 	FileMetadata `json:"-" yaml:"-"`
+	// Package dependencies required for this test with exact versions.
+	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
 	// If this test should be skipped, more information about why it was skipped.
 	Skip                 TestSkip       `json:"skip,omitempty" yaml:"skip,omitempty"`
 	AdditionalProperties map[string]any `json:"-" yaml:",inline"`
@@ -418,6 +433,21 @@ type SystemTestConfig struct {
 	// Configuration overrides for the Elastic Agent
 	Agent      SystemTestAgent       `json:"agent,omitempty" yaml:"agent,omitempty"`
 	DataStream *SystemTestDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	// Name of the service deployer to setup for this system benchmark.
+	Deployer Deployer `json:"deployer,omitempty" yaml:"deployer,omitempty"`
+	// Tests can create policies using the Fleet APIs with different formats. The "legacy" format
+	// requires to send variables with hints about their type, and defaults are not managed
+	// automatically.
+	//
+	// The newer, "simplified" format has better format support for variables and don't allow to include
+	// hints, it also uses defaults automatically, and requires explicit enablement or disablement of
+	// inputs and streams.
+	//
+	// In most cases tests should not set this value. The main use case is to set it to "legacy" for
+	// cases that cannot be fully supported with the newer "simplified" format.
+	PolicyAPIFormat PolicyAPIFormat `json:"policy_api_format,omitempty" yaml:"policy_api_format,omitempty"`
+	// Package dependencies required for this test with exact versions.
+	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
 	// If this test should be skipped, more information about why it was skipped.
 	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// If listed here, elastic-package system tests will not fail if values for the specified field
@@ -501,6 +531,8 @@ func (v SystemTestDataStream) MarshalJSON() ([]byte, error) {
 type TestCategoryConfig struct {
 	// Tests defined can be run in parallel (default true).
 	Parallel *bool `json:"parallel,omitempty" yaml:"parallel,omitempty"`
+	// Package dependencies required for these tests with exact versions.
+	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
 	// If this test should be skipped, more information about why it was skipped.
 	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 }
