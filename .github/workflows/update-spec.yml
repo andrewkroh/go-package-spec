@@ -109,6 +109,11 @@ jobs:
             exit 0
           fi
 
+          # Delete stale remote branch from a previous failed run.
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
+            git push origin --delete "$BRANCH"
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
