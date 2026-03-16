@@ -151,15 +151,19 @@ type ConditionsKibana struct {
 
 // ContentConditions conditions under which this package can be installed.
 type ContentConditions struct {
+	// Elastic conditions
 	Elastic ConditionsElastic `json:"elastic,omitempty" yaml:"elastic,omitempty"`
-	Kibana  ConditionsKibana  `json:"kibana,omitempty" yaml:"kibana,omitempty"`
+	// Kibana conditions
+	Kibana ConditionsKibana `json:"kibana,omitempty" yaml:"kibana,omitempty"`
 }
 
 type ContentManifest struct {
 	Manifest
 	// Conditions under which this package can be installed.
 	Conditions ContentConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	Discovery  Discovery         `json:"discovery,omitempty" yaml:"discovery,omitempty"`
+	// Description of the data this package can be used with. It can be used to discover the package
+	// from elements in the existing data.
+	Discovery Discovery `json:"discovery,omitempty" yaml:"discovery,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for ContentManifest.
@@ -236,19 +240,27 @@ type Icon struct {
 
 // InputElasticsearch elasticsearch asset definitions
 type InputElasticsearch struct {
-	IndexMode     IndexMode     `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
+	// Index mode to use. Index mode can be used to enable use case specific functionalities.
+	//
+	// This setting must be installed in the composable index template, not in the package component
+	// templates.
+	IndexMode IndexMode `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
+	// Index template definition
 	IndexTemplate IndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
 }
 
 type InputManifest struct {
 	Manifest
-	Agent      Agent      `json:"agent,omitempty" yaml:"agent,omitempty"`
+	// Declarations related to Agent configurations or requirements.
+	Agent Agent `json:"agent,omitempty" yaml:"agent,omitempty"`
+	// Conditions under which this package can be installed.
 	Conditions Conditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	// Elasticsearch asset definitions
 	Elasticsearch InputElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	// List of policy templates offered by this package.
 	PolicyTemplates []InputPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
-	Vars            []Var                 `json:"vars,omitempty" yaml:"vars,omitempty"`
+	// Input variables.
+	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for InputManifest.
@@ -281,7 +293,9 @@ type IntegrationElasticsearchPrivileges struct {
 
 type IntegrationManifest struct {
 	Manifest
-	Agent      Agent      `json:"agent,omitempty" yaml:"agent,omitempty"`
+	// Declarations related to Agent configurations or requirements.
+	Agent Agent `json:"agent,omitempty" yaml:"agent,omitempty"`
+	// Conditions under which this package can be installed.
 	Conditions Conditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	// Elasticsearch requirements
 	Elasticsearch IntegrationElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
@@ -292,9 +306,14 @@ type IntegrationManifest struct {
 	// When set to `individual_policies`, all policies are individually available, but there is no
 	// combined policy. The default value is `all`, where the combined policy template is available
 	// along with the individual policies.
-	PolicyTemplatesBehavior string     `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
-	VarGroups               []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
-	Vars                    []Var      `json:"vars,omitempty" yaml:"vars,omitempty"`
+	PolicyTemplatesBehavior string `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
+	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
+	// that option's vars array are shown. The selected option name is stored in the policy. Additional
+	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector
+	// metadata).
+	VarGroups []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
+	// Input variables.
+	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for IntegrationManifest.
@@ -316,18 +335,27 @@ func (v *IntegrationManifest) UnmarshalYAML(node *yamlv3.Node) error {
 // Manifest contains the common fields shared by all package manifest types.
 type Manifest struct {
 	FileMetadata `json:"-" yaml:"-"`
-	Categories   []Category `json:"categories,omitempty" yaml:"categories,omitempty"`
-	Deprecated   Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Description  string     `json:"description" yaml:"description"`
+	// Categories to which this package belongs.
+	Categories []Category `json:"categories,omitempty" yaml:"categories,omitempty"`
+	// Information on deprecation of a package or an individual feature.
+	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	// A longer description of the package. It should describe, at least all the kinds of data that is
+	// collected and with what collectors, following the structure "Collect X from Y with X".
+	Description string `json:"description" yaml:"description"`
 	// The version of the package specification format used by this package.
 	FormatVersion string `json:"format_version" yaml:"format_version"`
-	Icons         []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
+	// List of icons for by this package.
+	Icons []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
 	// The name of the package.
-	Name        string       `json:"name" yaml:"name"`
-	Owner       Owner        `json:"owner" yaml:"owner"`
+	Name  string `json:"name" yaml:"name"`
+	Owner Owner  `json:"owner" yaml:"owner"`
+	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
-	Source      Source       `json:"source,omitempty" yaml:"source,omitempty"`
-	Title       string       `json:"title" yaml:"title"`
+	// Information about the source of the package.
+	Source Source `json:"source,omitempty" yaml:"source,omitempty"`
+	// Title of the package. It should be the usual title given to the product, service or kind of
+	// source being managed by this package.
+	Title string `json:"title" yaml:"title"`
 	// The type of package.
 	Type ManifestType `json:"type" yaml:"type"`
 	// The version of the package.

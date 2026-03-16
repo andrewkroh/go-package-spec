@@ -57,13 +57,13 @@ CREATE TABLE IF NOT EXISTS packages (
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
-  description TEXT NOT NULL, -- Description
+  description TEXT NOT NULL, -- A longer description of the package. It should describe, at least all the kinds of data that is collected and with what collectors, following the structure "Collect X from Y with X".
   format_version TEXT NOT NULL, -- The version of the package specification format used by this package.
   name TEXT NOT NULL, -- The name of the package.
   owner_github TEXT NOT NULL, -- Github team name of the package maintainer.
   owner_type TEXT NOT NULL, -- Describes who owns the package and the level of support that is provided. The 'elastic' value indicates that the package is built and maintained by Elastic. The 'partner' value indicates that the p...
   source_license TEXT, -- Identifier of the license of the package, as specified in https://spdx.org/licenses/.
-  title TEXT NOT NULL, -- Title
+  title TEXT NOT NULL, -- Title of the package. It should be the usual title given to the product, service or kind of source being managed by this package.
   type TEXT NOT NULL, -- The type of package.
   version TEXT NOT NULL -- The version of the package.
 );
@@ -114,8 +114,8 @@ CREATE TABLE IF NOT EXISTS data_streams (
   dataset_is_prefix BOOLEAN, -- If true, the index pattern in the ES template will contain the dataset as a prefix only
   elasticsearch_dynamic_dataset BOOLEAN, -- When set to true, agents running this integration are granted data stream privileges for all datasets of its type
   elasticsearch_dynamic_namespace BOOLEAN, -- When set to true, agents running this integration are granted data stream privileges for all namespaces of its type
-  elasticsearch_index_mode TEXT, -- Elasticsearch.IndexMode
-  elasticsearch_index_template JSON, -- JSON-encoded IndexTemplate
+  elasticsearch_index_mode TEXT, -- Index mode to use. Index mode can be used to enable use case specific functionalities. This setting must be installed in the composable index template, not in the package component templates.
+  elasticsearch_index_template JSON, -- Index template definition
   elasticsearch_privileges JSON, -- Elasticsearch privilege requirements
   elasticsearch_source_mode TEXT, -- Source mode to use. This configures how the document source (`_source`) is stored for this data stream. If configured as `default`, this mode is not configured and it uses Elasticsearch defaults. I...
   hidden BOOLEAN, -- Specifies if a data stream is hidden, resulting in dot prefixed system indices. To set the data stream hidden without those dot prefixed indices, check `elasticsearch.index_template.data_stream.hid...
@@ -282,7 +282,7 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   file_path TEXT, -- source file path
   file_line INTEGER, -- source file line number
   file_column INTEGER, -- source file column number
-  configuration_links JSON, -- JSON-encoded ConfigurationLinks
+  configuration_links JSON, -- List of links related to inputs and policy templates.
   data_streams JSON, -- List of data streams compatible with the policy template.
   deployment_modes_agentless_division TEXT, -- The division responsible for the integration. This is used to tag the agentless agent deployments for monitoring.
   deployment_modes_agentless_enabled BOOLEAN, -- Indicates if the agentless deployment mode is available for this template policy. It is disabled by default.
@@ -293,7 +293,7 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   deployment_modes_agentless_team TEXT, -- The team responsible for the integration. This is used to tag the agentless agent deployments for monitoring.
   deployment_modes_default_enabled BOOLEAN, -- Indicates if the default deployment mode is available for this template policy. It is enabled by default.
   description TEXT NOT NULL, -- Longer description of policy template.
-  fips_compatible BOOLEAN, -- FipsCompatible
+  fips_compatible BOOLEAN, -- Indicate if this package is capable of satisfying FIPS requirements. Set to false if it uses any input that cannot be configured to use FIPS cryptography.
   multiple BOOLEAN, -- Multiple
   name TEXT NOT NULL, -- Name of policy template.
   title TEXT NOT NULL -- Title of policy template.

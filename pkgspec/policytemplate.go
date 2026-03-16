@@ -112,19 +112,27 @@ func (v DeploymentModesDefault) MarshalJSON() ([]byte, error) {
 }
 
 type InputPolicyTemplate struct {
+	// List of links related to inputs and policy templates.
 	ConfigurationLinks []ConfigurationLink `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
-	DeploymentModes    DeploymentModes     `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
-	Deprecated         Deprecated          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	// Options related to the deployment modes. The deployment mode refers to the mode used to deploy
+	// the Elastic Agents running this policy.
+	DeploymentModes DeploymentModes `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
+	// Information on deprecation of a package or an individual feature.
+	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Longer description of policy template.
 	Description string `json:"description" yaml:"description"`
 	// When enabled, decides the transforms and index templates that need to be created depending on the
 	// pipelines specified in the configuration.
-	DynamicSignalTypes *bool  `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
-	FipsCompatible     *bool  `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
-	Icons              []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
-	Input              string `json:"input" yaml:"input"`
+	DynamicSignalTypes *bool `json:"dynamic_signal_types,omitempty" yaml:"dynamic_signal_types,omitempty"`
+	// Indicate if this package is capable of satisfying FIPS requirements. Set to false if it uses any
+	// input that cannot be configured to use FIPS cryptography.
+	FipsCompatible *bool `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
+	// List of icons for by this package.
+	Icons []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Input string `json:"input" yaml:"input"`
 	// Name of policy template.
-	Name        string       `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name"`
+	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
 	// Path to Elasticsearch index template for stream.
 	TemplatePath string `json:"template_path" yaml:"template_path"`
@@ -132,7 +140,8 @@ type InputPolicyTemplate struct {
 	Title string `json:"title" yaml:"title"`
 	// Type of data stream
 	Type InputPolicyTemplateType `json:"type" yaml:"type"`
-	Vars []Var                   `json:"vars,omitempty" yaml:"vars,omitempty"`
+	// Input variables.
+	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // InputPolicyTemplateType type of data stream
@@ -147,26 +156,36 @@ const (
 )
 
 type PolicyTemplate struct {
-	FileMetadata       `json:"-" yaml:"-"`
-	Categories         []Category          `json:"categories,omitempty" yaml:"categories,omitempty"`
+	FileMetadata `json:"-" yaml:"-"`
+	// Categories to which this package belongs.
+	Categories []Category `json:"categories,omitempty" yaml:"categories,omitempty"`
+	// List of links related to inputs and policy templates.
 	ConfigurationLinks []ConfigurationLink `json:"configuration_links,omitempty" yaml:"configuration_links,omitempty"`
 	// List of data streams compatible with the policy template.
-	DataStreams     []string        `json:"data_streams,omitempty" yaml:"data_streams,omitempty"`
+	DataStreams []string `json:"data_streams,omitempty" yaml:"data_streams,omitempty"`
+	// Options related to the deployment modes. The deployment mode refers to the mode used to deploy
+	// the Elastic Agents running this policy.
 	DeploymentModes DeploymentModes `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
-	Deprecated      Deprecated      `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	// Information on deprecation of a package or an individual feature.
+	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Longer description of policy template.
-	Description    string `json:"description" yaml:"description"`
-	FipsCompatible *bool  `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
-	Icons          []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
+	Description string `json:"description" yaml:"description"`
+	// Indicate if this package is capable of satisfying FIPS requirements. Set to false if it uses any
+	// input that cannot be configured to use FIPS cryptography.
+	FipsCompatible *bool `json:"fips_compatible,omitempty" yaml:"fips_compatible,omitempty"`
+	// List of icons for by this package.
+	Icons []Icon `json:"icons,omitempty" yaml:"icons,omitempty"`
 	// List of inputs supported by policy template.
 	Inputs   []PolicyTemplateInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 	Multiple *bool                 `json:"multiple,omitempty" yaml:"multiple,omitempty"`
 	// Name of policy template.
-	Name        string       `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name"`
+	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
 	// Title of policy template.
 	Title string `json:"title" yaml:"title"`
-	Vars  []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
+	// Input variables.
+	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for PolicyTemplate.
@@ -186,7 +205,8 @@ type PolicyTemplateInput struct {
 	// List of deployment modes that this input is compatible with. If not specified, the input is
 	// compatible with all deployment modes.
 	DeploymentModes []PolicyTemplateInputDeploymentMode `json:"deployment_modes,omitempty" yaml:"deployment_modes,omitempty"`
-	Deprecated      Deprecated                          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	// Information on deprecation of a package or an individual feature.
+	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Longer description of input.
 	Description string `json:"description" yaml:"description"`
 	// HideInVarGroupOptions filters out specific var_group options for this input.
@@ -194,7 +214,8 @@ type PolicyTemplateInput struct {
 	// Name of the input group
 	InputGroup PolicyTemplateInputGroup `json:"input_group,omitempty" yaml:"input_group,omitempty"`
 	// Can input be defined multiple times
-	Multi        *bool        `json:"multi,omitempty" yaml:"multi,omitempty"`
+	Multi *bool `json:"multi,omitempty" yaml:"multi,omitempty"`
+	// Required conditional variables for the package.
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
 	// Path of the config template for the input.
 	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
@@ -202,7 +223,8 @@ type PolicyTemplateInput struct {
 	Title string `json:"title" yaml:"title"`
 	// Type of input.
 	Type string `json:"type" yaml:"type"`
-	Vars []Var  `json:"vars,omitempty" yaml:"vars,omitempty"`
+	// Input variables.
+	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 type PolicyTemplateInputDeploymentMode string

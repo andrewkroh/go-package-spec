@@ -11,9 +11,14 @@ type DataStreamElasticsearch struct {
 	DynamicDataset *bool `json:"dynamic_dataset,omitempty" yaml:"dynamic_dataset,omitempty"`
 	// When set to true, agents running this integration are granted data stream privileges for all
 	// namespaces of its type
-	DynamicNamespace *bool         `json:"dynamic_namespace,omitempty" yaml:"dynamic_namespace,omitempty"`
-	IndexMode        IndexMode     `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
-	IndexTemplate    IndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
+	DynamicNamespace *bool `json:"dynamic_namespace,omitempty" yaml:"dynamic_namespace,omitempty"`
+	// Index mode to use. Index mode can be used to enable use case specific functionalities.
+	//
+	// This setting must be installed in the composable index template, not in the package component
+	// templates.
+	IndexMode IndexMode `json:"index_mode,omitempty" yaml:"index_mode,omitempty"`
+	// Index template definition
+	IndexTemplate IndexTemplate `json:"index_template,omitempty" yaml:"index_template,omitempty"`
 	// Elasticsearch privilege requirements
 	Privileges DataStreamElasticsearchPrivileges `json:"privileges,omitempty" yaml:"privileges,omitempty"`
 	// Source mode to use. This configures how the document source (`_source`) is stored for this data
@@ -38,15 +43,17 @@ type DataStreamElasticsearchPrivileges struct {
 
 type DataStreamManifest struct {
 	FileMetadata `json:"-" yaml:"-"`
-	Agent        Agent `json:"agent,omitempty" yaml:"agent,omitempty"`
+	// Declarations related to Agent configurations or requirements.
+	Agent Agent `json:"agent,omitempty" yaml:"agent,omitempty"`
 	// Optional categories that describe the type of data collected by this data stream. Used for
 	// telemetry and categorization purposes. Skip if integration-level categories are appropriate.
 	Categories []Category `json:"categories,omitempty" yaml:"categories,omitempty"`
 	// Name of data set.
 	Dataset string `json:"dataset,omitempty" yaml:"dataset,omitempty"`
 	// If true, the index pattern in the ES template will contain the dataset as a prefix only
-	DatasetIsPrefix *bool      `json:"dataset_is_prefix,omitempty" yaml:"dataset_is_prefix,omitempty"`
-	Deprecated      Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	DatasetIsPrefix *bool `json:"dataset_is_prefix,omitempty" yaml:"dataset_is_prefix,omitempty"`
+	// Information on deprecation of a package or an individual feature.
+	Deprecated Deprecated `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	// Elasticsearch asset definitions
 	Elasticsearch DataStreamElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	// Specifies if a data stream is hidden, resulting in dot prefixed system indices. To set the data
@@ -116,16 +123,22 @@ type DataStreamStream struct {
 	// following the structure "Collect X from Y with X".
 	Description string `json:"description" yaml:"description"`
 	// Is stream enabled?
-	Enabled      *bool        `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Input        string       `json:"input" yaml:"input"`
+	Enabled *bool  `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Input   string `json:"input" yaml:"input"`
+	// Required conditional variables for the package.
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
 	// Path to Elasticsearch index template for stream.
 	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
 	// Title of the stream. It should include the source of the data that is being collected, and the
 	// kind of data collected such as logs or metrics. Words should be uppercased.
-	Title     string     `json:"title" yaml:"title"`
+	Title string `json:"title" yaml:"title"`
+	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
+	// that option's vars array are shown. The selected option name is stored in the policy. Additional
+	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector
+	// metadata).
 	VarGroups []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
-	Vars      []Var      `json:"vars,omitempty" yaml:"vars,omitempty"`
+	// Input variables.
+	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler for DataStreamStream.

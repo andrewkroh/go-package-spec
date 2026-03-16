@@ -58,6 +58,8 @@ const (
 )
 
 type TransformDestIndexSettings struct {
+	// Type of compression to use. The default is to use LZ4, `best_compression` uses DEFLATE, with
+	// higher compression but lower ingestion performance.
 	Codec IndexCodec `json:"codec,omitempty" yaml:"codec,omitempty"`
 	// Makes the index hidden.
 	Hidden  *bool              `json:"hidden,omitempty" yaml:"hidden,omitempty"`
@@ -66,7 +68,8 @@ type TransformDestIndexSettings struct {
 	Mode TransformDestIndexMode `json:"mode,omitempty" yaml:"mode,omitempty"`
 	// Number used when splitting shards.
 	NumberOfRoutingShards int `json:"number_of_routing_shards,omitempty" yaml:"number_of_routing_shards,omitempty"`
-	NumberOfShards        int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
+	// Number of primary shards that the data stream should have.
+	NumberOfShards int `json:"number_of_shards,omitempty" yaml:"number_of_shards,omitempty"`
 	// How often to perform a refresh operation, which makes recent changes to the index visible to
 	// search.
 	RefreshInterval string    `json:"refresh_interval,omitempty" yaml:"refresh_interval,omitempty"`
@@ -75,10 +78,13 @@ type TransformDestIndexSettings struct {
 
 // TransformDestIndexTemplate elasticsearch index template for the transform's destination index
 type TransformDestIndexTemplate struct {
-	DataStream     IndexTemplateDataStream            `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
-	IngestPipeline IndexTemplatePipeline              `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
-	Mappings       IndexTemplateMappings              `json:"mappings,omitempty" yaml:"mappings,omitempty"`
-	Settings       TransformDestIndexTemplateSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+	// Data stream section of index template
+	DataStream IndexTemplateDataStream `json:"data_stream,omitempty" yaml:"data_stream,omitempty"`
+	// Elasticsearch ingest pipeline settings
+	IngestPipeline IndexTemplatePipeline `json:"ingest_pipeline,omitempty" yaml:"ingest_pipeline,omitempty"`
+	// Mappings section of index template
+	Mappings IndexTemplateMappings              `json:"mappings,omitempty" yaml:"mappings,omitempty"`
+	Settings TransformDestIndexTemplateSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
 }
 
 type TransformDestIndexTemplateSettings struct {
