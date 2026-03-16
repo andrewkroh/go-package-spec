@@ -409,10 +409,17 @@ func (m *TypeMapper) processObject(
 			fieldRef.Pointer = true
 		}
 
+		doc := pi.schema.Description
+		if doc == "" && pi.schema.Ref != "" {
+			if resolved, _, err := m.registry.ResolveRef(pi.schema.Ref, pi.contextFile); err == nil && resolved != nil {
+				doc = resolved.Description
+			}
+		}
+
 		goType.Fields = append(goType.Fields, GoField{
 			Name:     fieldName,
 			JSONName: propName,
-			Doc:      cleanDoc(pi.schema.Description),
+			Doc:      cleanDoc(doc),
 			Type:     fieldRef,
 			Required: isRequired,
 		})
