@@ -529,6 +529,7 @@ type SystemTest struct {
 	Deployer                        sql.NullString
 	PolicyApiFormat                 sql.NullString
 	Requires                        interface{}
+	Samples                         interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}

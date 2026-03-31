@@ -47,3 +47,19 @@ type Requires struct {
 	// List of required input packages.
 	Input []PackageDependency `json:"input,omitempty" yaml:"input,omitempty"`
 }
+
+type SystemTestConfigSample struct {
+	// Condition to filter documents used for the sample event.
+	Condition SystemTestConfigSampleCondition `json:"condition,omitempty" yaml:"condition,omitempty"`
+	// Name identifying the sample event file to use. Corresponds to the suffix in
+	// `sample_event_<name>.json`.
+	Name string `json:"name" yaml:"name"`
+}
+
+// SystemTestConfigSampleCondition condition to filter documents used for the sample event.
+type SystemTestConfigSampleCondition struct {
+	// Field name to check in the document.
+	Key string `json:"key" yaml:"key"`
+	// Expected value of the field.
+	Value string `json:"value,omitempty" yaml:"value,omitempty"`
+}

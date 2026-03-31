@@ -2033,12 +2033,14 @@ INSERT INTO system_tests (
   deployer,
   policy_api_format,
   requires,
+  samples,
   skip_link,
   skip_reason,
   skip_ignored_fields,
   vars,
   wait_for_data_timeout
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -2088,6 +2090,7 @@ type InsertSystemTestsParams struct {
 	Deployer                        sql.NullString
 	PolicyApiFormat                 sql.NullString
 	Requires                        interface{}
+	Samples                         interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}
@@ -2117,6 +2120,7 @@ func (q *Queries) InsertSystemTests(ctx context.Context, arg InsertSystemTestsPa
 		arg.Deployer,
 		arg.PolicyApiFormat,
 		arg.Requires,
+		arg.Samples,
 		arg.SkipLink,
 		arg.SkipReason,
 		arg.SkipIgnoredFields,

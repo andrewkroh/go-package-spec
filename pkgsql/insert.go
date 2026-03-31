@@ -421,6 +421,7 @@ func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.Inser
 		FilePath:                        toNullString(v.FilePath()),
 		PolicyApiFormat:                 toNullString(string(v.PolicyAPIFormat)),
 		Requires:                        jsonNullString(v.Requires),
+		Samples:                         jsonNullString(v.Samples),
 		SkipIgnoredFields:               jsonNullString(v.SkipIgnoredFields),
 		SkipLink:                        v.Skip.Link,
 		SkipReason:                      v.Skip.Reason,

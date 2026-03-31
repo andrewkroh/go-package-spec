@@ -448,6 +448,10 @@ type SystemTestConfig struct {
 	PolicyAPIFormat PolicyAPIFormat `json:"policy_api_format,omitempty" yaml:"policy_api_format,omitempty"`
 	// Package dependencies required for this test with exact versions.
 	Requires []map[string]any `json:"requires,omitempty" yaml:"requires,omitempty"`
+	// List of sample event files to collect from this test. Each entry selects a sample event file by
+	// name (the suffix in `sample_event_<name>.json`) and can optionally define a condition to restrict
+	// which documents are used.
+	Samples []SystemTestConfigSample `json:"samples,omitempty" yaml:"samples,omitempty"`
 	// If this test should be skipped, more information about why it was skipped.
 	Skip TestSkip `json:"skip,omitempty" yaml:"skip,omitempty"`
 	// If listed here, elastic-package system tests will not fail if values for the specified field

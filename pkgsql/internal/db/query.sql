@@ -830,12 +830,14 @@ INSERT INTO system_tests (
   deployer,
   policy_api_format,
   requires,
+  samples,
   skip_link,
   skip_reason,
   skip_ignored_fields,
   vars,
   wait_for_data_timeout
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
