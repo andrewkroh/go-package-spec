@@ -307,7 +307,9 @@ type PolicyTemplate struct {
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
 	Name                                            string
+	Sections                                        interface{}
 	Title                                           string
+	VarGroups                                       interface{}
 }
 
 type PolicyTemplateCategory struct {
@@ -336,11 +338,15 @@ type PolicyTemplateInput struct {
 	InputGroup            sql.NullString
 	MigrateFrom           sql.NullString
 	Multi                 sql.NullBool
+	Name                  sql.NullString
 	Package               sql.NullString
+	Sections              interface{}
+	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
 	Title                 string
 	Type                  sql.NullString
+	VarGroups             interface{}
 }
 
 type PolicyTemplateInputVar struct {
@@ -496,6 +502,7 @@ type Stream struct {
 	Input              sql.NullString
 	MigrateFrom        sql.NullString
 	Package            sql.NullString
+	Sections           interface{}
 	TemplatePath       sql.NullString
 	TemplatePaths      interface{}
 	Title              string
@@ -529,6 +536,7 @@ type SystemTest struct {
 	Deployer                        sql.NullString
 	PolicyApiFormat                 sql.NullString
 	Requires                        interface{}
+	Samples                         interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}
@@ -589,6 +597,7 @@ type Var struct {
 	Options               interface{}
 	Required              sql.NullBool
 	Secret                sql.NullBool
+	Section               sql.NullString
 	ShowUser              sql.NullBool
 	Title                 sql.NullString
 	Type                  string

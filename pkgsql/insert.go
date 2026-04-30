@@ -291,8 +291,10 @@ func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64, dynamic
 		Name:                                            v.Name,
 		PackagesID:                                      parentID,
 		PolicyTemplateType:                              policyTemplateType,
+		Sections:                                        jsonNullString(v.Sections),
 		TemplatePath:                                    templatePath,
 		Title:                                           v.Title,
+		VarGroups:                                       jsonNullString(v.VarGroups),
 	}
 }
 
@@ -318,12 +320,16 @@ func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int6
 		InputGroup:            toNullString(string(v.InputGroup)),
 		MigrateFrom:           toNullString(v.MigrateFrom),
 		Multi:                 toNullBool(v.Multi),
+		Name:                  toNullString(v.Name),
 		Package:               toNullString(v.Package),
 		PolicyTemplatesID:     parentID,
+		Sections:              jsonNullString(v.Sections),
+		ShowDivider:           toNullBool(v.ShowDivider),
 		TemplatePath:          toNullString(v.TemplatePath),
 		TemplatePaths:         jsonNullString(v.TemplatePaths),
 		Title:                 v.Title,
 		Type:                  toNullString(v.Type),
+		VarGroups:             jsonNullString(v.VarGroups),
 	}
 }
 
@@ -394,6 +400,7 @@ func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) db.InsertStre
 		Input:              toNullString(v.Input),
 		MigrateFrom:        toNullString(v.MigrateFrom),
 		Package:            toNullString(v.Package),
+		Sections:           jsonNullString(v.Sections),
 		TemplatePath:       toNullString(v.TemplatePath),
 		TemplatePaths:      jsonNullString(v.TemplatePaths),
 		Title:              v.Title,
@@ -421,6 +428,7 @@ func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.Inser
 		FilePath:                        toNullString(v.FilePath()),
 		PolicyApiFormat:                 toNullString(string(v.PolicyAPIFormat)),
 		Requires:                        jsonNullString(v.Requires),
+		Samples:                         jsonNullString(v.Samples),
 		SkipIgnoredFields:               jsonNullString(v.SkipIgnoredFields),
 		SkipLink:                        v.Skip.Link,
 		SkipReason:                      v.Skip.Reason,
@@ -481,6 +489,7 @@ func mapVarsParams(v *pkgspec.Var) db.InsertVarsParams {
 		Options:               jsonNullString(v.Options),
 		Required:              toNullBool(v.Required),
 		Secret:                toNullBool(v.Secret),
+		Section:               toNullString(v.Section),
 		ShowUser:              toNullBool(v.ShowUser),
 		Title:                 toNullString(v.Title),
 		Type:                  string(v.Type),

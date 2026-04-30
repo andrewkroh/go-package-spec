@@ -284,6 +284,7 @@ const (
 	FieldTypeUnsignedLong          FieldType = "unsigned_long"
 	FieldTypeCountedKeyword        FieldType = "counted_keyword"
 	FieldTypeSemanticText          FieldType = "semantic_text"
+	FieldTypeGeoShape              FieldType = "geo_shape"
 )
 
 // FieldUnit unit type to associate with a numeric field. This is attached to the field as metadata

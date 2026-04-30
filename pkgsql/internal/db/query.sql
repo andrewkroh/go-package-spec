@@ -468,8 +468,12 @@ INSERT INTO policy_templates (
   fips_compatible,
   multiple,
   name,
-  title
+  sections,
+  title,
+  var_groups
 ) VALUES (
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -531,12 +535,20 @@ INSERT INTO policy_template_inputs (
   input_group,
   migrate_from,
   multi,
+  name,
   package,
+  sections,
+  show_divider,
   template_path,
   template_paths,
   title,
-  type
+  type,
+  var_groups
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -789,10 +801,12 @@ INSERT INTO streams (
   input,
   migrate_from,
   package,
+  sections,
   template_path,
   template_paths,
   title
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -830,12 +844,14 @@ INSERT INTO system_tests (
   deployer,
   policy_api_format,
   requires,
+  samples,
   skip_link,
   skip_reason,
   skip_ignored_fields,
   vars,
   wait_for_data_timeout
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -945,11 +961,13 @@ INSERT INTO vars (
   options,
   required,
   secret,
+  section,
   show_user,
   title,
   type,
   url_allowed_schemes
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,

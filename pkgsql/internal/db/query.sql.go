@@ -1212,12 +1212,20 @@ INSERT INTO policy_template_inputs (
   input_group,
   migrate_from,
   multi,
+  name,
   package,
+  sections,
+  show_divider,
   template_path,
   template_paths,
   title,
-  type
+  type,
+  var_groups
 ) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -1243,11 +1251,15 @@ type InsertPolicyTemplateInputsParams struct {
 	InputGroup            sql.NullString
 	MigrateFrom           sql.NullString
 	Multi                 sql.NullBool
+	Name                  sql.NullString
 	Package               sql.NullString
+	Sections              interface{}
+	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
 	Title                 string
 	Type                  sql.NullString
+	VarGroups             interface{}
 }
 
 func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPolicyTemplateInputsParams) (int64, error) {
@@ -1260,11 +1272,15 @@ func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPoli
 		arg.InputGroup,
 		arg.MigrateFrom,
 		arg.Multi,
+		arg.Name,
 		arg.Package,
+		arg.Sections,
+		arg.ShowDivider,
 		arg.TemplatePath,
 		arg.TemplatePaths,
 		arg.Title,
 		arg.Type,
+		arg.VarGroups,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -1354,8 +1370,12 @@ INSERT INTO policy_templates (
   fips_compatible,
   multiple,
   name,
-  title
+  sections,
+  title,
+  var_groups
 ) VALUES (
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -1405,7 +1425,9 @@ type InsertPolicyTemplatesParams struct {
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
 	Name                                            string
+	Sections                                        interface{}
 	Title                                           string
+	VarGroups                                       interface{}
 }
 
 func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTemplatesParams) (int64, error) {
@@ -1432,7 +1454,9 @@ func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTem
 		arg.FipsCompatible,
 		arg.Multiple,
 		arg.Name,
+		arg.Sections,
 		arg.Title,
+		arg.VarGroups,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -1954,10 +1978,12 @@ INSERT INTO streams (
   input,
   migrate_from,
   package,
+  sections,
   template_path,
   template_paths,
   title
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -1985,6 +2011,7 @@ type InsertStreamsParams struct {
 	Input              sql.NullString
 	MigrateFrom        sql.NullString
 	Package            sql.NullString
+	Sections           interface{}
 	TemplatePath       sql.NullString
 	TemplatePaths      interface{}
 	Title              string
@@ -2002,6 +2029,7 @@ func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (i
 		arg.Input,
 		arg.MigrateFrom,
 		arg.Package,
+		arg.Sections,
 		arg.TemplatePath,
 		arg.TemplatePaths,
 		arg.Title,
@@ -2033,12 +2061,14 @@ INSERT INTO system_tests (
   deployer,
   policy_api_format,
   requires,
+  samples,
   skip_link,
   skip_reason,
   skip_ignored_fields,
   vars,
   wait_for_data_timeout
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -2088,6 +2118,7 @@ type InsertSystemTestsParams struct {
 	Deployer                        sql.NullString
 	PolicyApiFormat                 sql.NullString
 	Requires                        interface{}
+	Samples                         interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}
@@ -2117,6 +2148,7 @@ func (q *Queries) InsertSystemTests(ctx context.Context, arg InsertSystemTestsPa
 		arg.Deployer,
 		arg.PolicyApiFormat,
 		arg.Requires,
+		arg.Samples,
 		arg.SkipLink,
 		arg.SkipReason,
 		arg.SkipIgnoredFields,
@@ -2295,11 +2327,13 @@ INSERT INTO vars (
   options,
   required,
   secret,
+  section,
   show_user,
   title,
   type,
   url_allowed_schemes
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -2334,6 +2368,7 @@ type InsertVarsParams struct {
 	Options               interface{}
 	Required              sql.NullBool
 	Secret                sql.NullBool
+	Section               sql.NullString
 	ShowUser              sql.NullBool
 	Title                 sql.NullString
 	Type                  string
@@ -2355,6 +2390,7 @@ func (q *Queries) InsertVars(ctx context.Context, arg InsertVarsParams) (int64, 
 		arg.Options,
 		arg.Required,
 		arg.Secret,
+		arg.Section,
 		arg.ShowUser,
 		arg.Title,
 		arg.Type,

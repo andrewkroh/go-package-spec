@@ -296,7 +296,9 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   fips_compatible BOOLEAN, -- Indicate if this package is capable of satisfying FIPS requirements. Set to false if it uses any input that cannot be configured to use FIPS cryptography.
   multiple BOOLEAN, -- Multiple
   name TEXT NOT NULL, -- Name of policy template.
-  title TEXT NOT NULL -- Title of policy template.
+  sections JSON, -- Defines named sections used to group and visually organize variables in the Fleet UI. Variables reference a section by name using the `section` attribute. Sections are rendered in the order they ar...
+  title TEXT NOT NULL, -- Title of policy template.
+  var_groups JSON -- Defines mutually exclusive groups of variables. When an option is selected, only the variables in that option's vars array are shown. The selected option name is stored in the policy. Additional pr...
 );
 
 CREATE TABLE IF NOT EXISTS policy_template_categories (
@@ -328,11 +330,15 @@ CREATE TABLE IF NOT EXISTS policy_template_inputs (
   input_group TEXT, -- Name of the input group
   migrate_from TEXT, -- Previous input type to migrate configuration from. This allows Fleet to automatically migrate the policy configuration when replacing one input implementation with an equivalent one. This field sho...
   multi BOOLEAN, -- Can input be defined multiple times
+  name TEXT, -- Unique name for this input within the policy template. When set, data streams reference this input by name instead of type, allowing multiple inputs of the same type to coexist in the same policy t...
   package TEXT, -- Reference to an input package. When specified, configuration is inherited from the referenced package. The package must be listed in the manifest's requires section.
+  sections JSON, -- Defines named sections used to group and visually organize variables in the Fleet UI. Variables reference a section by name using the `section` attribute. Sections are rendered in the order they ar...
+  show_divider BOOLEAN, -- When false, suppresses the automatic horizontal divider rendered after this section.
   template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. agent/input/httpjson.yml.hbs). NULL when not specified. Joinable directly to agent_templates.file_path.
   template_paths JSON, -- Paths of the config templates. Templates are rendered and merged sequentially; later templates override earlier ones for conflicting keys.
   title TEXT NOT NULL, -- Title of input.
-  type TEXT -- Type of input.
+  type TEXT, -- Type of input.
+  var_groups JSON -- Defines mutually exclusive groups of variables. When an option is selected, only the variables in that option's vars array are shown. The selected option name is stored in the policy. Additional pr...
 );
 
 CREATE TABLE IF NOT EXISTS policy_template_screenshots (
@@ -488,6 +494,7 @@ CREATE TABLE IF NOT EXISTS streams (
   input TEXT, -- Input
   migrate_from TEXT, -- Previous input type to migrate configuration from. This allows Fleet to automatically migrate the policy configuration when replacing one input implementation with an equivalent one. This field sho...
   package TEXT, -- Reference to an input package. When specified, configuration is inherited from the referenced package. The package must be listed in the manifest's requires section.
+  sections JSON, -- Defines named sections used to group and visually organize variables in the Fleet UI. Variables reference a section by name using the `section` attribute. Sections are rendered in the order they ar...
   template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. data_stream/logs/agent/stream/stream.yml.hbs). Defaults to stream.yml.hbs when not specified in the manifest. Joinable directly to agent_templates.file_path.
   template_paths JSON, -- Paths of the config templates. Templates are rendered and merged sequentially; later templates override earlier ones for conflicting keys.
   title TEXT NOT NULL -- Title of the stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
@@ -516,6 +523,7 @@ CREATE TABLE IF NOT EXISTS system_tests (
   deployer TEXT, -- Name of the service deployer to setup for this system benchmark.
   policy_api_format TEXT, -- Tests can create policies using the Fleet APIs with different formats. The "legacy" format requires to send variables with hints about their type, and defaults are not managed automatically. The ne...
   requires JSON, -- Package dependencies required for this test with exact versions.
+  samples JSON, -- List of sample event files to collect from this test. Each entry selects a sample event file by name (the suffix in `sample_event_<name>.json`) and can optionally define a condition to restrict whi...
   skip_link TEXT NOT NULL, -- Link to issue with more details about skipped test or to track re-enabling skipped test.
   skip_reason TEXT NOT NULL, -- Short explanation for why test has been skipped.
   skip_ignored_fields JSON, -- If listed here, elastic-package system tests will not fail if values for the specified field names can't be indexed for any incoming documents. This should only be used if the failure is related to...
@@ -580,6 +588,7 @@ CREATE TABLE IF NOT EXISTS vars (
   options JSON, -- Options provides the list of selectable options when type is "select".
   required BOOLEAN, -- Is variable required?
   secret BOOLEAN, -- Specifying that a variable is secret means that Kibana will store the value separate from the package policy in a more secure index. This is useful for passwords and other sensitive information. On...
+  section TEXT, -- Name of the section this variable belongs to. Must match a section name defined in the `sections` list at the same level.
   show_user BOOLEAN, -- Should this variable be shown to the user by default?
   title TEXT, -- Title of variable.
   type TEXT NOT NULL, -- Data type of variable. A duration type is a sequence of decimal numbers, each with a unit suffix, such as "60s", "1m" or "2h45m". Duration values must follow these rules: - Use time units of "ms", ...
