@@ -14,12 +14,12 @@ import (
 // DataStream represents a fully-loaded data stream within an integration package.
 type DataStream struct {
 	Manifest       pkgspec.DataStreamManifest
-	Fields         map[string]*FieldsFile    // keyed by filename
-	Pipelines      map[string]*PipelineFile  // keyed by filename (e.g., "default.yml")
-	ILMPolicies    map[string]*ILMPolicy     // keyed by filename, nil if absent
-	Lifecycle      *pkgspec.Lifecycle        // nil if absent
-	RoutingRules   []pkgspec.RoutingRuleSet  // nil if absent
-	SampleEvent    json.RawMessage           // contents of sample_event.json, nil if absent
+	Fields         map[string]*FieldsFile     // keyed by filename
+	Pipelines      map[string]*PipelineFile   // keyed by filename (e.g., "default.yml")
+	ILMPolicies    map[string]*ILMPolicy      // keyed by filename, nil if absent
+	Lifecycle      *pkgspec.Lifecycle         // nil if absent
+	RoutingRules   []pkgspec.RoutingRuleSet   // nil if absent
+	SampleEvent    json.RawMessage            // contents of sample_event.json, nil if absent
 	SampleEvents   map[string]json.RawMessage // contents of sample_event_<name>.json, keyed by name (suffix), nil if none
 	AgentTemplates map[string]*AgentTemplate  // nil unless WithAgentTemplates used
 	Tests          *DataStreamTests           // nil unless WithTestConfigs used
