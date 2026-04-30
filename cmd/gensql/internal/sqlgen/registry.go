@@ -30,8 +30,12 @@ var typeRegistry = map[string]reflect.Type{
 	"FlatField": reflect.TypeOf(pkgspec.FlatField{}),
 
 	// Variables.
-	"Var":      reflect.TypeOf(pkgspec.Var{}),
-	"VarGroup": reflect.TypeOf(pkgspec.VarGroup{}),
+	"Var":            reflect.TypeOf(pkgspec.Var{}),
+	"VarGroup":       reflect.TypeOf(pkgspec.VarGroup{}),
+	"VarGroupOption": reflect.TypeOf(pkgspec.VarGroupOption{}),
+
+	// Sections.
+	"Section": reflect.TypeOf(pkgspec.Section{}),
 
 	// Changelog.
 	"Changelog":      reflect.TypeOf(pkgspec.Changelog{}),
@@ -57,10 +61,11 @@ var typeRegistry = map[string]reflect.Type{
 	"RoutingRule":    reflect.TypeOf(pkgspec.RoutingRule{}),
 
 	// Tests.
-	"SystemTestConfig":   reflect.TypeOf(pkgspec.SystemTestConfig{}),
-	"StaticTestConfig":   reflect.TypeOf(pkgspec.StaticTestConfig{}),
-	"PolicyTestConfig":   reflect.TypeOf(pkgspec.PolicyTestConfig{}),
-	"PipelineTestConfig": reflect.TypeOf(pkgspec.PipelineTestConfig{}),
+	"SystemTestConfig":       reflect.TypeOf(pkgspec.SystemTestConfig{}),
+	"SystemTestConfigSample": reflect.TypeOf(pkgspec.SystemTestConfigSample{}),
+	"StaticTestConfig":       reflect.TypeOf(pkgspec.StaticTestConfig{}),
+	"PolicyTestConfig":       reflect.TypeOf(pkgspec.PolicyTestConfig{}),
+	"PipelineTestConfig":     reflect.TypeOf(pkgspec.PipelineTestConfig{}),
 
 	// Tags.
 	"Tag": reflect.TypeOf(pkgspec.Tag{}),

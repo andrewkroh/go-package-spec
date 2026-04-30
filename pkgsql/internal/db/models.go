@@ -336,7 +336,9 @@ type PolicyTemplateInput struct {
 	InputGroup            sql.NullString
 	MigrateFrom           sql.NullString
 	Multi                 sql.NullBool
+	Name                  sql.NullString
 	Package               sql.NullString
+	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
 	Title                 string
@@ -396,6 +398,18 @@ type SampleEvent struct {
 	ID            int64
 	DataStreamsID int64
 	Event         interface{}
+	Name          sql.NullString
+}
+
+type Section struct {
+	ID                     int64
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Title                  string
 }
 
 type SecurityRule struct {
@@ -536,6 +550,14 @@ type SystemTest struct {
 	WaitForDataTimeout              sql.NullString
 }
 
+type SystemTestSample struct {
+	ID             int64
+	SystemTestsID  int64
+	ConditionKey   string
+	ConditionValue sql.NullString
+	Name           string
+}
+
 type Tag struct {
 	ID         int64
 	PackagesID int64
@@ -589,8 +611,34 @@ type Var struct {
 	Options               interface{}
 	Required              sql.NullBool
 	Secret                sql.NullBool
+	Section               sql.NullString
 	ShowUser              sql.NullBool
 	Title                 sql.NullString
 	Type                  string
 	UrlAllowedSchemes     interface{}
+}
+
+type VarGroup struct {
+	ID                     int64
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Required               sql.NullBool
+	SelectorTitle          string
+	ShowDivider            sql.NullBool
+	Title                  string
+}
+
+type VarGroupOption struct {
+	ID                    int64
+	VarGroupsID           int64
+	Description           sql.NullString
+	HideInDeploymentModes interface{}
+	Name                  string
+	Title                 string
+	Vars                  interface{}
+	AdditionalProperties  interface{}
 }

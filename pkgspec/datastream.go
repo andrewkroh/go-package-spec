@@ -138,6 +138,10 @@ type DataStreamStream struct {
 	Package string `json:"package,omitempty" yaml:"package,omitempty"`
 	// Required conditional variables for the package.
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
+	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
+	// reference a section by name using the `section` attribute. Sections are rendered in the order
+	// they are defined.
+	Sections []Section `json:"sections,omitempty" yaml:"sections,omitempty"`
 	// Path of the config template.
 	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
 	// Paths of the config templates. Templates are rendered and merged sequentially; later templates

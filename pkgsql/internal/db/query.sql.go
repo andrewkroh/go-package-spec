@@ -1212,12 +1212,16 @@ INSERT INTO policy_template_inputs (
   input_group,
   migrate_from,
   multi,
+  name,
   package,
+  show_divider,
   template_path,
   template_paths,
   title,
   type
 ) VALUES (
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -1243,7 +1247,9 @@ type InsertPolicyTemplateInputsParams struct {
 	InputGroup            sql.NullString
 	MigrateFrom           sql.NullString
 	Multi                 sql.NullBool
+	Name                  sql.NullString
 	Package               sql.NullString
+	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
 	Title                 string
@@ -1260,7 +1266,9 @@ func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPoli
 		arg.InputGroup,
 		arg.MigrateFrom,
 		arg.Multi,
+		arg.Name,
 		arg.Package,
+		arg.ShowDivider,
 		arg.TemplatePath,
 		arg.TemplatePaths,
 		arg.Title,
@@ -1556,8 +1564,10 @@ func (q *Queries) InsertRoutingRules(ctx context.Context, arg InsertRoutingRules
 const insertSampleEvents = `-- name: InsertSampleEvents :one
 INSERT INTO sample_events (
   data_streams_id,
-  event
+  event,
+  name
 ) VALUES (
+  ?,
   ?,
   ?
 ) RETURNING id
@@ -1566,10 +1576,56 @@ INSERT INTO sample_events (
 type InsertSampleEventsParams struct {
 	DataStreamsID int64
 	Event         interface{}
+	Name          sql.NullString
 }
 
 func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEventsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event)
+	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event, arg.Name)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSections = `-- name: InsertSections :one
+INSERT INTO sections (
+  packages_id,
+  policy_template_inputs_id,
+  policy_templates_id,
+  streams_id,
+  description,
+  name,
+  title
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSectionsParams struct {
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Title                  string
+}
+
+func (q *Queries) InsertSections(ctx context.Context, arg InsertSectionsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSections,
+		arg.PackagesID,
+		arg.PolicyTemplateInputsID,
+		arg.PolicyTemplatesID,
+		arg.StreamsID,
+		arg.Description,
+		arg.Name,
+		arg.Title,
+	)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -2011,6 +2067,39 @@ func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (i
 	return id, err
 }
 
+const insertSystemTestSamples = `-- name: InsertSystemTestSamples :one
+INSERT INTO system_test_samples (
+  system_tests_id,
+  condition_key,
+  condition_value,
+  name
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSystemTestSamplesParams struct {
+	SystemTestsID  int64
+	ConditionKey   string
+	ConditionValue sql.NullString
+	Name           string
+}
+
+func (q *Queries) InsertSystemTestSamples(ctx context.Context, arg InsertSystemTestSamplesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSystemTestSamples,
+		arg.SystemTestsID,
+		arg.ConditionKey,
+		arg.ConditionValue,
+		arg.Name,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertSystemTests = `-- name: InsertSystemTests :one
 INSERT INTO system_tests (
   case_name,
@@ -2280,6 +2369,108 @@ func (q *Queries) InsertTransforms(ctx context.Context, arg InsertTransformsPara
 	return id, err
 }
 
+const insertVarGroupOptions = `-- name: InsertVarGroupOptions :one
+INSERT INTO var_group_options (
+  var_groups_id,
+  description,
+  hide_in_deployment_modes,
+  name,
+  title,
+  vars,
+  additional_properties
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertVarGroupOptionsParams struct {
+	VarGroupsID           int64
+	Description           sql.NullString
+	HideInDeploymentModes interface{}
+	Name                  string
+	Title                 string
+	Vars                  interface{}
+	AdditionalProperties  interface{}
+}
+
+func (q *Queries) InsertVarGroupOptions(ctx context.Context, arg InsertVarGroupOptionsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertVarGroupOptions,
+		arg.VarGroupsID,
+		arg.Description,
+		arg.HideInDeploymentModes,
+		arg.Name,
+		arg.Title,
+		arg.Vars,
+		arg.AdditionalProperties,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertVarGroups = `-- name: InsertVarGroups :one
+INSERT INTO var_groups (
+  packages_id,
+  policy_template_inputs_id,
+  policy_templates_id,
+  streams_id,
+  description,
+  name,
+  required,
+  selector_title,
+  show_divider,
+  title
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertVarGroupsParams struct {
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Required               sql.NullBool
+	SelectorTitle          string
+	ShowDivider            sql.NullBool
+	Title                  string
+}
+
+func (q *Queries) InsertVarGroups(ctx context.Context, arg InsertVarGroupsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertVarGroups,
+		arg.PackagesID,
+		arg.PolicyTemplateInputsID,
+		arg.PolicyTemplatesID,
+		arg.StreamsID,
+		arg.Description,
+		arg.Name,
+		arg.Required,
+		arg.SelectorTitle,
+		arg.ShowDivider,
+		arg.Title,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertVars = `-- name: InsertVars :one
 INSERT INTO vars (
   file_path,
@@ -2295,11 +2486,13 @@ INSERT INTO vars (
   options,
   required,
   secret,
+  section,
   show_user,
   title,
   type,
   url_allowed_schemes
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -2334,6 +2527,7 @@ type InsertVarsParams struct {
 	Options               interface{}
 	Required              sql.NullBool
 	Secret                sql.NullBool
+	Section               sql.NullString
 	ShowUser              sql.NullBool
 	Title                 sql.NullString
 	Type                  string
@@ -2355,6 +2549,7 @@ func (q *Queries) InsertVars(ctx context.Context, arg InsertVarsParams) (int64, 
 		arg.Options,
 		arg.Required,
 		arg.Secret,
+		arg.Section,
 		arg.ShowUser,
 		arg.Title,
 		arg.Type,

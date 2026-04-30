@@ -4,3 +4,6 @@ streams:
   - input: logfile
     title: Collect test logs
     description: Collect test log data.
+    sections:
+      - name: paths_section
+        title: File paths

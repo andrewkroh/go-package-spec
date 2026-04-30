@@ -328,7 +328,9 @@ CREATE TABLE IF NOT EXISTS policy_template_inputs (
   input_group TEXT, -- Name of the input group
   migrate_from TEXT, -- Previous input type to migrate configuration from. This allows Fleet to automatically migrate the policy configuration when replacing one input implementation with an equivalent one. This field sho...
   multi BOOLEAN, -- Can input be defined multiple times
+  name TEXT, -- Unique name for this input within the policy template. When set, data streams reference this input by name instead of type, allowing multiple inputs of the same type to coexist in the same policy t...
   package TEXT, -- Reference to an input package. When specified, configuration is inherited from the referenced package. The package must be listed in the manifest's requires section.
+  show_divider BOOLEAN, -- When false, suppresses the automatic horizontal divider rendered after this section.
   template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. agent/input/httpjson.yml.hbs). NULL when not specified. Joinable directly to agent_templates.file_path.
   template_paths JSON, -- Paths of the config templates. Templates are rendered and merged sequentially; later templates override earlier ones for conflicting keys.
   title TEXT NOT NULL, -- Title of input.
@@ -376,10 +378,11 @@ CREATE TABLE IF NOT EXISTS routing_rules (
 );
 
 CREATE TABLE IF NOT EXISTS sample_events (
-  -- Sample event data for data streams.
+  -- Sample event data for data streams. NULL name indicates the unnamed default sample_event.json; non-NULL names correspond to sample_event_<name>.json files referenced by SystemTestConfig samples.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
   data_streams_id INTEGER NOT NULL REFERENCES data_streams(id), -- foreign key to data_streams
-  event JSON NOT NULL -- sample event data (JSON)
+  event JSON NOT NULL, -- sample event data (JSON)
+  name TEXT -- sample event name (NULL for sample_event.json; suffix from sample_event_<name>.json otherwise)
 );
 
 CREATE TABLE IF NOT EXISTS security_rules (
@@ -493,6 +496,18 @@ CREATE TABLE IF NOT EXISTS streams (
   title TEXT NOT NULL -- Title of the stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
 );
 
+CREATE TABLE IF NOT EXISTS sections (
+  -- Named sections used to group and visually organize variables in the Fleet UI. A section is owned by exactly one parent (package, policy template, policy template input, or stream); the corresponding parent FK column is set, all others are NULL.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set for top-level integration/input package sections)
+  policy_template_inputs_id INTEGER REFERENCES policy_template_inputs(id), -- foreign key to policy_template_inputs (set for policy template input sections)
+  policy_templates_id INTEGER REFERENCES policy_templates(id), -- foreign key to policy_templates (set for policy template sections)
+  streams_id INTEGER REFERENCES streams(id), -- foreign key to streams (set for stream sections)
+  description TEXT, -- Optional help text displayed below the section header.
+  name TEXT NOT NULL, -- Unique identifier for this section.
+  title TEXT NOT NULL -- Display title for this section header in the Fleet UI.
+);
+
 CREATE TABLE IF NOT EXISTS system_tests (
   -- System test cases for data streams and input packages.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
@@ -521,6 +536,15 @@ CREATE TABLE IF NOT EXISTS system_tests (
   skip_ignored_fields JSON, -- If listed here, elastic-package system tests will not fail if values for the specified field names can't be indexed for any incoming documents. This should only be used if the failure is related to...
   vars JSON, -- Variables used to configure settings defined in the package manifest.
   wait_for_data_timeout TEXT -- Timeout for waiting for metrics data during a system test.
+);
+
+CREATE TABLE IF NOT EXISTS system_test_samples (
+  -- Sample event files to collect from a system test, with optional document filtering condition. Each entry references a sample_event_<name>.json file.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  system_tests_id INTEGER NOT NULL REFERENCES system_tests(id), -- foreign key to system_tests
+  condition_key TEXT NOT NULL, -- Field name to check in the document.
+  condition_value TEXT, -- Expected value of the field.
+  name TEXT NOT NULL -- Name identifying the sample event file to use. Corresponds to the suffix in `sample_event_<name>.json`.
 );
 
 CREATE TABLE IF NOT EXISTS tags (
@@ -564,6 +588,33 @@ CREATE TABLE IF NOT EXISTS transform_fields (
   transform_id INTEGER NOT NULL REFERENCES transforms(id) -- foreign key to transforms
 );
 
+CREATE TABLE IF NOT EXISTS var_groups (
+  -- Mutually exclusive groups of variables shown in Fleet UI as a selector. A var_group is owned by exactly one parent (package, policy template, or policy template input); the corresponding parent FK column is set, all others are NULL. Options are stored in var_group_options.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  packages_id INTEGER REFERENCES packages(id), -- foreign key to packages (set for top-level integration/input package var groups)
+  policy_template_inputs_id INTEGER REFERENCES policy_template_inputs(id), -- foreign key to policy_template_inputs (set for policy template input var groups)
+  policy_templates_id INTEGER REFERENCES policy_templates(id), -- foreign key to policy_templates (set for policy template var groups)
+  streams_id INTEGER REFERENCES streams(id), -- foreign key to streams (set for stream var groups)
+  description TEXT, -- Help text explaining what this selector controls.
+  name TEXT NOT NULL, -- Unique identifier for this variable group selector.
+  required BOOLEAN, -- Whether a selection is required for this var_group. When true, Fleet UI will require the user to select an option, and all variables within the selected option are treated as required (inferred). W...
+  selector_title TEXT NOT NULL, -- Label for the dropdown selector (e.g., "Preferred method").
+  show_divider BOOLEAN, -- When false, suppresses the automatic horizontal divider rendered after this section.
+  title TEXT NOT NULL -- Section header displayed in the UI (e.g., "Setup Access").
+);
+
+CREATE TABLE IF NOT EXISTS var_group_options (
+  -- Options within a variable group. Each option lists which variable names are shown when selected.
+  id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
+  var_groups_id INTEGER NOT NULL REFERENCES var_groups(id), -- foreign key to var_groups
+  description TEXT, -- Help text for this option.
+  hide_in_deployment_modes JSON, -- Deployment modes where this option is hidden.
+  name TEXT NOT NULL, -- Unique identifier (stored in policy when selected).
+  title TEXT NOT NULL, -- Display title shown in the dropdown.
+  vars JSON, -- Variable names to display when this option is selected.
+  additional_properties JSON -- JSON-encoded AdditionalProperties
+);
+
 CREATE TABLE IF NOT EXISTS vars (
   -- Input variable definitions. Linked to packages, policy templates, streams, or inputs via join tables.
   id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier
@@ -580,6 +631,7 @@ CREATE TABLE IF NOT EXISTS vars (
   options JSON, -- Options provides the list of selectable options when type is "select".
   required BOOLEAN, -- Is variable required?
   secret BOOLEAN, -- Specifying that a variable is secret means that Kibana will store the value separate from the package policy in a more secure index. This is useful for passwords and other sensitive information. On...
+  section TEXT, -- Name of the section this variable belongs to. Must match a section name defined in the `sections` list at the same level.
   show_user BOOLEAN, -- Should this variable be shown to the user by default?
   title TEXT, -- Title of variable.
   type TEXT NOT NULL, -- Data type of variable. A duration type is a sequence of decimal numbers, each with a unit suffix, such as "60s", "1m" or "2h45m". Duration values must follow these rules: - Use time units of "ms", ...

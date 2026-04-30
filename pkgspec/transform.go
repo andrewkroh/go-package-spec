@@ -144,6 +144,7 @@ type TransformSettings struct {
 	DeduceMappings     *bool   `json:"deduce_mappings,omitempty" yaml:"deduce_mappings,omitempty"`
 	DocsPerSecond      float64 `json:"docs_per_second,omitempty" yaml:"docs_per_second,omitempty"`
 	MaxPageSearchSize  int     `json:"max_page_search_size,omitempty" yaml:"max_page_search_size,omitempty"`
+	NumFailureRetries  int     `json:"num_failure_retries,omitempty" yaml:"num_failure_retries,omitempty"`
 	Unattended         *bool   `json:"unattended,omitempty" yaml:"unattended,omitempty"`
 	UsePointInTime     *bool   `json:"use_point_in_time,omitempty" yaml:"use_point_in_time,omitempty"`
 }

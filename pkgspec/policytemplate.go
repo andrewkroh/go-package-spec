@@ -135,6 +135,10 @@ type InputPolicyTemplate struct {
 	Name string `json:"name" yaml:"name"`
 	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
+	// reference a section by name using the `section` attribute. Sections are rendered in the order
+	// they are defined.
+	Sections []Section `json:"sections,omitempty" yaml:"sections,omitempty"`
 	// Path of the config template.
 	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
 	// Paths of the config templates. Templates are rendered and merged sequentially; later templates
@@ -144,6 +148,11 @@ type InputPolicyTemplate struct {
 	Title string `json:"title" yaml:"title"`
 	// Type of data stream
 	Type InputPolicyTemplateType `json:"type,omitempty" yaml:"type,omitempty"`
+	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
+	// that option's vars array are shown. The selected option name is stored in the policy. Additional
+	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector
+	// metadata).
+	VarGroups []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	// Input variables.
 	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -187,8 +196,17 @@ type PolicyTemplate struct {
 	Name string `json:"name" yaml:"name"`
 	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
+	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
+	// reference a section by name using the `section` attribute. Sections are rendered in the order
+	// they are defined.
+	Sections []Section `json:"sections,omitempty" yaml:"sections,omitempty"`
 	// Title of policy template.
 	Title string `json:"title" yaml:"title"`
+	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
+	// that option's vars array are shown. The selected option name is stored in the policy. Additional
+	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector
+	// metadata).
+	VarGroups []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	// Input variables.
 	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -228,11 +246,21 @@ type PolicyTemplateInput struct {
 	MigrateFrom string `json:"migrate_from,omitempty" yaml:"migrate_from,omitempty"`
 	// Can input be defined multiple times
 	Multi *bool `json:"multi,omitempty" yaml:"multi,omitempty"`
+	// Unique name for this input within the policy template. When set, data streams reference this
+	// input by name instead of type, allowing multiple inputs of the same type to coexist in the same
+	// policy template.
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 	// Reference to an input package. When specified, configuration is inherited from the referenced
 	// package. The package must be listed in the manifest's requires section.
 	Package string `json:"package,omitempty" yaml:"package,omitempty"`
 	// Required conditional variables for the package.
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
+	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
+	// reference a section by name using the `section` attribute. Sections are rendered in the order
+	// they are defined.
+	Sections []Section `json:"sections,omitempty" yaml:"sections,omitempty"`
+	// When false, suppresses the automatic horizontal divider rendered after this section.
+	ShowDivider *bool `json:"show_divider,omitempty" yaml:"show_divider,omitempty"`
 	// Path of the config template.
 	TemplatePath string `json:"template_path,omitempty" yaml:"template_path,omitempty"`
 	// Paths of the config templates. Templates are rendered and merged sequentially; later templates
@@ -242,6 +270,11 @@ type PolicyTemplateInput struct {
 	Title string `json:"title" yaml:"title"`
 	// Type of input.
 	Type string `json:"type,omitempty" yaml:"type,omitempty"`
+	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
+	// that option's vars array are shown. The selected option name is stored in the policy. Additional
+	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector
+	// metadata).
+	VarGroups []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	// Input variables.
 	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }

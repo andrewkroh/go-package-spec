@@ -14,14 +14,15 @@ import (
 // DataStream represents a fully-loaded data stream within an integration package.
 type DataStream struct {
 	Manifest       pkgspec.DataStreamManifest
-	Fields         map[string]*FieldsFile    // keyed by filename
-	Pipelines      map[string]*PipelineFile  // keyed by filename (e.g., "default.yml")
-	ILMPolicies    map[string]*ILMPolicy     // keyed by filename, nil if absent
-	Lifecycle      *pkgspec.Lifecycle        // nil if absent
-	RoutingRules   []pkgspec.RoutingRuleSet  // nil if absent
-	SampleEvent    json.RawMessage           // nil if absent
-	AgentTemplates map[string]*AgentTemplate // nil unless WithAgentTemplates used
-	Tests          *DataStreamTests          // nil unless WithTestConfigs used
+	Fields         map[string]*FieldsFile     // keyed by filename
+	Pipelines      map[string]*PipelineFile   // keyed by filename (e.g., "default.yml")
+	ILMPolicies    map[string]*ILMPolicy      // keyed by filename, nil if absent
+	Lifecycle      *pkgspec.Lifecycle         // nil if absent
+	RoutingRules   []pkgspec.RoutingRuleSet   // nil if absent
+	SampleEvent    json.RawMessage            // contents of sample_event.json, nil if absent
+	SampleEvents   map[string]json.RawMessage // contents of sample_event_<name>.json, keyed by name (suffix), nil if none
+	AgentTemplates map[string]*AgentTemplate  // nil unless WithAgentTemplates used
+	Tests          *DataStreamTests           // nil unless WithTestConfigs used
 	path           string
 }
 
@@ -168,6 +169,13 @@ func readDataStream(fsys fs.FS, dsPath string, cfg *config) (*DataStream, error)
 		return nil, fmt.Errorf("reading sample event: %w", err)
 	}
 	ds.SampleEvent = sampleEvent
+
+	// Read named sample events: sample_event_<name>.json (optional).
+	namedSampleEvents, err := readNamedSampleEvents(fsys, dsPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading named sample events: %w", err)
+	}
+	ds.SampleEvents = namedSampleEvents
 
 	// Read agent templates (optional, requires WithAgentTemplates).
 	if cfg.agentTemplates {
@@ -318,6 +326,48 @@ func readILMPolicies(fsys fs.FS, dir string) (map[string]*ILMPolicy, error) {
 			Content: content,
 			path:    filePath,
 		}
+	}
+
+	return result, nil
+}
+
+// readNamedSampleEvents scans dir for files named "sample_event_<name>.json"
+// and returns a map keyed by the name suffix. The unnamed "sample_event.json"
+// (handled separately) is not included.
+func readNamedSampleEvents(fsys fs.FS, dir string) (map[string]json.RawMessage, error) {
+	entries, err := fs.ReadDir(fsys, dir)
+	if err != nil {
+		if isNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("reading directory %s: %w", dir, err)
+	}
+
+	const prefix = "sample_event_"
+	const suffix = ".json"
+
+	var result map[string]json.RawMessage
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasPrefix(name, prefix) || !strings.HasSuffix(name, suffix) {
+			continue
+		}
+		key := name[len(prefix) : len(name)-len(suffix)]
+		if key == "" {
+			continue
+		}
+
+		data, err := fs.ReadFile(fsys, path.Join(dir, name))
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", name, err)
+		}
+		if result == nil {
+			result = make(map[string]json.RawMessage)
+		}
+		result[key] = data
 	}
 
 	return result, nil

@@ -259,6 +259,15 @@ type InputManifest struct {
 	Elasticsearch InputElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	// List of policy templates offered by this package.
 	PolicyTemplates []InputPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
+	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
+	// reference a section by name using the `section` attribute. Sections are rendered in the order
+	// they are defined.
+	Sections []Section `json:"sections,omitempty" yaml:"sections,omitempty"`
+	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
+	// that option's vars array are shown. The selected option name is stored in the policy. Additional
+	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector
+	// metadata).
+	VarGroups []VarGroup `json:"var_groups,omitempty" yaml:"var_groups,omitempty"`
 	// Input variables.
 	Vars []Var `json:"vars,omitempty" yaml:"vars,omitempty"`
 }
@@ -309,6 +318,10 @@ type IntegrationManifest struct {
 	PolicyTemplatesBehavior string `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
 	// Dependencies that this package requires to function properly.
 	Requires Requires `json:"requires,omitempty" yaml:"requires,omitempty"`
+	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
+	// reference a section by name using the `section` attribute. Sections are rendered in the order
+	// they are defined.
+	Sections []Section `json:"sections,omitempty" yaml:"sections,omitempty"`
 	// Defines mutually exclusive groups of variables. When an option is selected, only the variables in
 	// that option's vars array are shown. The selected option name is stored in the policy. Additional
 	// properties on options are allowed for feature-specific extensions (e.g., Cloud Connector

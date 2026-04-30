@@ -41,6 +41,9 @@ type Var struct {
 	// information. One caveat is that secrets are write-only, once a user writes a secret var they
 	// cannot read it again, only overwrite it.
 	Secret *bool `json:"secret,omitempty" yaml:"secret,omitempty"`
+	// Name of the section this variable belongs to. Must match a section name defined in the `sections`
+	// list at the same level.
+	Section string `json:"section,omitempty" yaml:"section,omitempty"`
 	// Should this variable be shown to the user by default?
 	ShowUser *bool `json:"show_user,omitempty" yaml:"show_user,omitempty"`
 	// Title of variable.
@@ -84,6 +87,8 @@ type VarGroup struct {
 	Required *bool `json:"required,omitempty" yaml:"required,omitempty"`
 	// Label for the dropdown selector (e.g., "Preferred method").
 	SelectorTitle string `json:"selector_title" yaml:"selector_title"`
+	// When false, suppresses the automatic horizontal divider rendered after this section.
+	ShowDivider *bool `json:"show_divider,omitempty" yaml:"show_divider,omitempty"`
 	// Section header displayed in the UI (e.g., "Setup Access").
 	Title string `json:"title" yaml:"title"`
 }

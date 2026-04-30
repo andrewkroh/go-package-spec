@@ -318,8 +318,10 @@ func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int6
 		InputGroup:            toNullString(string(v.InputGroup)),
 		MigrateFrom:           toNullString(v.MigrateFrom),
 		Multi:                 toNullBool(v.Multi),
+		Name:                  toNullString(v.Name),
 		Package:               toNullString(v.Package),
 		PolicyTemplatesID:     parentID,
+		ShowDivider:           toNullBool(v.ShowDivider),
 		TemplatePath:          toNullString(v.TemplatePath),
 		TemplatePaths:         jsonNullString(v.TemplatePaths),
 		Title:                 v.Title,
@@ -400,6 +402,15 @@ func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) db.InsertStre
 	}
 }
 
+// mapSectionsParams converts a Section to db.InsertSectionsParams.
+func mapSectionsParams(v *pkgspec.Section) db.InsertSectionsParams {
+	return db.InsertSectionsParams{
+		Description: toNullString(v.Description),
+		Name:        v.Name,
+		Title:       v.Title,
+	}
+}
+
 // mapSystemTestsParams converts a SystemTestConfig to db.InsertSystemTestsParams.
 func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.InsertSystemTestsParams {
 	return db.InsertSystemTestsParams{
@@ -426,6 +437,16 @@ func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.Inser
 		SkipReason:                      v.Skip.Reason,
 		Vars:                            jsonNullString(v.Vars),
 		WaitForDataTimeout:              toNullString(v.WaitForDataTimeout),
+	}
+}
+
+// mapSystemTestSamplesParams converts a SystemTestConfigSample to db.InsertSystemTestSamplesParams.
+func mapSystemTestSamplesParams(v *pkgspec.SystemTestConfigSample, parentID int64) db.InsertSystemTestSamplesParams {
+	return db.InsertSystemTestSamplesParams{
+		ConditionKey:   v.Condition.Key,
+		ConditionValue: toNullString(v.Condition.Value),
+		Name:           v.Name,
+		SystemTestsID:  parentID,
 	}
 }
 
@@ -465,6 +486,31 @@ func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, m
 	}
 }
 
+// mapVarGroupsParams converts a VarGroup to db.InsertVarGroupsParams.
+func mapVarGroupsParams(v *pkgspec.VarGroup) db.InsertVarGroupsParams {
+	return db.InsertVarGroupsParams{
+		Description:   toNullString(v.Description),
+		Name:          v.Name,
+		Required:      toNullBool(v.Required),
+		SelectorTitle: v.SelectorTitle,
+		ShowDivider:   toNullBool(v.ShowDivider),
+		Title:         v.Title,
+	}
+}
+
+// mapVarGroupOptionsParams converts a VarGroupOption to db.InsertVarGroupOptionsParams.
+func mapVarGroupOptionsParams(v *pkgspec.VarGroupOption, parentID int64) db.InsertVarGroupOptionsParams {
+	return db.InsertVarGroupOptionsParams{
+		AdditionalProperties:  jsonNullString(v.AdditionalProperties),
+		Description:           toNullString(v.Description),
+		HideInDeploymentModes: jsonNullString(v.HideInDeploymentModes),
+		Name:                  v.Name,
+		Title:                 v.Title,
+		VarGroupsID:           parentID,
+		Vars:                  jsonNullString(v.Vars),
+	}
+}
+
 // mapVarsParams converts a Var to db.InsertVarsParams.
 func mapVarsParams(v *pkgspec.Var) db.InsertVarsParams {
 	return db.InsertVarsParams{
@@ -481,6 +527,7 @@ func mapVarsParams(v *pkgspec.Var) db.InsertVarsParams {
 		Options:               jsonNullString(v.Options),
 		Required:              toNullBool(v.Required),
 		Secret:                toNullBool(v.Secret),
+		Section:               toNullString(v.Section),
 		ShowUser:              toNullBool(v.ShowUser),
 		Title:                 toNullString(v.Title),
 		Type:                  string(v.Type),

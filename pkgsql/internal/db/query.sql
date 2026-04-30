@@ -531,12 +531,16 @@ INSERT INTO policy_template_inputs (
   input_group,
   migrate_from,
   multi,
+  name,
   package,
+  show_divider,
   template_path,
   template_paths,
   title,
   type
 ) VALUES (
+  ?,
+  ?,
   ?,
   ?,
   ?,
@@ -620,8 +624,10 @@ INSERT INTO routing_rules (
 -- name: InsertSampleEvents :one
 INSERT INTO sample_events (
   data_streams_id,
-  event
+  event,
+  name
 ) VALUES (
+  ?,
   ?,
   ?
 ) RETURNING id;
@@ -808,6 +814,25 @@ INSERT INTO streams (
   ?
 ) RETURNING id;
 
+-- name: InsertSections :one
+INSERT INTO sections (
+  packages_id,
+  policy_template_inputs_id,
+  policy_templates_id,
+  streams_id,
+  description,
+  name,
+  title
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertSystemTests :one
 INSERT INTO system_tests (
   case_name,
@@ -857,6 +882,19 @@ INSERT INTO system_tests (
   ?,
   ?,
   ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertSystemTestSamples :one
+INSERT INTO system_test_samples (
+  system_tests_id,
+  condition_key,
+  condition_value,
+  name
+) VALUES (
   ?,
   ?,
   ?,
@@ -930,6 +968,50 @@ INSERT INTO transform_fields (
   ?
 ) RETURNING id;
 
+-- name: InsertVarGroups :one
+INSERT INTO var_groups (
+  packages_id,
+  policy_template_inputs_id,
+  policy_templates_id,
+  streams_id,
+  description,
+  name,
+  required,
+  selector_title,
+  show_divider,
+  title
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
+-- name: InsertVarGroupOptions :one
+INSERT INTO var_group_options (
+  var_groups_id,
+  description,
+  hide_in_deployment_modes,
+  name,
+  title,
+  vars,
+  additional_properties
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id;
+
 -- name: InsertVars :one
 INSERT INTO vars (
   file_path,
@@ -945,11 +1027,13 @@ INSERT INTO vars (
   options,
   required,
   secret,
+  section,
   show_user,
   title,
   type,
   url_allowed_schemes
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,

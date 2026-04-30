@@ -285,6 +285,15 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 		return fmt.Errorf("inserting package vars: %w", err)
 	}
 
+	// Insert package-level sections and var groups.
+	pkgParent := sectionParent{Packages: sql.NullInt64{Int64: pkgID, Valid: true}}
+	if err := writeSections(ctx, q, im.Sections, pkgParent); err != nil {
+		return fmt.Errorf("inserting package sections: %w", err)
+	}
+	if err := writeVarGroups(ctx, q, im.VarGroups, pkgParent); err != nil {
+		return fmt.Errorf("inserting package var groups: %w", err)
+	}
+
 	// Insert policy templates.
 	for i := range im.PolicyTemplates {
 		pt := &im.PolicyTemplates[i]
@@ -346,6 +355,15 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 			return fmt.Errorf("inserting policy template vars: %w", err)
 		}
 
+		// Insert policy template sections and var groups.
+		ptParent := sectionParent{PolicyTemplates: sql.NullInt64{Int64: ptID, Valid: true}}
+		if err := writeSections(ctx, q, pt.Sections, ptParent); err != nil {
+			return fmt.Errorf("inserting policy template sections: %w", err)
+		}
+		if err := writeVarGroups(ctx, q, pt.VarGroups, ptParent); err != nil {
+			return fmt.Errorf("inserting policy template var groups: %w", err)
+		}
+
 		// Insert inputs.
 		for j := range pt.Inputs {
 			inp := &pt.Inputs[j]
@@ -378,6 +396,15 @@ func writeIntegration(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Pack
 				return err
 			}); err != nil {
 				return fmt.Errorf("inserting input vars: %w", err)
+			}
+
+			// Insert input sections and var groups.
+			inpParent := sectionParent{PolicyTemplateInputs: sql.NullInt64{Int64: inpID, Valid: true}}
+			if err := writeSections(ctx, q, inp.Sections, inpParent); err != nil {
+				return fmt.Errorf("inserting input sections: %w", err)
+			}
+			if err := writeVarGroups(ctx, q, inp.VarGroups, inpParent); err != nil {
+				return fmt.Errorf("inserting input var groups: %w", err)
 			}
 		}
 	}
@@ -450,6 +477,15 @@ func writeInput(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, p
 		return err
 	}); err != nil {
 		return fmt.Errorf("inserting input package vars: %w", err)
+	}
+
+	// Insert package-level sections and var groups.
+	pkgParent := sectionParent{Packages: sql.NullInt64{Int64: pkgID, Valid: true}}
+	if err := writeSections(ctx, q, im.Sections, pkgParent); err != nil {
+		return fmt.Errorf("inserting input package sections: %w", err)
+	}
+	if err := writeVarGroups(ctx, q, im.VarGroups, pkgParent); err != nil {
+		return fmt.Errorf("inserting input package var groups: %w", err)
 	}
 
 	// Insert policy templates.
@@ -882,6 +918,15 @@ func writeInputPolicyTemplate(ctx context.Context, q *dbpkg.Queries, pt *pkgspec
 		return fmt.Errorf("inserting input policy template vars: %w", err)
 	}
 
+	// Insert policy template sections and var groups.
+	ptParent := sectionParent{PolicyTemplates: sql.NullInt64{Int64: ptID, Valid: true}}
+	if err := writeSections(ctx, q, pt.Sections, ptParent); err != nil {
+		return fmt.Errorf("inserting input policy template sections: %w", err)
+	}
+	if err := writeVarGroups(ctx, q, pt.VarGroups, ptParent); err != nil {
+		return fmt.Errorf("inserting input policy template var groups: %w", err)
+	}
+
 	return nil
 }
 
@@ -900,7 +945,7 @@ func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *p
 		}
 	}
 
-	// Insert sample event.
+	// Insert sample event (unnamed).
 	if ds.SampleEvent != nil {
 		_, err := q.InsertSampleEvents(ctx, dbpkg.InsertSampleEventsParams{
 			DataStreamsID: dsID,
@@ -908,6 +953,18 @@ func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *p
 		})
 		if err != nil {
 			return fmt.Errorf("inserting sample event: %w", err)
+		}
+	}
+
+	// Insert named sample events (sample_event_<name>.json).
+	for name, event := range ds.SampleEvents {
+		_, err := q.InsertSampleEvents(ctx, dbpkg.InsertSampleEventsParams{
+			DataStreamsID: dsID,
+			Name:          sql.NullString{String: name, Valid: true},
+			Event:         string(event),
+		})
+		if err != nil {
+			return fmt.Errorf("inserting sample event %s: %w", name, err)
 		}
 	}
 
@@ -936,6 +993,15 @@ func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *p
 			return err
 		}); err != nil {
 			return fmt.Errorf("inserting stream vars: %w", err)
+		}
+
+		// Insert stream sections and var groups.
+		streamParent := sectionParent{Streams: sql.NullInt64{Int64: streamID, Valid: true}}
+		if err := writeSections(ctx, q, stream.Sections, streamParent); err != nil {
+			return fmt.Errorf("inserting stream sections: %w", err)
+		}
+		if err := writeVarGroups(ctx, q, stream.VarGroups, streamParent); err != nil {
+			return fmt.Errorf("inserting stream var groups: %w", err)
 		}
 	}
 
@@ -1105,6 +1171,64 @@ func writeDocs(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package, pk
 	return nil
 }
 
+// sectionParent holds the (mutually exclusive) owning-row ID for a sections
+// or var_groups row. Exactly one of the embedded NullInt64 values should be
+// Valid; the rest are NULL.
+type sectionParent struct {
+	Packages             sql.NullInt64
+	PolicyTemplates      sql.NullInt64
+	PolicyTemplateInputs sql.NullInt64
+	Streams              sql.NullInt64
+}
+
+// writeSections inserts each section row with the given parent FK set.
+func writeSections(ctx context.Context, q *dbpkg.Queries, sections []pkgspec.Section, parent sectionParent) error {
+	for i := range sections {
+		p := mapSectionsParams(&sections[i])
+		p.PackagesID = parent.Packages
+		p.PolicyTemplatesID = parent.PolicyTemplates
+		p.PolicyTemplateInputsID = parent.PolicyTemplateInputs
+		p.StreamsID = parent.Streams
+		if _, err := q.InsertSections(ctx, p); err != nil {
+			return fmt.Errorf("inserting section %s: %w", sections[i].Name, err)
+		}
+	}
+	return nil
+}
+
+// writeSystemTestSamples inserts the sample event references defined for a
+// system test.
+func writeSystemTestSamples(ctx context.Context, q *dbpkg.Queries, samples []pkgspec.SystemTestConfigSample, parentID int64) error {
+	for i := range samples {
+		if _, err := q.InsertSystemTestSamples(ctx, mapSystemTestSamplesParams(&samples[i], parentID)); err != nil {
+			return fmt.Errorf("inserting system test sample %s: %w", samples[i].Name, err)
+		}
+	}
+	return nil
+}
+
+// writeVarGroups inserts each var group and its nested options.
+func writeVarGroups(ctx context.Context, q *dbpkg.Queries, groups []pkgspec.VarGroup, parent sectionParent) error {
+	for i := range groups {
+		vg := &groups[i]
+		p := mapVarGroupsParams(vg)
+		p.PackagesID = parent.Packages
+		p.PolicyTemplatesID = parent.PolicyTemplates
+		p.PolicyTemplateInputsID = parent.PolicyTemplateInputs
+		p.StreamsID = parent.Streams
+		vgID, err := q.InsertVarGroups(ctx, p)
+		if err != nil {
+			return fmt.Errorf("inserting var group %s: %w", vg.Name, err)
+		}
+		for j := range vg.Options {
+			if _, err := q.InsertVarGroupOptions(ctx, mapVarGroupOptionsParams(&vg.Options[j], vgID)); err != nil {
+				return fmt.Errorf("inserting var group %s option %s: %w", vg.Name, vg.Options[j].Name, err)
+			}
+		}
+	}
+	return nil
+}
+
 func writeVars(ctx context.Context, q *dbpkg.Queries, vars []pkgspec.Var, link func(varID int64) error) error {
 	for i := range vars {
 		varID, err := q.InsertVars(ctx, mapVarsParams(&vars[i]))
@@ -1159,8 +1283,12 @@ func writeDataStreamTests(ctx context.Context, q *dbpkg.Queries, tests *pkgreade
 	for caseName, cfg := range tests.System {
 		p := mapSystemTestsParams(cfg, caseName)
 		p.DataStreamsID = sql.NullInt64{Int64: dsID, Valid: true}
-		if _, err := q.InsertSystemTests(ctx, p); err != nil {
+		stID, err := q.InsertSystemTests(ctx, p)
+		if err != nil {
 			return fmt.Errorf("system test %s: %w", caseName, err)
+		}
+		if err := writeSystemTestSamples(ctx, q, cfg.Samples, stID); err != nil {
+			return fmt.Errorf("system test %s samples: %w", caseName, err)
 		}
 	}
 
@@ -1223,8 +1351,12 @@ func writeInputTests(ctx context.Context, q *dbpkg.Queries, tests *pkgreader.Inp
 	for caseName, cfg := range tests.System {
 		p := mapSystemTestsParams(cfg, caseName)
 		p.PackagesID = sql.NullInt64{Int64: pkgID, Valid: true}
-		if _, err := q.InsertSystemTests(ctx, p); err != nil {
+		stID, err := q.InsertSystemTests(ctx, p)
+		if err != nil {
 			return fmt.Errorf("system test %s: %w", caseName, err)
+		}
+		if err := writeSystemTestSamples(ctx, q, cfg.Samples, stID); err != nil {
+			return fmt.Errorf("system test %s samples: %w", caseName, err)
 		}
 	}
 

@@ -29,8 +29,8 @@ func TestReadIntegrationPackage(t *testing.T) {
 	if m.Version != "1.0.0" {
 		t.Errorf("version = %q, want 1.0.0", m.Version)
 	}
-	if m.FormatVersion != "3.3.0" {
-		t.Errorf("format_version = %q, want 3.3.0", m.FormatVersion)
+	if m.FormatVersion != "3.6.2" {
+		t.Errorf("format_version = %q, want 3.6.2", m.FormatVersion)
 	}
 	if m.Description != "A test integration package." {
 		t.Errorf("description = %q, want A test integration package.", m.Description)
@@ -162,6 +162,42 @@ func TestReadIntegrationPackage(t *testing.T) {
 		t.Error("data stream sample event is not valid JSON")
 	}
 
+	// Named sample events: sample_event_one.json and sample_event_two.json.
+	if len(ds.SampleEvents) != 2 {
+		t.Fatalf("named sample event count = %d, want 2", len(ds.SampleEvents))
+	}
+	for _, name := range []string{"one", "two"} {
+		if data, ok := ds.SampleEvents[name]; !ok {
+			t.Errorf("named sample event %q missing", name)
+		} else if !json.Valid(data) {
+			t.Errorf("named sample event %q is not valid JSON", name)
+		}
+	}
+
+	// Sections at the top-level integration manifest.
+	if len(im.Sections) != 1 || im.Sections[0].Name != "auth_section" {
+		t.Errorf("im.Sections = %v, want [{auth_section ...}]", im.Sections)
+	}
+
+	// Var groups at the top-level integration manifest.
+	if len(im.VarGroups) != 1 {
+		t.Fatalf("im.VarGroups count = %d, want 1", len(im.VarGroups))
+	}
+	if im.VarGroups[0].Name != "credential_type" {
+		t.Errorf("im.VarGroups[0].Name = %q, want credential_type", im.VarGroups[0].Name)
+	}
+	if len(im.VarGroups[0].Options) != 2 {
+		t.Errorf("im.VarGroups[0].Options count = %d, want 2", len(im.VarGroups[0].Options))
+	}
+
+	// Sections on the data stream's stream.
+	if len(ds.Manifest.Streams) != 1 {
+		t.Fatalf("ds streams count = %d, want 1", len(ds.Manifest.Streams))
+	}
+	if got := ds.Manifest.Streams[0].Sections; len(got) != 1 || got[0].Name != "paths_section" {
+		t.Errorf("stream sections = %v, want [{paths_section ...}]", got)
+	}
+
 	// Package-level pipelines.
 	if len(pkg.Pipelines) != 1 {
 		t.Fatalf("package pipeline count = %d, want 1", len(pkg.Pipelines))
@@ -276,6 +312,16 @@ func TestReadInputPackage(t *testing.T) {
 	}
 	if !json.Valid(pkg.SampleEvent) {
 		t.Error("input package sample event is not valid JSON")
+	}
+
+	// Named sample events: sample_event_first.json.
+	if len(pkg.SampleEvents) != 1 {
+		t.Fatalf("input named sample event count = %d, want 1", len(pkg.SampleEvents))
+	}
+	if data, ok := pkg.SampleEvents["first"]; !ok {
+		t.Error("input named sample event 'first' missing")
+	} else if !json.Valid(data) {
+		t.Error("input named sample event 'first' is not valid JSON")
 	}
 
 	// Build should be nil for input packages.
@@ -668,6 +714,18 @@ func TestTestConfigs(t *testing.T) {
 		}
 		if sys.Vars.DataStreamDataset != "test_integration.logs" {
 			t.Errorf("system vars.data_stream.dataset = %q, want test_integration.logs", sys.Vars.DataStreamDataset)
+		}
+		if len(sys.Samples) != 2 {
+			t.Fatalf("system test samples count = %d, want 2", len(sys.Samples))
+		}
+		if sys.Samples[0].Name != "one" {
+			t.Errorf("system test sample[0].Name = %q, want one", sys.Samples[0].Name)
+		}
+		if sys.Samples[1].Condition.Key != "event.dataset" {
+			t.Errorf("system test sample[1].Condition.Key = %q, want event.dataset", sys.Samples[1].Condition.Key)
+		}
+		if sys.Samples[1].Condition.Value != "test_integration.logs" {
+			t.Errorf("system test sample[1].Condition.Value = %q, want test_integration.logs", sys.Samples[1].Condition.Value)
 		}
 
 		// Static tests.
