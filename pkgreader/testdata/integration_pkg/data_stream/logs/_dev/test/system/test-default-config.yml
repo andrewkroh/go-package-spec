@@ -1,2 +1,8 @@
 vars:
   data_stream.dataset: "test_integration.logs"
+samples:
+  - name: one
+  - name: two
+    condition:
+      key: event.dataset
+      value: test_integration.logs

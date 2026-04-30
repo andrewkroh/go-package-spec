@@ -1,4 +1,4 @@
-format_version: "3.3.0"
+format_version: "3.6.2"
 name: test_integration
 title: Test Integration
 version: "1.0.0"
@@ -11,6 +11,25 @@ owner:
   type: elastic
 source:
   license: Elastic-2.0
+sections:
+  - name: auth_section
+    title: Authentication
+    description: Authentication settings.
+var_groups:
+  - name: credential_type
+    title: Credentials
+    selector_title: Preferred method
+    description: Choose how to authenticate.
+    options:
+      - name: api_key
+        title: API Key
+        vars:
+          - api_key
+      - name: basic_auth
+        title: Basic Auth
+        vars:
+          - username
+          - password
 policy_templates:
   - name: test_policy
     title: Test Policy

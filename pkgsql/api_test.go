@@ -141,6 +141,19 @@ elasticsearch:
     cluster:
       - monitor
       - manage_ilm
+sections:
+  - name: pkg_section
+    title: Package Section
+    description: Top-level section.
+var_groups:
+  - name: pkg_credential
+    title: Package Credentials
+    selector_title: Auth method
+    options:
+      - name: api_key
+        title: API Key
+        vars:
+          - api_key
 policy_templates:
   - name: test-policy
     title: Test Policy
@@ -151,10 +164,34 @@ policy_templates:
     screenshots:
       - src: /img/policy-shot.png
         title: Policy Screenshot
+    sections:
+      - name: pt_section
+        title: Policy Template Section
+    var_groups:
+      - name: pt_credential
+        title: Policy Template Credentials
+        selector_title: Auth method
+        options:
+          - name: basic
+            title: Basic Auth
+            vars:
+              - username
     inputs:
       - type: logfile
         title: Log File
         description: Collect log files.
+        sections:
+          - name: pti_section
+            title: Input Section
+        var_groups:
+          - name: pti_credential
+            title: Input Credentials
+            selector_title: Auth method
+            options:
+              - name: token
+                title: Token
+                vars:
+                  - token
 `)},
 		"changelog.yml": {Data: []byte(`
 - version: 1.0.0
@@ -173,6 +210,18 @@ streams:
   - input: logfile
     title: Log Files
     description: Collect log files with Filebeat.
+    sections:
+      - name: stream_section
+        title: Stream Section
+    var_groups:
+      - name: stream_credential
+        title: Stream Credentials
+        selector_title: Auth method
+        options:
+          - name: secret
+            title: Secret
+            vars:
+              - secret
     vars:
       - name: paths
         type: text
@@ -197,11 +246,21 @@ streams:
       type: keyword
       description: Log level.
 `)},
-		"data_stream/logs/sample_event.json": {Data: []byte(`{"@timestamp": "2024-01-01T00:00:00Z", "message": "test"}`)},
-		"docs/README.md":                     {Data: []byte("# Test Package\n")},
+		"data_stream/logs/sample_event.json":     {Data: []byte(`{"@timestamp": "2024-01-01T00:00:00Z", "message": "test"}`)},
+		"data_stream/logs/sample_event_one.json": {Data: []byte(`{"@timestamp": "2024-01-02T00:00:00Z", "message": "named one"}`)},
+		"data_stream/logs/_dev/test/system/test-default-config.yml": {Data: []byte(`vars:
+  data_stream.dataset: "test-package.logs"
+samples:
+  - name: one
+  - name: two
+    condition:
+      key: event.dataset
+      value: test-package.logs
+`)},
+		"docs/README.md": {Data: []byte("# Test Package\n")},
 	}
 
-	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys))
+	pkg, err := pkgreader.Read(".", pkgreader.WithFS(fsys), pkgreader.WithTestConfigs())
 	if err != nil {
 		t.Fatalf("reading package: %v", err)
 	}
@@ -292,14 +351,30 @@ streams:
 		t.Errorf("got title=%s dir_name=%s", dsTitle, dsDirName)
 	}
 
-	// Verify sample event.
-	var sampleEvent string
-	err = db.QueryRowContext(ctx, "SELECT event FROM sample_events").Scan(&sampleEvent)
+	// Verify sample events: one unnamed (NULL name) and one named "one".
+	var sampleEventCount int
+	err = db.QueryRowContext(ctx, "SELECT count(*) FROM sample_events").Scan(&sampleEventCount)
 	if err != nil {
-		t.Fatalf("querying sample event: %v", err)
+		t.Fatalf("querying sample events: %v", err)
 	}
-	if !strings.Contains(sampleEvent, "test") {
-		t.Errorf("expected sample event to contain 'test', got %s", sampleEvent)
+	if sampleEventCount != 2 {
+		t.Errorf("expected 2 sample events, got %d", sampleEventCount)
+	}
+	var unnamedEvent string
+	err = db.QueryRowContext(ctx, "SELECT event FROM sample_events WHERE name IS NULL").Scan(&unnamedEvent)
+	if err != nil {
+		t.Fatalf("querying unnamed sample event: %v", err)
+	}
+	if !strings.Contains(unnamedEvent, "test") {
+		t.Errorf("expected unnamed sample event to contain 'test', got %s", unnamedEvent)
+	}
+	var namedEvent string
+	err = db.QueryRowContext(ctx, "SELECT event FROM sample_events WHERE name = 'one'").Scan(&namedEvent)
+	if err != nil {
+		t.Fatalf("querying named sample event: %v", err)
+	}
+	if !strings.Contains(namedEvent, "named one") {
+		t.Errorf("expected named sample event to contain 'named one', got %s", namedEvent)
 	}
 
 	// Verify streams.
@@ -385,6 +460,79 @@ streams:
 	}
 	if docContent.Valid {
 		t.Errorf("expected NULL content without WithDocContent, got %q", docContent.String)
+	}
+
+	// Verify sections at every parent level (package, policy_template,
+	// policy_template_input, stream).
+	wantSectionParents := map[string]struct {
+		col  string
+		name string
+	}{
+		"pkg_section":    {col: "packages_id", name: "Package Section"},
+		"pt_section":     {col: "policy_templates_id", name: "Policy Template Section"},
+		"pti_section":    {col: "policy_template_inputs_id", name: "Input Section"},
+		"stream_section": {col: "streams_id", name: "Stream Section"},
+	}
+	for sectionName, want := range wantSectionParents {
+		var title string
+		var fkID sql.NullInt64
+		query := "SELECT title, " + want.col + " FROM sections WHERE name = ?"
+		if err := db.QueryRowContext(ctx, query, sectionName).Scan(&title, &fkID); err != nil {
+			t.Fatalf("querying section %s: %v", sectionName, err)
+		}
+		if title != want.name {
+			t.Errorf("section %s: title = %q, want %q", sectionName, title, want.name)
+		}
+		if !fkID.Valid {
+			t.Errorf("section %s: %s should be set", sectionName, want.col)
+		}
+	}
+
+	// Verify var_groups at every parent level.
+	wantVarGroupParents := map[string]string{
+		"pkg_credential":    "packages_id",
+		"pt_credential":     "policy_templates_id",
+		"pti_credential":    "policy_template_inputs_id",
+		"stream_credential": "streams_id",
+	}
+	for vgName, fkCol := range wantVarGroupParents {
+		var fkID sql.NullInt64
+		query := "SELECT " + fkCol + " FROM var_groups WHERE name = ?"
+		if err := db.QueryRowContext(ctx, query, vgName).Scan(&fkID); err != nil {
+			t.Fatalf("querying var group %s: %v", vgName, err)
+		}
+		if !fkID.Valid {
+			t.Errorf("var group %s: %s should be set", vgName, fkCol)
+		}
+	}
+
+	// Verify var_group_options is populated and joins to var_groups.
+	var optCount int
+	if err := db.QueryRowContext(ctx, "SELECT count(*) FROM var_group_options").Scan(&optCount); err != nil {
+		t.Fatalf("querying var_group_options: %v", err)
+	}
+	if optCount != 4 {
+		t.Errorf("expected 4 var_group_options, got %d", optCount)
+	}
+
+	// Verify system_test_samples.
+	var sampleCount int
+	if err := db.QueryRowContext(ctx, "SELECT count(*) FROM system_test_samples").Scan(&sampleCount); err != nil {
+		t.Fatalf("querying system_test_samples: %v", err)
+	}
+	if sampleCount != 2 {
+		t.Errorf("expected 2 system_test_samples, got %d", sampleCount)
+	}
+	var conditionKey, conditionValue sql.NullString
+	if err := db.QueryRowContext(ctx, "SELECT condition_key, condition_value FROM system_test_samples WHERE name = 'two'").
+		Scan(&conditionKey, &conditionValue); err != nil {
+		t.Fatalf("querying system_test_samples row 'two': %v", err)
+	}
+	if conditionKey.String != "event.dataset" {
+		t.Errorf("system_test_samples 'two': condition_key = %q, want event.dataset", conditionKey.String)
+	}
+	if conditionValue.String != "test-package.logs" {
+		t.Errorf("system_test_samples 'two': condition_value = %q, want test-package.logs", conditionValue.String)
 	}
 }
 
