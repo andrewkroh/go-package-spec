@@ -17,6 +17,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/andrewkroh/go-package-spec/pkgspec"
 )
@@ -94,15 +95,16 @@ func (p *Package) ContentManifest() *pkgspec.ContentManifest {
 type Option func(*config)
 
 type config struct {
-	fsys           fs.FS
-	knownFields    bool
-	gitMetadata    bool
-	agentTemplates bool
-	imageMetadata  bool
-	testConfigs    bool
-	pathPrefix     string // prefix prepended to all FileMetadata file paths
-	packagePath    string // original OS path, needed for git operations
-	codeownersPath string // path to CODEOWNERS file for data stream ownership
+	fsys             fs.FS
+	knownFields      bool
+	gitMetadata      bool
+	agentTemplates   bool
+	imageMetadata    bool
+	testConfigs      bool
+	pathPrefix       string // prefix prepended to all FileMetadata file paths
+	repoRelativePath string // package path relative to the repo root (for CODEOWNERS lookup)
+	packagePath      string // original OS path, needed for git operations
+	codeownersPath   string // path to CODEOWNERS file for data stream ownership
 }
 
 // WithFS provides a custom filesystem for reading package files. When set,
@@ -177,6 +179,21 @@ func WithPathPrefix(prefix string) Option {
 func WithCodeowners(path string) Option {
 	return func(c *config) {
 		c.codeownersPath = path
+	}
+}
+
+// WithRepoRelativePath sets the package's path relative to the repository
+// root. This is used to build CODEOWNERS lookup keys when the package lives
+// under a nested layout such as packages/<group>/<name>/, where the directory
+// basename alone is insufficient. The value should be a forward-slash path
+// like "packages/aws" or "packages/microsoft/defender_endpoint".
+//
+// If WithRepoRelativePath is not set, the value provided to WithPathPrefix is
+// used. If neither is set, the CODEOWNERS lookup falls back to the basename
+// of the package path, which matches historical behavior for the flat layout.
+func WithRepoRelativePath(p string) Option {
+	return func(c *config) {
+		c.repoRelativePath = p
 	}
 }
 
@@ -445,9 +462,9 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 		if err != nil {
 			return nil, fmt.Errorf("loading CODEOWNERS: %w", err)
 		}
-		dirName := path.Base(cfg.packagePath)
+		pkgKey := codeownersPackageKey(cfg)
 		for dsName, ds := range pkg.DataStreams {
-			dsPath := "/packages/" + dirName + "/data_stream/" + dsName
+			dsPath := pkgKey + "/data_stream/" + dsName
 			if owner := cf.matchOwner(dsPath); owner != "" {
 				ds.Manifest.GithubCodeOwner = owner
 			}
@@ -464,6 +481,23 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 	}
 
 	return pkg, nil
+}
+
+// codeownersPackageKey returns the leading path used as the prefix in
+// CODEOWNERS lookups for a package's data streams. Preference order:
+// WithRepoRelativePath, WithPathPrefix, then path.Base(packagePath). The
+// returned key starts with "/" and has no trailing slash, matching the
+// pattern style used in the elastic/integrations CODEOWNERS file (e.g.
+// "/packages/aws" or "/packages/microsoft/defender_endpoint").
+func codeownersPackageKey(cfg *config) string {
+	switch {
+	case cfg.repoRelativePath != "":
+		return "/" + strings.Trim(cfg.repoRelativePath, "/")
+	case cfg.pathPrefix != "":
+		return "/" + strings.Trim(cfg.pathPrefix, "/")
+	default:
+		return "/packages/" + path.Base(cfg.packagePath)
+	}
 }
 
 // manifestTypeDetector is used to extract only the "type" field from a manifest.

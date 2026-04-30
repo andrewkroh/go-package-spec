@@ -13,20 +13,20 @@ func TestReadAllPackages(t *testing.T) {
 	}
 
 	packagesDir := filepath.Join(dir, "packages")
-	entries, err := os.ReadDir(packagesDir)
+	pkgPaths, err := ListPackages(packagesDir)
 	if err != nil {
-		t.Fatalf("reading packages directory: %v", err)
+		t.Fatalf("listing packages: %v", err)
 	}
 
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
+	for _, pkgPath := range pkgPaths {
+		rel, err := filepath.Rel(packagesDir, pkgPath)
+		if err != nil {
+			t.Fatalf("computing relative path: %v", err)
 		}
 
-		t.Run(entry.Name(), func(t *testing.T) {
+		t.Run(rel, func(t *testing.T) {
 			t.Parallel()
 
-			pkgPath := filepath.Join(packagesDir, entry.Name())
 			pkg, err := Read(pkgPath, WithKnownFields())
 			if err != nil {
 				t.Fatalf("reading package: %v", err)
