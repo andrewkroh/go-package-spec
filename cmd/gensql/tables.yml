@@ -95,6 +95,8 @@ tables:
       - Icons
       - Screenshots
       - Inputs
+      - Sections
+      - VarGroups
       - Vars
       - Deprecated
     inline:
@@ -140,6 +142,8 @@ tables:
           root (e.g. agent/input/httpjson.yml.hbs). NULL when not
           specified. Joinable directly to agent_templates.file_path.
     exclude:
+      - Sections
+      - VarGroups
       - Vars
       - RequiredVars
       - Deprecated
@@ -168,13 +172,16 @@ tables:
       - Elasticsearch.Privileges
 
   sample_events:
-    comment: "Sample event data for data streams."
+    comment: "Sample event data for data streams. NULL name indicates the unnamed default sample_event.json; non-NULL names correspond to sample_event_<name>.json files referenced by SystemTestConfig samples."
     extra_columns:
       data_streams_id:
         type: INTEGER
         not_null: true
         fk: data_streams
         comment: "foreign key to data_streams"
+      name:
+        type: TEXT
+        comment: "sample event name (NULL for sample_event.json; suffix from sample_event_<name>.json otherwise)"
       event:
         type: JSON
         not_null: true
@@ -192,6 +199,7 @@ tables:
           to stream.yml.hbs when not specified in the manifest. Joinable
           directly to agent_templates.file_path.
     exclude:
+      - Sections
       - Vars
       - VarGroups
       - RequiredVars
@@ -262,6 +270,74 @@ tables:
         not_null: true
         fk: vars
         comment: "foreign key to vars"
+
+  sections:
+    type: Section
+    comment: >-
+      Named sections used to group and visually organize variables in the
+      Fleet UI. A section is owned by exactly one parent (package, policy
+      template, policy template input, or stream); the corresponding parent
+      FK column is set, all others are NULL.
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        fk: packages
+        comment: "foreign key to packages (set for top-level integration/input package sections)"
+      policy_templates_id:
+        type: INTEGER
+        fk: policy_templates
+        comment: "foreign key to policy_templates (set for policy template sections)"
+      policy_template_inputs_id:
+        type: INTEGER
+        fk: policy_template_inputs
+        comment: "foreign key to policy_template_inputs (set for policy template input sections)"
+      streams_id:
+        type: INTEGER
+        fk: streams
+        comment: "foreign key to streams (set for stream sections)"
+
+  var_groups:
+    type: VarGroup
+    comment: >-
+      Mutually exclusive groups of variables shown in Fleet UI as a selector.
+      A var_group is owned by exactly one parent (package, policy template,
+      or policy template input); the corresponding parent FK column is set,
+      all others are NULL. Options are stored in var_group_options.
+    extra_columns:
+      packages_id:
+        type: INTEGER
+        fk: packages
+        comment: "foreign key to packages (set for top-level integration/input package var groups)"
+      policy_templates_id:
+        type: INTEGER
+        fk: policy_templates
+        comment: "foreign key to policy_templates (set for policy template var groups)"
+      policy_template_inputs_id:
+        type: INTEGER
+        fk: policy_template_inputs
+        comment: "foreign key to policy_template_inputs (set for policy template input var groups)"
+      streams_id:
+        type: INTEGER
+        fk: streams
+        comment: "foreign key to streams (set for stream var groups)"
+    exclude:
+      - Options
+
+  var_group_options:
+    type: VarGroupOption
+    parent: var_groups
+    comment: "Options within a variable group. Each option lists which variable names are shown when selected."
+    json_columns:
+      - Vars
+      - HideInDeploymentModes
+      - AdditionalProperties
+
+  system_test_samples:
+    type: SystemTestConfigSample
+    parent: system_tests
+    comment: "Sample event files to collect from a system test, with optional document filtering condition. Each entry references a sample_event_<name>.json file."
+    inline:
+      - Condition
 
   fields:
     type: FlatField
@@ -519,6 +595,8 @@ tables:
       - Agent
       - Agent.PreStartScript
       - Agent.ProvisioningScript
+    exclude:
+      - Samples
     json_columns:
       - Agent.LinuxCapabilities
       - Agent.Ports

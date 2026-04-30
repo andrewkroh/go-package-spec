@@ -1214,16 +1214,12 @@ INSERT INTO policy_template_inputs (
   multi,
   name,
   package,
-  sections,
   show_divider,
   template_path,
   template_paths,
   title,
-  type,
-  var_groups
+  type
 ) VALUES (
-  ?,
-  ?,
   ?,
   ?,
   ?,
@@ -1253,13 +1249,11 @@ type InsertPolicyTemplateInputsParams struct {
 	Multi                 sql.NullBool
 	Name                  sql.NullString
 	Package               sql.NullString
-	Sections              interface{}
 	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
 	Title                 string
 	Type                  sql.NullString
-	VarGroups             interface{}
 }
 
 func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPolicyTemplateInputsParams) (int64, error) {
@@ -1274,13 +1268,11 @@ func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPoli
 		arg.Multi,
 		arg.Name,
 		arg.Package,
-		arg.Sections,
 		arg.ShowDivider,
 		arg.TemplatePath,
 		arg.TemplatePaths,
 		arg.Title,
 		arg.Type,
-		arg.VarGroups,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -1370,12 +1362,8 @@ INSERT INTO policy_templates (
   fips_compatible,
   multiple,
   name,
-  sections,
-  title,
-  var_groups
+  title
 ) VALUES (
-  ?,
-  ?,
   ?,
   ?,
   ?,
@@ -1425,9 +1413,7 @@ type InsertPolicyTemplatesParams struct {
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
 	Name                                            string
-	Sections                                        interface{}
 	Title                                           string
-	VarGroups                                       interface{}
 }
 
 func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTemplatesParams) (int64, error) {
@@ -1454,9 +1440,7 @@ func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTem
 		arg.FipsCompatible,
 		arg.Multiple,
 		arg.Name,
-		arg.Sections,
 		arg.Title,
-		arg.VarGroups,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -1580,8 +1564,10 @@ func (q *Queries) InsertRoutingRules(ctx context.Context, arg InsertRoutingRules
 const insertSampleEvents = `-- name: InsertSampleEvents :one
 INSERT INTO sample_events (
   data_streams_id,
-  event
+  event,
+  name
 ) VALUES (
+  ?,
   ?,
   ?
 ) RETURNING id
@@ -1590,10 +1576,56 @@ INSERT INTO sample_events (
 type InsertSampleEventsParams struct {
 	DataStreamsID int64
 	Event         interface{}
+	Name          sql.NullString
 }
 
 func (q *Queries) InsertSampleEvents(ctx context.Context, arg InsertSampleEventsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event)
+	row := q.db.QueryRowContext(ctx, insertSampleEvents, arg.DataStreamsID, arg.Event, arg.Name)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSections = `-- name: InsertSections :one
+INSERT INTO sections (
+  packages_id,
+  policy_template_inputs_id,
+  policy_templates_id,
+  streams_id,
+  description,
+  name,
+  title
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSectionsParams struct {
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Title                  string
+}
+
+func (q *Queries) InsertSections(ctx context.Context, arg InsertSectionsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSections,
+		arg.PackagesID,
+		arg.PolicyTemplateInputsID,
+		arg.PolicyTemplatesID,
+		arg.StreamsID,
+		arg.Description,
+		arg.Name,
+		arg.Title,
+	)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -1978,12 +2010,10 @@ INSERT INTO streams (
   input,
   migrate_from,
   package,
-  sections,
   template_path,
   template_paths,
   title
 ) VALUES (
-  ?,
   ?,
   ?,
   ?,
@@ -2011,7 +2041,6 @@ type InsertStreamsParams struct {
 	Input              sql.NullString
 	MigrateFrom        sql.NullString
 	Package            sql.NullString
-	Sections           interface{}
 	TemplatePath       sql.NullString
 	TemplatePaths      interface{}
 	Title              string
@@ -2029,10 +2058,42 @@ func (q *Queries) InsertStreams(ctx context.Context, arg InsertStreamsParams) (i
 		arg.Input,
 		arg.MigrateFrom,
 		arg.Package,
-		arg.Sections,
 		arg.TemplatePath,
 		arg.TemplatePaths,
 		arg.Title,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertSystemTestSamples = `-- name: InsertSystemTestSamples :one
+INSERT INTO system_test_samples (
+  system_tests_id,
+  condition_key,
+  condition_value,
+  name
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertSystemTestSamplesParams struct {
+	SystemTestsID  int64
+	ConditionKey   string
+	ConditionValue sql.NullString
+	Name           string
+}
+
+func (q *Queries) InsertSystemTestSamples(ctx context.Context, arg InsertSystemTestSamplesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertSystemTestSamples,
+		arg.SystemTestsID,
+		arg.ConditionKey,
+		arg.ConditionValue,
+		arg.Name,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -2061,14 +2122,12 @@ INSERT INTO system_tests (
   deployer,
   policy_api_format,
   requires,
-  samples,
   skip_link,
   skip_reason,
   skip_ignored_fields,
   vars,
   wait_for_data_timeout
 ) VALUES (
-  ?,
   ?,
   ?,
   ?,
@@ -2118,7 +2177,6 @@ type InsertSystemTestsParams struct {
 	Deployer                        sql.NullString
 	PolicyApiFormat                 sql.NullString
 	Requires                        interface{}
-	Samples                         interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}
@@ -2148,7 +2206,6 @@ func (q *Queries) InsertSystemTests(ctx context.Context, arg InsertSystemTestsPa
 		arg.Deployer,
 		arg.PolicyApiFormat,
 		arg.Requires,
-		arg.Samples,
 		arg.SkipLink,
 		arg.SkipReason,
 		arg.SkipIgnoredFields,
@@ -2306,6 +2363,108 @@ func (q *Queries) InsertTransforms(ctx context.Context, arg InsertTransformsPara
 		arg.Settings,
 		arg.Source,
 		arg.Sync,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertVarGroupOptions = `-- name: InsertVarGroupOptions :one
+INSERT INTO var_group_options (
+  var_groups_id,
+  description,
+  hide_in_deployment_modes,
+  name,
+  title,
+  vars,
+  additional_properties
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertVarGroupOptionsParams struct {
+	VarGroupsID           int64
+	Description           sql.NullString
+	HideInDeploymentModes interface{}
+	Name                  string
+	Title                 string
+	Vars                  interface{}
+	AdditionalProperties  interface{}
+}
+
+func (q *Queries) InsertVarGroupOptions(ctx context.Context, arg InsertVarGroupOptionsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertVarGroupOptions,
+		arg.VarGroupsID,
+		arg.Description,
+		arg.HideInDeploymentModes,
+		arg.Name,
+		arg.Title,
+		arg.Vars,
+		arg.AdditionalProperties,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertVarGroups = `-- name: InsertVarGroups :one
+INSERT INTO var_groups (
+  packages_id,
+  policy_template_inputs_id,
+  policy_templates_id,
+  streams_id,
+  description,
+  name,
+  required,
+  selector_title,
+  show_divider,
+  title
+) VALUES (
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?,
+  ?
+) RETURNING id
+`
+
+type InsertVarGroupsParams struct {
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Required               sql.NullBool
+	SelectorTitle          string
+	ShowDivider            sql.NullBool
+	Title                  string
+}
+
+func (q *Queries) InsertVarGroups(ctx context.Context, arg InsertVarGroupsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, insertVarGroups,
+		arg.PackagesID,
+		arg.PolicyTemplateInputsID,
+		arg.PolicyTemplatesID,
+		arg.StreamsID,
+		arg.Description,
+		arg.Name,
+		arg.Required,
+		arg.SelectorTitle,
+		arg.ShowDivider,
+		arg.Title,
 	)
 	var id int64
 	err := row.Scan(&id)

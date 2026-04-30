@@ -307,9 +307,7 @@ type PolicyTemplate struct {
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
 	Name                                            string
-	Sections                                        interface{}
 	Title                                           string
-	VarGroups                                       interface{}
 }
 
 type PolicyTemplateCategory struct {
@@ -340,13 +338,11 @@ type PolicyTemplateInput struct {
 	Multi                 sql.NullBool
 	Name                  sql.NullString
 	Package               sql.NullString
-	Sections              interface{}
 	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
 	Title                 string
 	Type                  sql.NullString
-	VarGroups             interface{}
 }
 
 type PolicyTemplateInputVar struct {
@@ -402,6 +398,18 @@ type SampleEvent struct {
 	ID            int64
 	DataStreamsID int64
 	Event         interface{}
+	Name          sql.NullString
+}
+
+type Section struct {
+	ID                     int64
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Title                  string
 }
 
 type SecurityRule struct {
@@ -502,7 +510,6 @@ type Stream struct {
 	Input              sql.NullString
 	MigrateFrom        sql.NullString
 	Package            sql.NullString
-	Sections           interface{}
 	TemplatePath       sql.NullString
 	TemplatePaths      interface{}
 	Title              string
@@ -536,12 +543,19 @@ type SystemTest struct {
 	Deployer                        sql.NullString
 	PolicyApiFormat                 sql.NullString
 	Requires                        interface{}
-	Samples                         interface{}
 	SkipLink                        string
 	SkipReason                      string
 	SkipIgnoredFields               interface{}
 	Vars                            interface{}
 	WaitForDataTimeout              sql.NullString
+}
+
+type SystemTestSample struct {
+	ID             int64
+	SystemTestsID  int64
+	ConditionKey   string
+	ConditionValue sql.NullString
+	Name           string
 }
 
 type Tag struct {
@@ -602,4 +616,29 @@ type Var struct {
 	Title                 sql.NullString
 	Type                  string
 	UrlAllowedSchemes     interface{}
+}
+
+type VarGroup struct {
+	ID                     int64
+	PackagesID             sql.NullInt64
+	PolicyTemplateInputsID sql.NullInt64
+	PolicyTemplatesID      sql.NullInt64
+	StreamsID              sql.NullInt64
+	Description            sql.NullString
+	Name                   string
+	Required               sql.NullBool
+	SelectorTitle          string
+	ShowDivider            sql.NullBool
+	Title                  string
+}
+
+type VarGroupOption struct {
+	ID                    int64
+	VarGroupsID           int64
+	Description           sql.NullString
+	HideInDeploymentModes interface{}
+	Name                  string
+	Title                 string
+	Vars                  interface{}
+	AdditionalProperties  interface{}
 }

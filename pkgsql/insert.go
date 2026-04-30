@@ -291,10 +291,8 @@ func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64, dynamic
 		Name:                                            v.Name,
 		PackagesID:                                      parentID,
 		PolicyTemplateType:                              policyTemplateType,
-		Sections:                                        jsonNullString(v.Sections),
 		TemplatePath:                                    templatePath,
 		Title:                                           v.Title,
-		VarGroups:                                       jsonNullString(v.VarGroups),
 	}
 }
 
@@ -323,13 +321,11 @@ func mapPolicyTemplateInputsParams(v *pkgspec.PolicyTemplateInput, parentID int6
 		Name:                  toNullString(v.Name),
 		Package:               toNullString(v.Package),
 		PolicyTemplatesID:     parentID,
-		Sections:              jsonNullString(v.Sections),
 		ShowDivider:           toNullBool(v.ShowDivider),
 		TemplatePath:          toNullString(v.TemplatePath),
 		TemplatePaths:         jsonNullString(v.TemplatePaths),
 		Title:                 v.Title,
 		Type:                  toNullString(v.Type),
-		VarGroups:             jsonNullString(v.VarGroups),
 	}
 }
 
@@ -400,10 +396,18 @@ func mapStreamsParams(v *pkgspec.DataStreamStream, parentID int64) db.InsertStre
 		Input:              toNullString(v.Input),
 		MigrateFrom:        toNullString(v.MigrateFrom),
 		Package:            toNullString(v.Package),
-		Sections:           jsonNullString(v.Sections),
 		TemplatePath:       toNullString(v.TemplatePath),
 		TemplatePaths:      jsonNullString(v.TemplatePaths),
 		Title:              v.Title,
+	}
+}
+
+// mapSectionsParams converts a Section to db.InsertSectionsParams.
+func mapSectionsParams(v *pkgspec.Section) db.InsertSectionsParams {
+	return db.InsertSectionsParams{
+		Description: toNullString(v.Description),
+		Name:        v.Name,
+		Title:       v.Title,
 	}
 }
 
@@ -428,12 +432,21 @@ func mapSystemTestsParams(v *pkgspec.SystemTestConfig, caseName string) db.Inser
 		FilePath:                        toNullString(v.FilePath()),
 		PolicyApiFormat:                 toNullString(string(v.PolicyAPIFormat)),
 		Requires:                        jsonNullString(v.Requires),
-		Samples:                         jsonNullString(v.Samples),
 		SkipIgnoredFields:               jsonNullString(v.SkipIgnoredFields),
 		SkipLink:                        v.Skip.Link,
 		SkipReason:                      v.Skip.Reason,
 		Vars:                            jsonNullString(v.Vars),
 		WaitForDataTimeout:              toNullString(v.WaitForDataTimeout),
+	}
+}
+
+// mapSystemTestSamplesParams converts a SystemTestConfigSample to db.InsertSystemTestSamplesParams.
+func mapSystemTestSamplesParams(v *pkgspec.SystemTestConfigSample, parentID int64) db.InsertSystemTestSamplesParams {
+	return db.InsertSystemTestSamplesParams{
+		ConditionKey:   v.Condition.Key,
+		ConditionValue: toNullString(v.Condition.Value),
+		Name:           v.Name,
+		SystemTestsID:  parentID,
 	}
 }
 
@@ -470,6 +483,31 @@ func mapTransformsParams(v *pkgspec.Transform, parentID int64, dirName string, m
 		Settings:                         jsonNullString(v.Settings),
 		Source:                           jsonNullString(v.Source),
 		Sync:                             jsonNullString(v.Sync),
+	}
+}
+
+// mapVarGroupsParams converts a VarGroup to db.InsertVarGroupsParams.
+func mapVarGroupsParams(v *pkgspec.VarGroup) db.InsertVarGroupsParams {
+	return db.InsertVarGroupsParams{
+		Description:   toNullString(v.Description),
+		Name:          v.Name,
+		Required:      toNullBool(v.Required),
+		SelectorTitle: v.SelectorTitle,
+		ShowDivider:   toNullBool(v.ShowDivider),
+		Title:         v.Title,
+	}
+}
+
+// mapVarGroupOptionsParams converts a VarGroupOption to db.InsertVarGroupOptionsParams.
+func mapVarGroupOptionsParams(v *pkgspec.VarGroupOption, parentID int64) db.InsertVarGroupOptionsParams {
+	return db.InsertVarGroupOptionsParams{
+		AdditionalProperties:  jsonNullString(v.AdditionalProperties),
+		Description:           toNullString(v.Description),
+		HideInDeploymentModes: jsonNullString(v.HideInDeploymentModes),
+		Name:                  v.Name,
+		Title:                 v.Title,
+		VarGroupsID:           parentID,
+		Vars:                  jsonNullString(v.Vars),
 	}
 }
 
