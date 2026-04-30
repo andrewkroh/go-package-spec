@@ -155,3 +155,139 @@ func writeTemp(t *testing.T, content string) string {
 	}
 	return p
 }
+
+func TestReadAppliesCodeownersForFlatPackage(t *testing.T) {
+	pkgDir := t.TempDir()
+	writePackageWithDataStream(t, pkgDir, "aws", "cloudtrail")
+	codeowners := writeTemp(t, `
+* @elastic/integrations
+/packages/aws @elastic/obs-team
+/packages/aws/data_stream/cloudtrail @elastic/security-team
+`)
+
+	pkg, err := Read(pkgDir,
+		WithCodeowners(codeowners),
+		WithRepoRelativePath("packages/aws"),
+	)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+
+	ds := pkg.DataStreams["cloudtrail"]
+	if ds == nil {
+		t.Fatal("data stream cloudtrail not loaded")
+	}
+	if got, want := ds.Manifest.GithubCodeOwner, "elastic/security-team"; got != want {
+		t.Errorf("GithubCodeOwner = %q, want %q", got, want)
+	}
+}
+
+func TestReadAppliesCodeownersForNestedPackage(t *testing.T) {
+	// A nested package layout — packages/microsoft/defender_endpoint —
+	// must look up CODEOWNERS using the full repo-relative path, not the
+	// directory basename.
+	pkgDir := t.TempDir()
+	writePackageWithDataStream(t, pkgDir, "microsoft_defender_endpoint", "alerts")
+	codeowners := writeTemp(t, `
+* @elastic/integrations
+/packages/microsoft/defender_endpoint @elastic/sec-eng
+/packages/microsoft/defender_endpoint/data_stream/alerts @elastic/sec-detections
+`)
+
+	pkg, err := Read(pkgDir,
+		WithCodeowners(codeowners),
+		WithRepoRelativePath("packages/microsoft/defender_endpoint"),
+	)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+
+	ds := pkg.DataStreams["alerts"]
+	if ds == nil {
+		t.Fatal("data stream alerts not loaded")
+	}
+	if got, want := ds.Manifest.GithubCodeOwner, "elastic/sec-detections"; got != want {
+		t.Errorf("GithubCodeOwner = %q, want %q", got, want)
+	}
+}
+
+func TestReadAppliesCodeownersFromPathPrefix(t *testing.T) {
+	// When WithRepoRelativePath is not provided, WithPathPrefix should be
+	// used as the fallback so existing callers keep working on the nested
+	// layout.
+	pkgDir := t.TempDir()
+	writePackageWithDataStream(t, pkgDir, "microsoft_defender_endpoint", "alerts")
+	codeowners := writeTemp(t, `
+* @elastic/integrations
+/packages/microsoft/defender_endpoint @elastic/sec-eng
+`)
+
+	pkg, err := Read(pkgDir,
+		WithCodeowners(codeowners),
+		WithPathPrefix("packages/microsoft/defender_endpoint"),
+	)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+
+	ds := pkg.DataStreams["alerts"]
+	if ds == nil {
+		t.Fatal("data stream alerts not loaded")
+	}
+	if got, want := ds.Manifest.GithubCodeOwner, "elastic/sec-eng"; got != want {
+		t.Errorf("GithubCodeOwner = %q, want %q", got, want)
+	}
+}
+
+// writePackageWithDataStream lays down a minimal but valid integration
+// package on disk under dir, with a single data stream named dsName.
+func writePackageWithDataStream(t *testing.T, dir, pkgName, dsName string) {
+	t.Helper()
+
+	files := map[string]string{
+		"manifest.yml": `format_version: 3.5.7
+name: ` + pkgName + `
+type: integration
+version: 1.0.0
+title: ` + pkgName + `
+description: Test package.
+owner:
+  github: elastic/integrations
+  type: elastic
+policy_templates:
+  - name: default
+    title: Default
+    description: Default policy.
+    inputs:
+      - type: logfile
+        title: Log
+        description: Collect logs.
+`,
+		"changelog.yml": `- version: 1.0.0
+  changes:
+    - description: Initial release
+      type: enhancement
+      link: https://example.com/1
+`,
+		filepath.Join("data_stream", dsName, "manifest.yml"): `title: ` + dsName + `
+type: logs
+streams:
+  - input: logfile
+    title: ` + dsName + `
+    description: Collect logs.
+`,
+		filepath.Join("data_stream", dsName, "fields", "base-fields.yml"): `- name: "@timestamp"
+  type: date
+`,
+	}
+
+	for rel, content := range files {
+		full := filepath.Join(dir, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -1472,9 +1471,9 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 	}
 
 	packagesDir := filepath.Join(dir, "packages")
-	entries, err := os.ReadDir(packagesDir)
+	pkgPaths, err := pkgreader.ListPackages(packagesDir)
 	if err != nil {
-		t.Fatalf("reading packages directory: %v", err)
+		t.Fatalf("listing packages: %v", err)
 	}
 
 	dbPath := filepath.Join(".", "fleet-packages.sqlite")
@@ -1536,11 +1535,16 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for name := range work {
-				pkgPath := filepath.Join(packagesDir, name)
-				pkgOpts := append(opts, pkgreader.WithPathPrefix(path.Join("packages", name)))
+			for pkgPath := range work {
+				rel, err := filepath.Rel(dir, pkgPath)
+				if err != nil {
+					results <- result{name: pkgPath, err: err}
+					continue
+				}
+				prefix := filepath.ToSlash(rel)
+				pkgOpts := append(opts, pkgreader.WithPathPrefix(prefix))
 				pkg, err := pkgreader.Read(pkgPath, pkgOpts...)
-				results <- result{pkg: pkg, name: name, err: err}
+				results <- result{pkg: pkg, name: prefix, err: err}
 			}
 		}()
 	}
@@ -1551,11 +1555,8 @@ func TestBuildFleetPackagesDB(t *testing.T) {
 	}()
 
 	go func() {
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				continue
-			}
-			work <- entry.Name()
+		for _, p := range pkgPaths {
+			work <- p
 		}
 		close(work)
 	}()
