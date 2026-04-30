@@ -945,7 +945,7 @@ func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *p
 		}
 	}
 
-	// Insert sample event.
+	// Insert sample event (unnamed).
 	if ds.SampleEvent != nil {
 		_, err := q.InsertSampleEvents(ctx, dbpkg.InsertSampleEventsParams{
 			DataStreamsID: dsID,
@@ -953,6 +953,18 @@ func writeDataStream(ctx context.Context, q *dbpkg.Queries, dsName string, ds *p
 		})
 		if err != nil {
 			return fmt.Errorf("inserting sample event: %w", err)
+		}
+	}
+
+	// Insert named sample events (sample_event_<name>.json).
+	for name, event := range ds.SampleEvents {
+		_, err := q.InsertSampleEvents(ctx, dbpkg.InsertSampleEventsParams{
+			DataStreamsID: dsID,
+			Name:          sql.NullString{String: name, Valid: true},
+			Event:         string(event),
+		})
+		if err != nil {
+			return fmt.Errorf("inserting sample event %s: %w", name, err)
 		}
 	}
 

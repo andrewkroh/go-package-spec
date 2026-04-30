@@ -35,7 +35,8 @@ type Package struct {
 	Transforms     map[string]*TransformData       // nil if absent
 	Tags           []pkgspec.Tag                   // nil if absent
 	Lifecycle      *pkgspec.Lifecycle              // type:input only, nil if absent
-	SampleEvent    json.RawMessage                 // type:input only, nil if absent
+	SampleEvent    json.RawMessage                 // contents of sample_event.json (type:input only), nil if absent
+	SampleEvents   map[string]json.RawMessage      // contents of sample_event_<name>.json (type:input only), nil if none
 	KibanaObjects  map[string][]*KibanaSavedObject // type:integration and type:content only, keyed by asset type
 	AgentTemplates map[string]*AgentTemplate       // type:integration and type:input only, nil unless WithAgentTemplates used
 	Images         map[string]*ImageFile           // nil unless WithImageMetadata used
@@ -376,6 +377,13 @@ func Read(pkgPath string, opts ...Option) (*Package, error) {
 			return nil, fmt.Errorf("reading sample event: %w", err)
 		}
 		pkg.SampleEvent = sampleEvent
+
+		// Read named sample events: sample_event_<name>.json (optional).
+		namedSampleEvents, err := readNamedSampleEvents(cfg.fsys, root)
+		if err != nil {
+			return nil, fmt.Errorf("reading named sample events: %w", err)
+		}
+		pkg.SampleEvents = namedSampleEvents
 
 		// Read agent templates (optional, requires WithAgentTemplates).
 		if cfg.agentTemplates {
