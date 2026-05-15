@@ -288,6 +288,7 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   deployment_modes_agentless_enabled BOOLEAN, -- Indicates if the agentless deployment mode is available for this template policy. It is disabled by default.
   deployment_modes_agentless_is_default BOOLEAN, -- On policy templates that support multiple deployment modes, this setting can be set to true to use agentless mode by default.
   deployment_modes_agentless_organization TEXT, -- The responsible organization of the integration. This is used to tag the agentless agent deployments for monitoring.
+  deployment_modes_agentless_release TEXT, -- The maturity level of the agentless deployment mode for this policy template. If not defined, Kibana will provide a default value based on agentless platform maturity. Packages where agentless is t...
   deployment_modes_agentless_resources_requests_cpu TEXT, -- The amount of CPUs that the Agentless deployment will be initially allocated.
   deployment_modes_agentless_resources_requests_memory TEXT, -- The amount of memory that the Agentless deployment will be initially allocated.
   deployment_modes_agentless_team TEXT, -- The team responsible for the integration. This is used to tag the agentless agent deployments for monitoring.

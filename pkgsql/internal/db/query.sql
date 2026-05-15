@@ -460,6 +460,7 @@ INSERT INTO policy_templates (
   deployment_modes_agentless_enabled,
   deployment_modes_agentless_is_default,
   deployment_modes_agentless_organization,
+  deployment_modes_agentless_release,
   deployment_modes_agentless_resources_requests_cpu,
   deployment_modes_agentless_resources_requests_memory,
   deployment_modes_agentless_team,
@@ -470,6 +471,7 @@ INSERT INTO policy_templates (
   name,
   title
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,

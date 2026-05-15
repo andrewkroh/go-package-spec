@@ -276,6 +276,7 @@ func mapPolicyTemplatesParams(v *pkgspec.PolicyTemplate, parentID int64, dynamic
 		DeploymentModesAgentlessEnabled:                 toNullBool(v.DeploymentModes.Agentless.Enabled),
 		DeploymentModesAgentlessIsDefault:               toNullBool(v.DeploymentModes.Agentless.IsDefault),
 		DeploymentModesAgentlessOrganization:            toNullString(v.DeploymentModes.Agentless.Organization),
+		DeploymentModesAgentlessRelease:                 toNullString(string(v.DeploymentModes.Agentless.Release)),
 		DeploymentModesAgentlessResourcesRequestsCpu:    toNullString(v.DeploymentModes.Agentless.Resources.Requests.CPU),
 		DeploymentModesAgentlessResourcesRequestsMemory: toNullString(v.DeploymentModes.Agentless.Resources.Requests.Memory),
 		DeploymentModesAgentlessTeam:                    toNullString(v.DeploymentModes.Agentless.Team),

@@ -72,6 +72,11 @@ type DeploymentModesAgentless struct {
 	// The responsible organization of the integration. This is used to tag the agentless agent
 	// deployments for monitoring.
 	Organization string `json:"organization,omitempty" yaml:"organization,omitempty"`
+	// The maturity level of the agentless deployment mode for this policy template. If not defined,
+	// Kibana will provide a default value based on agentless platform maturity. Packages where
+	// agentless is the only deployment mode, should defer to the package's top-level `version`. Only
+	// evaluated in Kibana 9.5.0 or later.
+	Release DeploymentModesAgentlessRelease `json:"release,omitempty" yaml:"release,omitempty"`
 	// The computing resources specifications for the Agentless deployment.
 	Resources AgentlessResources `json:"resources,omitempty" yaml:"resources,omitempty"`
 	// The team responsible for the integration. This is used to tag the agentless agent deployments for

@@ -12,6 +12,18 @@ const (
 	DeployerK8s    Deployer = "k8s"
 )
 
+// DeploymentModesAgentlessRelease the maturity level of the agentless deployment mode for this
+// policy template. If not defined, Kibana will provide a default value based on agentless platform
+// maturity. Packages where agentless is the only deployment mode, should defer to the package's
+// top-level `version`. Only evaluated in Kibana 9.5.0 or later.
+type DeploymentModesAgentlessRelease string
+
+// Enum values for DeploymentModesAgentlessRelease.
+const (
+	DeploymentModesAgentlessReleaseBeta DeploymentModesAgentlessRelease = "beta"
+	DeploymentModesAgentlessReleaseGa   DeploymentModesAgentlessRelease = "ga"
+)
+
 // PackageDependency A package dependency with name and version.
 type PackageDependency struct {
 	// Name of the required package.
