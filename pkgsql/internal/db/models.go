@@ -299,6 +299,7 @@ type PolicyTemplate struct {
 	DeploymentModesAgentlessEnabled                 sql.NullBool
 	DeploymentModesAgentlessIsDefault               sql.NullBool
 	DeploymentModesAgentlessOrganization            sql.NullString
+	DeploymentModesAgentlessRelease                 sql.NullString
 	DeploymentModesAgentlessResourcesRequestsCpu    sql.NullString
 	DeploymentModesAgentlessResourcesRequestsMemory sql.NullString
 	DeploymentModesAgentlessTeam                    sql.NullString

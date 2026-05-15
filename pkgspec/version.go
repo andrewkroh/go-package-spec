@@ -3,4 +3,4 @@
 package pkgspec
 
 // SpecVersion is the package-spec schema version used to generate this package.
-const SpecVersion = "3.6.2"
+const SpecVersion = "3.6.3"
