@@ -12,7 +12,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: stable
@@ -25,7 +25,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Checkout package-spec-schema
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: andrewkroh/package-spec-schema
           path: package-spec-schema
