@@ -64,6 +64,7 @@ type DataStream struct {
 	ElasticsearchSourceMode       sql.NullString
 	Hidden                        sql.NullBool
 	IlmPolicy                     sql.NullString
+	ProviderPermissions           interface{}
 	Release                       sql.NullString
 	Title                         string
 	Type                          sql.NullString
@@ -308,6 +309,7 @@ type PolicyTemplate struct {
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
 	Name                                            string
+	ProviderPermissions                             interface{}
 	Title                                           string
 }
 
@@ -339,6 +341,7 @@ type PolicyTemplateInput struct {
 	Multi                 sql.NullBool
 	Name                  sql.NullString
 	Package               sql.NullString
+	ProviderPermissions   interface{}
 	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
@@ -606,6 +609,7 @@ type Var struct {
 	Description           sql.NullString
 	HideInDeploymentModes interface{}
 	MaxDuration           sql.NullString
+	MigrateFrom           interface{}
 	MinDuration           sql.NullString
 	Multi                 sql.NullBool
 	Name                  string

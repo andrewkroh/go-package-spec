@@ -25,6 +25,10 @@ type Var struct {
 	// The maximum allowed duration value for duration data types. This property can only be used when
 	// the type is set to 'duration'.
 	MaxDuration string `json:"max_duration,omitempty" yaml:"max_duration,omitempty"`
+	// Declares that this variable was previously named differently or defined at a different scope.
+	// Fleet carries the old value over when upgrading a policy. At least one of `name` or `scope` must
+	// be set. Both may be set together when the variable was both renamed and moved between scopes.
+	MigrateFrom VarMigrateFrom `json:"migrate_from,omitempty" yaml:"migrate_from,omitempty"`
 	// The minimum allowed duration value for duration data types. This property can only be used when
 	// the type is set to 'duration'.
 	MinDuration string `json:"min_duration,omitempty" yaml:"min_duration,omitempty"`

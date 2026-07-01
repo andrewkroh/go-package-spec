@@ -209,11 +209,13 @@ INSERT INTO data_streams (
   elasticsearch_source_mode,
   hidden,
   ilm_policy,
+  provider_permissions,
   "release",
   title,
   type,
   github_code_owner
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -252,6 +254,7 @@ type InsertDataStreamsParams struct {
 	ElasticsearchSourceMode       sql.NullString
 	Hidden                        sql.NullBool
 	IlmPolicy                     sql.NullString
+	ProviderPermissions           interface{}
 	Release                       sql.NullString
 	Title                         string
 	Type                          sql.NullString
@@ -275,6 +278,7 @@ func (q *Queries) InsertDataStreams(ctx context.Context, arg InsertDataStreamsPa
 		arg.ElasticsearchSourceMode,
 		arg.Hidden,
 		arg.IlmPolicy,
+		arg.ProviderPermissions,
 		arg.Release,
 		arg.Title,
 		arg.Type,
@@ -1214,12 +1218,14 @@ INSERT INTO policy_template_inputs (
   multi,
   name,
   package,
+  provider_permissions,
   show_divider,
   template_path,
   template_paths,
   title,
   type
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -1249,6 +1255,7 @@ type InsertPolicyTemplateInputsParams struct {
 	Multi                 sql.NullBool
 	Name                  sql.NullString
 	Package               sql.NullString
+	ProviderPermissions   interface{}
 	ShowDivider           sql.NullBool
 	TemplatePath          sql.NullString
 	TemplatePaths         interface{}
@@ -1268,6 +1275,7 @@ func (q *Queries) InsertPolicyTemplateInputs(ctx context.Context, arg InsertPoli
 		arg.Multi,
 		arg.Name,
 		arg.Package,
+		arg.ProviderPermissions,
 		arg.ShowDivider,
 		arg.TemplatePath,
 		arg.TemplatePaths,
@@ -1363,8 +1371,10 @@ INSERT INTO policy_templates (
   fips_compatible,
   multiple,
   name,
+  provider_permissions,
   title
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -1416,6 +1426,7 @@ type InsertPolicyTemplatesParams struct {
 	FipsCompatible                                  sql.NullBool
 	Multiple                                        sql.NullBool
 	Name                                            string
+	ProviderPermissions                             interface{}
 	Title                                           string
 }
 
@@ -1444,6 +1455,7 @@ func (q *Queries) InsertPolicyTemplates(ctx context.Context, arg InsertPolicyTem
 		arg.FipsCompatible,
 		arg.Multiple,
 		arg.Name,
+		arg.ProviderPermissions,
 		arg.Title,
 	)
 	var id int64
@@ -2484,6 +2496,7 @@ INSERT INTO vars (
   description,
   hide_in_deployment_modes,
   max_duration,
+  migrate_from,
   min_duration,
   multi,
   name,
@@ -2513,6 +2526,7 @@ INSERT INTO vars (
   ?,
   ?,
   ?,
+  ?,
   ?
 ) RETURNING id
 `
@@ -2525,6 +2539,7 @@ type InsertVarsParams struct {
 	Description           sql.NullString
 	HideInDeploymentModes interface{}
 	MaxDuration           sql.NullString
+	MigrateFrom           interface{}
 	MinDuration           sql.NullString
 	Multi                 sql.NullBool
 	Name                  string
@@ -2547,6 +2562,7 @@ func (q *Queries) InsertVars(ctx context.Context, arg InsertVarsParams) (int64, 
 		arg.Description,
 		arg.HideInDeploymentModes,
 		arg.MaxDuration,
+		arg.MigrateFrom,
 		arg.MinDuration,
 		arg.Multi,
 		arg.Name,

@@ -62,6 +62,10 @@ type DataStreamManifest struct {
 	Hidden *bool `json:"hidden,omitempty" yaml:"hidden,omitempty"`
 	// The name of an existing ILM (Index Lifecycle Management) policy
 	ILMPolicy string `json:"ilm_policy,omitempty" yaml:"ilm_policy,omitempty"`
+	// Permissions and roles this integration unit requires from the named provider. May be declared at
+	// package, policy_template, input, and data_stream levels; entries across all applicable levels are
+	// accumulated into a single set and deduplicated.
+	ProviderPermissions []ProviderPermission `json:"provider_permissions,omitempty" yaml:"provider_permissions,omitempty"`
 	// Stability of data stream.
 	Release DataStreamRelease `json:"release,omitempty" yaml:"release,omitempty"`
 	// Streams offered by data stream.
@@ -181,5 +185,5 @@ const (
 	DataStreamTypeLogs       DataStreamType = "logs"
 	DataStreamTypeSynthetics DataStreamType = "synthetics"
 	DataStreamTypeTraces     DataStreamType = "traces"
-	DataStreamTypeProfiling  DataStreamType = "profiling"
+	DataStreamTypeProfiles   DataStreamType = "profiles"
 )

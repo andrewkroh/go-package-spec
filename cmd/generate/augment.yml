@@ -110,6 +110,12 @@ types:
       hide_in_var_group_options:
         type: "map[string][]string"
         doc: "HideInVarGroupOptions filters out specific var_group options for this input."
+      # In 3.6.5 the schema wrapped streams/inputs items in an if/then/else, moving the
+      # full vars definition into the then branch. The type mapper picks the less-specific
+      # top-level `vars: array of object`, so restore the typed slice explicitly.
+      vars:
+        type: "[]Var"
+        doc: "Input variables."
 
   # RequiredVars uses patternProperties and needs a map type.
   RequiredVars:
@@ -298,6 +304,12 @@ types:
   DataStreamManifestStream:
     name: DataStreamStream
     embed_meta: true
+    fields:
+      # See note on PolicyTemplateInput.vars — restore the typed slice that the
+      # 3.6.5 if/then/else restructuring caused the mapper to lose.
+      vars:
+        type: "[]Var"
+        doc: "Input variables."
 
   DataStreamManifestType:
     name: DataStreamType

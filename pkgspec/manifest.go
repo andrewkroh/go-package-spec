@@ -259,6 +259,10 @@ type InputManifest struct {
 	Elasticsearch InputElasticsearch `json:"elasticsearch,omitempty" yaml:"elasticsearch,omitempty"`
 	// List of policy templates offered by this package.
 	PolicyTemplates []InputPolicyTemplate `json:"policy_templates,omitempty" yaml:"policy_templates,omitempty"`
+	// Permissions and roles this integration unit requires from the named provider. May be declared at
+	// package, policy_template, input, and data_stream levels; entries across all applicable levels are
+	// accumulated into a single set and deduplicated.
+	ProviderPermissions []ProviderPermission `json:"provider_permissions,omitempty" yaml:"provider_permissions,omitempty"`
 	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
 	// reference a section by name using the `section` attribute. Sections are rendered in the order
 	// they are defined.
@@ -316,6 +320,10 @@ type IntegrationManifest struct {
 	// combined policy. The default value is `all`, where the combined policy template is available
 	// along with the individual policies.
 	PolicyTemplatesBehavior string `json:"policy_templates_behavior,omitempty" yaml:"policy_templates_behavior,omitempty"`
+	// Permissions and roles this integration unit requires from the named provider. May be declared at
+	// package, policy_template, input, and data_stream levels; entries across all applicable levels are
+	// accumulated into a single set and deduplicated.
+	ProviderPermissions []ProviderPermission `json:"provider_permissions,omitempty" yaml:"provider_permissions,omitempty"`
 	// Dependencies that this package requires to function properly.
 	Requires Requires `json:"requires,omitempty" yaml:"requires,omitempty"`
 	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
