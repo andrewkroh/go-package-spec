@@ -100,7 +100,8 @@ func ResolveColumns(tableName string, tc *TableConfig, docs DocMap) ([]ColumnDef
 	// Special case: Processor has no standard struct tags, but embeds
 	// FileMetadata for source location tracking. Add those columns and return.
 	if tc.Type == "Processor" {
-		cols = append(cols,
+		cols = append(
+			cols,
 			ColumnDef{Name: "file_path", SQLType: "TEXT", Comment: "source file path", GoField: "FilePath", IsMethod: true},
 			ColumnDef{Name: "file_line", SQLType: "INTEGER", Comment: "source file line number", GoField: "Line", IsMethod: true},
 			ColumnDef{Name: "file_column", SQLType: "INTEGER", Comment: "source file column number", GoField: "Column", IsMethod: true},
@@ -158,7 +159,8 @@ func walkStruct(rt reflect.Type, prefix, goPrefix string, inline, jsonCols, excl
 
 		// Emit source location columns for FileMetadata.
 		if sf.Type.Name() == "FileMetadata" {
-			cols = append(cols,
+			cols = append(
+				cols,
 				ColumnDef{Name: "file_path", SQLType: "TEXT", Comment: "source file path", GoField: "FilePath", IsMethod: true},
 				ColumnDef{Name: "file_line", SQLType: "INTEGER", Comment: "source file line number", GoField: "Line", IsMethod: true},
 				ColumnDef{Name: "file_column", SQLType: "INTEGER", Comment: "source file column number", GoField: "Column", IsMethod: true},

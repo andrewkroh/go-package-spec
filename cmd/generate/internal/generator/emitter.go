@@ -296,7 +296,8 @@ func (e *Emitter) emitMarshalJSON(f *File, goType *GoType) {
 	body = append(body, Type().Id(aliasName).Id(goType.Name))
 
 	// data, err := json.Marshal(alias(v))
-	body = append(body,
+	body = append(
+		body,
 		List(Id("data"), Err()).Op(":=").Qual(jsonPkg, "Marshal").Call(
 			Id(aliasName).Call(Id("v")),
 		),
