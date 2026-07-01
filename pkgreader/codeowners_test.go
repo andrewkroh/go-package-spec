@@ -165,7 +165,8 @@ func TestReadAppliesCodeownersForFlatPackage(t *testing.T) {
 /packages/aws/data_stream/cloudtrail @elastic/security-team
 `)
 
-	pkg, err := Read(pkgDir,
+	pkg, err := Read(
+		pkgDir,
 		WithCodeowners(codeowners),
 		WithRepoRelativePath("packages/aws"),
 	)
@@ -194,7 +195,8 @@ func TestReadAppliesCodeownersForNestedPackage(t *testing.T) {
 /packages/microsoft/defender_endpoint/data_stream/alerts @elastic/sec-detections
 `)
 
-	pkg, err := Read(pkgDir,
+	pkg, err := Read(
+		pkgDir,
 		WithCodeowners(codeowners),
 		WithRepoRelativePath("packages/microsoft/defender_endpoint"),
 	)
@@ -222,7 +224,8 @@ func TestReadAppliesCodeownersFromPathPrefix(t *testing.T) {
 /packages/microsoft/defender_endpoint @elastic/sec-eng
 `)
 
-	pkg, err := Read(pkgDir,
+	pkg, err := Read(
+		pkgDir,
 		WithCodeowners(codeowners),
 		WithPathPrefix("packages/microsoft/defender_endpoint"),
 	)
