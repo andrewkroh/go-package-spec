@@ -52,6 +52,33 @@ const (
 	PolicyAPIFormatSimplified PolicyAPIFormat = "simplified"
 )
 
+type ProviderPermission struct {
+	// Human-readable description of why these permissions are needed.
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	// Individual permission grants required by this integration unit.
+	Permissions []ProviderPermissionPermission `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	// Identifier of the provider these permissions apply to.
+	Provider string `json:"provider" yaml:"provider"`
+	// Pre-defined roles or managed policies to attach alongside inline permissions.
+	Roles []ProviderPermissionRole `json:"roles,omitempty" yaml:"roles,omitempty"`
+}
+
+type ProviderPermissionPermission struct {
+	// Human-readable description of why this permission is needed.
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	// Provider-specific permission or action name.
+	Name string `json:"name" yaml:"name"`
+}
+
+type ProviderPermissionRole struct {
+	// Human-readable description of this role.
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	// Provider-specific identifier for this role or managed policy.
+	ID string `json:"id,omitempty" yaml:"id,omitempty"`
+	// Display name of the role or managed policy.
+	Name string `json:"name" yaml:"name"`
+}
+
 // Requires dependencies that this package requires to function properly.
 type Requires struct {
 	// List of required content packages.
@@ -84,3 +111,31 @@ type SystemTestConfigSampleCondition struct {
 	// Expected value of the field.
 	Value string `json:"value,omitempty" yaml:"value,omitempty"`
 }
+
+// VarMigrateFrom declares that this variable was previously named differently or defined at a
+// different scope. Fleet carries the old value over when upgrading a policy. At least one of `name`
+// or `scope` must be set. Both may be set together when the variable was both renamed and moved
+// between scopes.
+type VarMigrateFrom struct {
+	// Previous name of the variable. Use when the variable was renamed between package versions.
+	// Combine with `scope` if the variable was also moved to a different scope.
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	// The scope where this variable previously lived. Use when the variable moved between input-level
+	// and stream-level within the same input type.
+	Scope VarMigrateFromScope `json:"scope,omitempty" yaml:"scope,omitempty"`
+	// The source stream to pull the old value from. May be written as the data stream folder name (e.g.
+	// `logs`) or the fully-qualified dataset (e.g. `mypackage.logs`); both forms are accepted. Required
+	// when `scope` is "stream" and the source input has more than one stream. May be omitted when the
+	// source input has exactly one stream. Has no effect when `scope` is "input".
+	Stream string `json:"stream,omitempty" yaml:"stream,omitempty"`
+}
+
+// VarMigrateFromScope the scope where this variable previously lived. Use when the variable moved
+// between input-level and stream-level within the same input type.
+type VarMigrateFromScope string
+
+// Enum values for VarMigrateFromScope.
+const (
+	VarMigrateFromScopeInput  VarMigrateFromScope = "input"
+	VarMigrateFromScopeStream VarMigrateFromScope = "stream"
+)

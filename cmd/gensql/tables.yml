@@ -213,6 +213,7 @@ tables:
       - Default
       - Options
       - HideInDeploymentModes
+      - MigrateFrom
       - URLAllowedSchemes
 
   package_vars:

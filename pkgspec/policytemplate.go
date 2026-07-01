@@ -138,6 +138,10 @@ type InputPolicyTemplate struct {
 	Input string `json:"input" yaml:"input"`
 	// Name of policy template.
 	Name string `json:"name" yaml:"name"`
+	// Permissions and roles this integration unit requires from the named provider. May be declared at
+	// package, policy_template, input, and data_stream levels; entries across all applicable levels are
+	// accumulated into a single set and deduplicated.
+	ProviderPermissions []ProviderPermission `json:"provider_permissions,omitempty" yaml:"provider_permissions,omitempty"`
 	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
 	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
@@ -199,6 +203,10 @@ type PolicyTemplate struct {
 	Multiple *bool                 `json:"multiple,omitempty" yaml:"multiple,omitempty"`
 	// Name of policy template.
 	Name string `json:"name" yaml:"name"`
+	// Permissions and roles this integration unit requires from the named provider. May be declared at
+	// package, policy_template, input, and data_stream levels; entries across all applicable levels are
+	// accumulated into a single set and deduplicated.
+	ProviderPermissions []ProviderPermission `json:"provider_permissions,omitempty" yaml:"provider_permissions,omitempty"`
 	// List of screenshots of Kibana assets created by this package.
 	Screenshots []Screenshot `json:"screenshots,omitempty" yaml:"screenshots,omitempty"`
 	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables
@@ -258,6 +266,10 @@ type PolicyTemplateInput struct {
 	// Reference to an input package. When specified, configuration is inherited from the referenced
 	// package. The package must be listed in the manifest's requires section.
 	Package string `json:"package,omitempty" yaml:"package,omitempty"`
+	// Permissions and roles this integration unit requires from the named provider. May be declared at
+	// package, policy_template, input, and data_stream levels; entries across all applicable levels are
+	// accumulated into a single set and deduplicated.
+	ProviderPermissions []ProviderPermission `json:"provider_permissions,omitempty" yaml:"provider_permissions,omitempty"`
 	// Required conditional variables for the package.
 	RequiredVars RequiredVars `json:"required_vars,omitempty" yaml:"required_vars,omitempty"`
 	// Defines named sections used to group and visually organize variables in the Fleet UI. Variables

@@ -198,11 +198,13 @@ INSERT INTO data_streams (
   elasticsearch_source_mode,
   hidden,
   ilm_policy,
+  provider_permissions,
   "release",
   title,
   type,
   github_code_owner
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -469,8 +471,10 @@ INSERT INTO policy_templates (
   fips_compatible,
   multiple,
   name,
+  provider_permissions,
   title
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -535,12 +539,14 @@ INSERT INTO policy_template_inputs (
   multi,
   name,
   package,
+  provider_permissions,
   show_divider,
   template_path,
   template_paths,
   title,
   type
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -1023,6 +1029,7 @@ INSERT INTO vars (
   description,
   hide_in_deployment_modes,
   max_duration,
+  migrate_from,
   min_duration,
   multi,
   name,
@@ -1035,6 +1042,7 @@ INSERT INTO vars (
   type,
   url_allowed_schemes
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,

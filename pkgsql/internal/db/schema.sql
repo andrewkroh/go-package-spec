@@ -120,6 +120,7 @@ CREATE TABLE IF NOT EXISTS data_streams (
   elasticsearch_source_mode TEXT, -- Source mode to use. This configures how the document source (`_source`) is stored for this data stream. If configured as `default`, this mode is not configured and it uses Elasticsearch defaults. I...
   hidden BOOLEAN, -- Specifies if a data stream is hidden, resulting in dot prefixed system indices. To set the data stream hidden without those dot prefixed indices, check `elasticsearch.index_template.data_stream.hid...
   ilm_policy TEXT, -- The name of an existing ILM (Index Lifecycle Management) policy
+  provider_permissions JSON, -- Permissions and roles this integration unit requires from the named provider. May be declared at package, policy_template, input, and data_stream levels; entries across all applicable levels are ac...
   "release" TEXT, -- Stability of data stream.
   title TEXT NOT NULL, -- Title of data stream. It should include the source of the data that is being collected, and the kind of data collected such as logs or metrics. Words should be uppercased.
   type TEXT, -- Type of data stream
@@ -297,6 +298,7 @@ CREATE TABLE IF NOT EXISTS policy_templates (
   fips_compatible BOOLEAN, -- Indicate if this package is capable of satisfying FIPS requirements. Set to false if it uses any input that cannot be configured to use FIPS cryptography.
   multiple BOOLEAN, -- Multiple
   name TEXT NOT NULL, -- Name of policy template.
+  provider_permissions JSON, -- Permissions and roles this integration unit requires from the named provider. May be declared at package, policy_template, input, and data_stream levels; entries across all applicable levels are ac...
   title TEXT NOT NULL -- Title of policy template.
 );
 
@@ -331,6 +333,7 @@ CREATE TABLE IF NOT EXISTS policy_template_inputs (
   multi BOOLEAN, -- Can input be defined multiple times
   name TEXT, -- Unique name for this input within the policy template. When set, data streams reference this input by name instead of type, allowing multiple inputs of the same type to coexist in the same policy t...
   package TEXT, -- Reference to an input package. When specified, configuration is inherited from the referenced package. The package must be listed in the manifest's requires section.
+  provider_permissions JSON, -- Permissions and roles this integration unit requires from the named provider. May be declared at package, policy_template, input, and data_stream levels; entries across all applicable levels are ac...
   show_divider BOOLEAN, -- When false, suppresses the automatic horizontal divider rendered after this section.
   template_path TEXT, -- Resolved file path to the agent template relative to the package root (e.g. agent/input/httpjson.yml.hbs). NULL when not specified. Joinable directly to agent_templates.file_path.
   template_paths JSON, -- Paths of the config templates. Templates are rendered and merged sequentially; later templates override earlier ones for conflicting keys.
@@ -626,6 +629,7 @@ CREATE TABLE IF NOT EXISTS vars (
   description TEXT, -- Short description of variable.
   hide_in_deployment_modes JSON, -- Whether this variable should be hidden in the UI for agent policies intended to some specific deployment modes.
   max_duration TEXT, -- The maximum allowed duration value for duration data types. This property can only be used when the type is set to 'duration'.
+  migrate_from JSON, -- Declares that this variable was previously named differently or defined at a different scope. Fleet carries the old value over when upgrading a policy. At least one of `name` or `scope` must be set...
   min_duration TEXT, -- The minimum allowed duration value for duration data types. This property can only be used when the type is set to 'duration'.
   multi BOOLEAN, -- Can variable contain multiple values?
   name TEXT NOT NULL, -- Variable name.
