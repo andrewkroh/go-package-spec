@@ -141,6 +141,7 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 
 	// Extract type-specific fields for the packages table.
 	var (
+		conditionsAgentVersion         sql.NullString
 		conditionsKibanaVersion        sql.NullString
 		conditionsElasticSubscription  sql.NullString
 		agentPrivilegesRoot            sql.NullBool
@@ -149,6 +150,7 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 	)
 	switch im := pkg.IntegrationManifest(); {
 	case im != nil:
+		conditionsAgentVersion = toNullString(im.Conditions.Agent.Version)
 		conditionsKibanaVersion = toNullString(im.Conditions.Kibana.Version)
 		conditionsElasticSubscription = toNullString(string(im.Conditions.Elastic.Subscription))
 		agentPrivilegesRoot = toNullBool(im.Agent.Privileges.Root)
@@ -156,6 +158,7 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 		policyTemplatesBehavior = toNullString(im.PolicyTemplatesBehavior)
 	default:
 		if inp := pkg.InputManifest(); inp != nil {
+			conditionsAgentVersion = toNullString(inp.Conditions.Agent.Version)
 			conditionsKibanaVersion = toNullString(inp.Conditions.Kibana.Version)
 			conditionsElasticSubscription = toNullString(string(inp.Conditions.Elastic.Subscription))
 			agentPrivilegesRoot = toNullBool(inp.Agent.Privileges.Root)
@@ -170,6 +173,7 @@ func writePackage(ctx context.Context, q *dbpkg.Queries, pkg *pkgreader.Package,
 		m,
 		agentPrivilegesRoot,
 		toNullString(pkg.Commit),
+		conditionsAgentVersion,
 		conditionsElasticSubscription,
 		conditionsKibanaVersion,
 		dirName,

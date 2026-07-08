@@ -211,6 +211,7 @@ type Package struct {
 	ID                             int64
 	AgentPrivilegesRoot            sql.NullBool
 	CommitID                       sql.NullString
+	ConditionsAgentVersion         sql.NullString
 	ConditionsElasticSubscription  sql.NullString
 	ConditionsKibanaVersion        sql.NullString
 	DirName                        string

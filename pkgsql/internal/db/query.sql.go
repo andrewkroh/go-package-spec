@@ -963,6 +963,7 @@ const insertPackages = `-- name: InsertPackages :one
 INSERT INTO packages (
   agent_privileges_root,
   commit_id,
+  conditions_agent_version,
   conditions_elastic_subscription,
   conditions_kibana_version,
   dir_name,
@@ -999,6 +1000,7 @@ INSERT INTO packages (
   ?,
   ?,
   ?,
+  ?,
   ?
 ) RETURNING id
 `
@@ -1006,6 +1008,7 @@ INSERT INTO packages (
 type InsertPackagesParams struct {
 	AgentPrivilegesRoot            sql.NullBool
 	CommitID                       sql.NullString
+	ConditionsAgentVersion         sql.NullString
 	ConditionsElasticSubscription  sql.NullString
 	ConditionsKibanaVersion        sql.NullString
 	DirName                        string
@@ -1029,6 +1032,7 @@ func (q *Queries) InsertPackages(ctx context.Context, arg InsertPackagesParams) 
 	row := q.db.QueryRowContext(ctx, insertPackages,
 		arg.AgentPrivilegesRoot,
 		arg.CommitID,
+		arg.ConditionsAgentVersion,
 		arg.ConditionsElasticSubscription,
 		arg.ConditionsKibanaVersion,
 		arg.DirName,
