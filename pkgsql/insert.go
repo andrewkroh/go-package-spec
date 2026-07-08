@@ -146,10 +146,11 @@ func mapFieldsParams(v *pkgspec.FlatField) db.InsertFieldsParams {
 }
 
 // mapPackagesParams converts a Manifest to db.InsertPackagesParams.
-func mapPackagesParams(v *pkgspec.Manifest, agentPrivilegesRoot sql.NullBool, commitId sql.NullString, conditionsElasticSubscription sql.NullString, conditionsKibanaVersion sql.NullString, dirName string, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString) db.InsertPackagesParams {
+func mapPackagesParams(v *pkgspec.Manifest, agentPrivilegesRoot sql.NullBool, commitId sql.NullString, conditionsAgentVersion sql.NullString, conditionsElasticSubscription sql.NullString, conditionsKibanaVersion sql.NullString, dirName string, elasticsearchPrivilegesCluster any, policyTemplatesBehavior sql.NullString) db.InsertPackagesParams {
 	return db.InsertPackagesParams{
 		AgentPrivilegesRoot:            agentPrivilegesRoot,
 		CommitID:                       commitId,
+		ConditionsAgentVersion:         conditionsAgentVersion,
 		ConditionsElasticSubscription:  conditionsElasticSubscription,
 		ConditionsKibanaVersion:        conditionsKibanaVersion,
 		Description:                    v.Description,

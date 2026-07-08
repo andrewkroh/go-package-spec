@@ -14,6 +14,9 @@ tables:
       conditions_elastic_subscription:
         type: TEXT
         comment: "required Elastic subscription level"
+      conditions_agent_version:
+        type: TEXT
+        comment: "required Elastic Agent version range"
       agent_privileges_root:
         type: BOOLEAN
         comment: "whether collection requires root privileges in the agent"
